@@ -485,7 +485,7 @@ main { max-width:1320px; margin:0 auto; padding:0 32px 60px; position:relative; 
 .del-stratum:hover { background:var(--coral-dim); border-color:rgba(232,82,74,.3); color:var(--coral); }
 .del-stratum:disabled { opacity:.3; cursor:not-allowed; }
 
-/* ── FLOWCHART INLINE BUTTON (appears under strata when toggle is ON) ── */
+/* ── FLOWCHART INLINE BUTTON (removed from input panel; now rendered in results by JS) ── */
 .fc-inline-btn-wrap {
   display:none; margin-top:12px;
 }
@@ -701,13 +701,25 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 .fc-modal-header h3 { font-size:18px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:10px; }
 .fc-modal-header h3 span { font-size:20px; }
 .fc-header-btns { display:flex; align-items:center; gap:8px; }
+
+/* ── CHANGE 2: Fix fullscreen button visibility ── */
 .fc-fullscreen-btn {
-  width:36px; height:36px; background:var(--bg4); border:1px solid var(--border);
-  border-radius:8px; cursor:pointer; color:var(--text2); font-size:16px;
-  display:flex; align-items:center; justify-content:center; transition:all .15s;
-  title: "Toggle Fullscreen";
+  width:36px; height:36px;
+  background:var(--bg4);
+  border:1.5px solid var(--border2);
+  border-radius:8px; cursor:pointer;
+  color:var(--text);
+  font-size:18px; font-weight:bold; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+  padding:0;
 }
-.fc-fullscreen-btn:hover { background:var(--accent-glow); color:var(--accent2); border-color:rgba(91,82,240,.3); }
+.fc-fullscreen-btn:hover {
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+
 .fc-close-btn {
   width:36px; height:36px; background:var(--bg4); border:1px solid var(--border);
   border-radius:8px; cursor:pointer; color:var(--text2); font-size:18px;
@@ -715,13 +727,23 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 }
 .fc-close-btn:hover { background:var(--coral-dim); color:var(--coral); border-color:rgba(232,82,74,.3); }
 
-.fc-body { display:grid; grid-template-columns:300px 1fr; height:680px; }
+/* ── fc-body: two-column, fixed height, left scrolls, right scrolls ── */
+.fc-body {
+  display:grid;
+  grid-template-columns:300px 1fr;
+  height:680px;
+  overflow:hidden;
+}
 .fc-modal.fullscreen .fc-body { height: calc(100vh - 73px); }
 
-/* LEFT: Controls panel */
+/* LEFT: Controls panel — scrollable */
 .fc-controls {
-  border-right:1px solid var(--border); overflow-y:auto;
-  padding:20px; display:flex; flex-direction:column; gap:0;
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
   background:var(--bg);
 }
 .fc-section {
@@ -775,13 +797,25 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 }
 .fc-reset-btn:hover { background:var(--coral-dim); }
 
-/* RIGHT: Preview */
+/* Full reset button — resets everything including nodes */
+.fc-full-reset-btn {
+  width:100%; padding:10px; background:none; border:2px solid var(--amber);
+  border-radius:8px; color:var(--amber); font-family:var(--sans); font-size:12px; font-weight:700;
+  cursor:pointer; transition:all .2s; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.fc-full-reset-btn:hover { background:var(--amber-dim); }
+
+/* RIGHT: Preview — flex column, canvas scrolls */
 .fc-preview {
-  display:flex; flex-direction:column; background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+  overflow:hidden;
 }
 .fc-preview-toolbar {
   padding:12px 20px; border-bottom:1px solid var(--border);
   display:flex; align-items:center; gap:10px; background:var(--bg2); flex-wrap:wrap;
+  flex-shrink:0;
 }
 .fc-preview-toolbar span { font-size:12px; color:var(--text3); flex:1; }
 .fc-dl-btn {
@@ -795,12 +829,53 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 .fc-dl-btn.png:hover { background:var(--teal); color:#fff; }
 body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 
+/* Canvas wrap: fills remaining space, both axes scrollable */
 .fc-canvas-wrap {
-  flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center;
+  flex:1;
+  overflow:auto;
+  display:block;
   padding:24px;
+  min-height:0;
 }
-#fc-svg-container { width:100%; }
-#fc-svg-container svg { width:100%; height:auto; display:block; }
+#fc-svg-container { display:inline-block; min-width:100%; }
+#fc-svg-container svg { display:block; }
+
+/* ── Editable strata panel inside flowchart modal ── */
+.fc-strata-edit-list {
+  display:flex; flex-direction:column; gap:8px; margin-top:8px;
+}
+.fc-stratum-edit-row {
+  display:grid; grid-template-columns:1fr 70px 60px auto; gap:6px; align-items:center;
+  padding:8px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:7px;
+}
+.fc-stratum-edit-row input {
+  width:100%; padding:6px 9px;
+  background:var(--bg3); border:1px solid var(--border2); border-radius:6px;
+  color:var(--text); font-family:var(--sans); font-size:12px; outline:none;
+  transition:border-color .15s;
+}
+.fc-stratum-edit-row input:focus { border-color:var(--accent); }
+.fc-stratum-del-btn {
+  width:26px; height:26px; background:none;
+  border:1px solid var(--border); border-radius:5px;
+  color:var(--text3); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:11px; transition:all .15s; flex-shrink:0;
+}
+.fc-stratum-del-btn:hover { background:var(--coral-dim); border-color:rgba(232,82,74,.3); color:var(--coral); }
+.fc-add-node-btn {
+  width:100%; padding:7px 11px; background:var(--bg2); border:1px dashed var(--teal);
+  border-radius:7px; font-family:var(--sans); font-size:12px; font-weight:600;
+  color:var(--teal); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:all .15s; margin-top:4px;
+}
+.fc-add-node-btn:hover { background:var(--teal-dim); }
+.fc-strata-col-labels {
+  display:grid; grid-template-columns:1fr 70px 60px 26px; gap:6px;
+  padding:0 10px; margin-bottom:4px;
+}
+.fc-strata-col-labels span {
+  font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text3);
+}
 
 /* ── RESPONSIVE ───────────────────────────────────────────────── */
 @media (max-width:1024px) { .calc-layout { grid-template-columns:1fr; } }
@@ -951,10 +1026,6 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
         </div>
         <div class="strata-list" id="prop-strata-list"></div>
       </div>
-      <!-- Flowchart button appears right under strata for proportional (always has strata) -->
-      <div class="fc-inline-btn-wrap visible" id="prop-fc-inline">
-        <button class="fc-inline-btn" onclick="openFcModal('prop')">◈ &nbsp;Generate Publication Flowchart</button>
-      </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="calcProportional()">⟳ &nbsp;Calculate Allocation</button>
         <button class="btn-secondary" onclick="resetProportional()">↺ Reset</button>
@@ -1014,10 +1085,6 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
           <button class="add-stratum-btn" onclick="event.stopPropagation();addStratum('yam')">+ Add Stratum</button>
         </div>
         <div class="strata-list" id="yam-strata-list"></div>
-      </div>
-      <!-- Flowchart button appears when strata toggle is ON -->
-      <div class="fc-inline-btn-wrap" id="yam-fc-inline">
-        <button class="fc-inline-btn" onclick="openFcModal('yam')">◈ &nbsp;Generate Publication Flowchart</button>
       </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="calcYamane()">⟳ &nbsp;Calculate Sample Size</button>
@@ -1091,10 +1158,6 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
         </div>
         <div class="strata-list" id="coch-strata-list"></div>
       </div>
-      <!-- Flowchart button appears when strata toggle is ON -->
-      <div class="fc-inline-btn-wrap" id="coch-fc-inline">
-        <button class="fc-inline-btn" onclick="openFcModal('coch')">◈ &nbsp;Generate Publication Flowchart</button>
-      </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="calcCochran()">⟳ &nbsp;Calculate Sample Size</button>
         <button class="btn-secondary" onclick="resetCochran()">↺ Reset</button>
@@ -1156,10 +1219,6 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
         </div>
         <div class="strata-list" id="oth-strata-list"></div>
       </div>
-      <!-- Flowchart button appears when strata toggle is ON -->
-      <div class="fc-inline-btn-wrap" id="oth-fc-inline">
-        <button class="fc-inline-btn" onclick="openFcModal('oth')">◈ &nbsp;Generate Publication Flowchart</button>
-      </div>
       <div class="btn-row">
         <button class="btn-primary" onclick="calcOther()">⟳ &nbsp;Calculate Sample Size</button>
         <button class="btn-secondary" onclick="resetOther()">↺ Reset</button>
@@ -1214,6 +1273,20 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 
       <!-- LEFT: Controls -->
       <div class="fc-controls" id="fc-controls">
+
+        <!-- Editable Nodes -->
+        <div class="fc-section">
+          <div class="fc-section-title">Edit Diagram Nodes</div>
+          <div class="fc-field">
+            <label>Header / Population label</label>
+            <input type="text" id="fc-header-label" value="Target Population" oninput="renderFcChart()">
+          </div>
+          <div class="fc-strata-col-labels">
+            <span>Name</span><span>Pop (N)</span><span>Sample (n)</span><span></span>
+          </div>
+          <div class="fc-strata-edit-list" id="fc-strata-edit-list"></div>
+          <button class="fc-add-node-btn" onclick="fcAddNode()">+ Add Node</button>
+        </div>
 
         <!-- Layout -->
         <div class="fc-section">
@@ -1353,7 +1426,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
             <div class="fc-toggle-mini" id="fc-alt-colors-sw"><div class="fc-toggle-mini-knob"></div></div>
             <span class="fc-toggle-label">Alternating stratum colors</span>
           </div>
-          <button class="fc-reset-btn" onclick="resetFcDefaults()">↺ &nbsp;Reset to Default Colors</button>
+          <button class="fc-reset-btn" onclick="resetFcDefaults()">↺ &nbsp;Reset Colors Only</button>
         </div>
 
         <!-- Typography -->
@@ -1440,6 +1513,13 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
           </div>
         </div>
 
+        <!-- Full Reset -->
+        <div class="fc-section">
+          <div class="fc-section-title">Full Reset</div>
+          <button class="fc-full-reset-btn" onclick="fcFullReset()">⟳ &nbsp;Reset All to Default</button>
+          <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;">Resets all colors, layout, typography, dimensions, node labels, and connector settings back to default values from the original calculation.</p>
+        </div>
+
       </div><!-- end fc-controls -->
 
       <!-- RIGHT: Preview -->
@@ -1521,16 +1601,12 @@ function setupStatsObserver() {
 }
 
 function animateStats() {
-  // stat-0: 0 → 8
   animateCount(document.getElementById('stat-0'), 0, 8, 1200, v => v.toString());
-  // stat-inf: 0 → ∞ (animate number then flip to ∞)
   animateCount(document.getElementById('stat-inf'), 0, 99, 1400, v => {
     if (v >= 99) return '∞';
     return v.toString();
   });
-  // stat-2: stays 0
   document.getElementById('stat-2').textContent = '0';
-  // stat-3: 0 → 100%
   animateCount(document.getElementById('stat-3'), 0, 100, 1500, v => v + '%');
 }
 
@@ -1624,16 +1700,13 @@ function updateDelButtons(prefix) {
 function toggleStrata(prefix) {
   const sw = document.getElementById(prefix+'-toggle');
   const wrap = document.getElementById(prefix+'-strata-wrap');
-  const fcBtn = document.getElementById(prefix+'-fc-inline');
   const isOn = sw.classList.toggle('on');
   if(isOn){
     wrap.classList.add('visible');
     if(strataCounts[prefix]===0) addStratum(prefix);
     updateDelButtons(prefix);
-    if(fcBtn) fcBtn.classList.add('visible');
   } else {
     wrap.classList.remove('visible');
-    if(fcBtn) fcBtn.classList.remove('visible');
   }
 }
 function getStrata(prefix) {
@@ -1712,11 +1785,20 @@ function allocHTML(allocs, totalSample) {
   return `<div style="margin-top:4px;"><div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Stratum Allocation</div>
     <div class="alloc-list">${rows}</div></div>`;
 }
-function exportBtnsHTML(prefix) {
-  return `<div class="export-row">
+
+function fcBtnHTML(prefix) {
+  return `<div style="margin-top:14px;">
+    <button class="fc-inline-btn" style="display:flex;" onclick="openFcModal('${prefix}')">◈ &nbsp;Generate Publication Flowchart</button>
+  </div>`;
+}
+
+function exportBtnsHTML(prefix, hasAllocs) {
+  let html = `<div class="export-row">
     <button class="export-btn xl" onclick="exportExcel('${prefix}')">📊 &nbsp;Export to Excel</button>
     <button class="export-btn wd" onclick="exportWord('${prefix}')">📄 &nbsp;Export to Word</button>
   </div>`;
+  html += fcBtnHTML(prefix);
+  return html;
 }
 
 // ─── PROPORTIONAL ────────────────────────────────────────────────
@@ -1779,7 +1861,7 @@ function calcProportional() {
   html+=metricHTML('Number of Strata',strata.length);
   html+=stepsHTML(steps);
   html+=allocHTML(allocs,adj);
-  html+=exportBtnsHTML('prop');
+  html+=exportBtnsHTML('prop', true);
 
   showResults('prop',html);
   toast('Allocation complete',`${fmtN(adj)} samples across ${strata.length} strata`,'success');
@@ -1864,7 +1946,7 @@ function calcYamane() {
     });
     html+=stepsHTML(aSteps); html+=allocHTML(allocs,adj);
   }
-  html+=exportBtnsHTML('yam');
+  html+=exportBtnsHTML('yam', useStrata && allocs);
   showResults('yam',html);
   toast('Yamane calculation done',`Sample size: ${fmtN(adj)}`,'success');
 }
@@ -1872,7 +1954,6 @@ function resetYamane() {
   document.getElementById('yam-n').value=5000; document.getElementById('yam-e').value=0.05; document.getElementById('yam-nr').value=0;
   document.getElementById('yam-toggle').classList.remove('on');
   document.getElementById('yam-strata-wrap').classList.remove('visible');
-  document.getElementById('yam-fc-inline').classList.remove('visible');
   document.getElementById('yam-strata-list').innerHTML=''; strataCounts.yam=0;
   clearResults('yam'); toast('Reset','Yamane parameters cleared.','info');
 }
@@ -1961,7 +2042,6 @@ function calcCochran() {
   let allocs=null, strata=[], totalPop=0;
   if(useStrata){ strata=getStrata('coch'); if(strata.length){ totalPop=strata.reduce((a,b)=>a+b.pop,0); allocs=buildAllocResult(strata,totalPop,adj); } }
 
-  // Store totalPop — if no population given and no strata, store null so flowchart knows
   lastResult.coch = { formula:"Cochran's Formula", pRaw, p, z, e, Npop, fpc, nr, nCeil, adj, strata, allocs, totalPop: Npop || (strata.length ? totalPop : null), steps, confLabel, z2, pq, e2, numerator, n0 };
 
   let html=metricHTML('Estimated Proportion (p)',fmtProp(p));
@@ -1983,7 +2063,7 @@ function calcCochran() {
     });
     html+=stepsHTML(aSteps); html+=allocHTML(allocs,adj);
   }
-  html+=exportBtnsHTML('coch');
+  html+=exportBtnsHTML('coch', useStrata && allocs);
   showResults('coch',html);
   toast("Cochran calculation done",`Sample size: ${fmtN(adj)}`,'success');
 }
@@ -1992,7 +2072,6 @@ function resetCochran() {
   document.getElementById('coch-e').value=0.05; document.getElementById('coch-N').value=''; document.getElementById('coch-nr').value=0;
   document.getElementById('coch-toggle').classList.remove('on');
   document.getElementById('coch-strata-wrap').classList.remove('visible');
-  document.getElementById('coch-fc-inline').classList.remove('visible');
   document.getElementById('coch-strata-list').innerHTML=''; strataCounts.coch=0;
   clearResults('coch'); toast('Reset','Cochran parameters cleared.','info');
 }
@@ -2281,7 +2360,7 @@ function calcOther() {
     });
     html+=stepsHTML(aSteps); html+=allocHTML(allocs,adj);
   }
-  html+=exportBtnsHTML('oth');
+  html+=exportBtnsHTML('oth', useStrata && allocs);
   showResults('oth',html);
   toast(`${fname} done`,`Sample size: ${fmtN(adj)}`,'success');
 }
@@ -2289,7 +2368,6 @@ function resetOther() {
   document.getElementById('other-type').value='prop'; document.getElementById('other-nr').value=0;
   document.getElementById('oth-toggle').classList.remove('on');
   document.getElementById('oth-strata-wrap').classList.remove('visible');
-  document.getElementById('oth-fc-inline').classList.remove('visible');
   document.getElementById('oth-strata-list').innerHTML=''; strataCounts.oth=0;
   updateOtherFormula(); clearResults('oth');
   toast('Reset','Other formula parameters cleared.','info');
@@ -2302,6 +2380,13 @@ function resetOther() {
 
 let fcCurrentPrefix = null;
 let fcIsFullscreen = false;
+
+// ── Live editable node data (separate from lastResult) ──────────
+// fcNodes: array of { name, pop, n } for stratum nodes
+// fcHeaderLabel, fcTotalPop, fcTotalSample, fcNR, fcFormula stored separately
+let fcNodes = [];
+let fcHeaderLabel = 'Target Population';
+let fcOriginalData = null; // snapshot of data when modal opened, for full reset
 
 // Default flowchart values (white nodes, black text)
 const FC_DEFAULTS = {
@@ -2370,13 +2455,73 @@ function resetFcDefaults() {
   document.getElementById('fc-col-line').value = FC_DEFAULTS.colLine;
   document.getElementById('fc-col-bg').value = FC_DEFAULTS.colBg;
   document.getElementById('fc-col-border').value = FC_DEFAULTS.colBorder;
-  // Reset scheme selector
   document.getElementById('fc-scheme').value = 'default';
-  // Reset alt colors toggle to off
   const altSw = document.getElementById('fc-alt-colors-sw');
   if(altSw) altSw.classList.remove('on');
   renderFcChart();
-  toast('Reset to defaults', 'White nodes, black text restored.', 'info');
+  toast('Colors reset', 'White nodes, black text restored.', 'info');
+}
+
+// ── FULL RESET: restores all controls AND nodes to original calculation values ──
+function fcFullReset() {
+  if(!fcOriginalData) return;
+
+  // Reset all style controls to defaults
+  document.getElementById('fc-direction').value = FC_DEFAULTS.direction;
+  document.getElementById('fc-shape').value = FC_DEFAULTS.shape;
+  document.getElementById('fc-spacing').value = FC_DEFAULTS.spacing;
+  document.getElementById('fc-spacing-val').textContent = FC_DEFAULTS.spacing + 'px';
+  document.getElementById('fc-connector').value = FC_DEFAULTS.connector;
+  document.getElementById('fc-arrow').value = FC_DEFAULTS.arrow;
+  document.getElementById('fc-show-header-values').value = FC_DEFAULTS.showHeaderValues;
+  document.getElementById('fc-show-values').value = FC_DEFAULTS.showValues;
+  document.getElementById('fc-font').value = FC_DEFAULTS.font;
+  document.getElementById('fc-fsize-h').value = FC_DEFAULTS.fsizeH;
+  document.getElementById('fc-fsize-h-val').textContent = FC_DEFAULTS.fsizeH + 'px';
+  document.getElementById('fc-fsize-n').value = FC_DEFAULTS.fsizeN;
+  document.getElementById('fc-fsize-n-val').textContent = FC_DEFAULTS.fsizeN + 'px';
+  document.getElementById('fc-font-weight').value = FC_DEFAULTS.fontWeight;
+  document.getElementById('fc-nw').value = FC_DEFAULTS.nw;
+  document.getElementById('fc-nw-val').textContent = FC_DEFAULTS.nw + 'px';
+  document.getElementById('fc-nh').value = FC_DEFAULTS.nh;
+  document.getElementById('fc-nh-val').textContent = FC_DEFAULTS.nh + 'px';
+  document.getElementById('fc-radius').value = FC_DEFAULTS.radius;
+  document.getElementById('fc-radius-val').textContent = FC_DEFAULTS.radius + 'px';
+  document.getElementById('fc-stroke').value = FC_DEFAULTS.strokeW;
+  document.getElementById('fc-stroke-val').textContent = FC_DEFAULTS.strokeW + 'px';
+
+  // Reset toggle switches
+  const toggleDefaults = { 'fc-show-pct-bar': false, 'fc-show-nr': true, 'fc-show-formula': true, 'fc-show-legend': true, 'fc-alt-colors': false };
+  Object.entries(toggleDefaults).forEach(([id, onState]) => {
+    const sw = document.getElementById(id + '-sw');
+    if(sw) { if(onState) sw.classList.add('on'); else sw.classList.remove('on'); }
+  });
+
+  // Reset colors
+  document.getElementById('fc-col-header').value = FC_DEFAULTS.colHeader;
+  document.getElementById('fc-col-header-txt').value = FC_DEFAULTS.colHeaderTxt;
+  document.getElementById('fc-col-strat').value = FC_DEFAULTS.colStrat;
+  document.getElementById('fc-col-strat-txt').value = FC_DEFAULTS.colStratTxt;
+  document.getElementById('fc-col-strat2').value = FC_DEFAULTS.colStrat2;
+  document.getElementById('fc-col-line').value = FC_DEFAULTS.colLine;
+  document.getElementById('fc-col-bg').value = FC_DEFAULTS.colBg;
+  document.getElementById('fc-col-border').value = FC_DEFAULTS.colBorder;
+  document.getElementById('fc-scheme').value = 'default';
+
+  // Reset title/subtitle/footer
+  document.getElementById('fc-title').value = fcOriginalData.formula + ' — Sample Size Allocation';
+  document.getElementById('fc-subtitle').value = '';
+  document.getElementById('fc-footer').value = 'Calculated with CalcuStats Lite · mudasiribrahim.vercel.app';
+
+  // Reset header label
+  document.getElementById('fc-header-label').value = 'Target Population';
+  fcHeaderLabel = 'Target Population';
+
+  // Reset nodes from original data
+  fcNodes = fcOriginalData.allocs.map(a => ({ name: a.name, pop: a.pop, n: a.n }));
+  rebuildFcNodeEditList();
+  renderFcChart();
+  toast('Full reset done', 'All settings and nodes restored to original values.', 'info');
 }
 
 function fcToggle(id) {
@@ -2392,6 +2537,59 @@ function fcIsOn(id) {
 function fcVal(id) { return document.getElementById(id)?.value || ''; }
 function fcNum(id) { return parseFloat(document.getElementById(id)?.value)||0; }
 
+// ── Editable node list in modal ───────────────────────────────────
+function rebuildFcNodeEditList() {
+  const list = document.getElementById('fc-strata-edit-list');
+  list.innerHTML = '';
+  fcNodes.forEach((node, idx) => {
+    const row = document.createElement('div');
+    row.className = 'fc-stratum-edit-row';
+    row.id = 'fc-node-row-' + idx;
+    row.innerHTML = `
+      <input type="text" id="fc-node-name-${idx}" value="${escAttr(node.name)}" placeholder="Name" oninput="fcNodeUpdate(${idx},'name',this.value)">
+      <input type="number" id="fc-node-pop-${idx}" value="${node.pop}" min="0" placeholder="Pop" oninput="fcNodeUpdate(${idx},'pop',this.value)">
+      <input type="number" id="fc-node-n-${idx}" value="${node.n}" min="0" placeholder="n" oninput="fcNodeUpdate(${idx},'n',this.value)">
+      <button class="fc-stratum-del-btn" onclick="fcDeleteNode(${idx})" title="Remove node">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  updateFcDeleteButtons();
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fcNodeUpdate(idx, field, val) {
+  if(!fcNodes[idx]) return;
+  if(field === 'name') { fcNodes[idx].name = val; }
+  else if(field === 'pop') { fcNodes[idx].pop = parseFloat(val)||0; }
+  else if(field === 'n') { fcNodes[idx].n = parseInt(val)||0; }
+  renderFcChart();
+}
+
+function fcDeleteNode(idx) {
+  if(fcNodes.length <= 1) { toast('Cannot remove','At least one node is required.','warn'); return; }
+  fcNodes.splice(idx, 1);
+  rebuildFcNodeEditList();
+  renderFcChart();
+}
+
+function updateFcDeleteButtons() {
+  const btns = document.querySelectorAll('.fc-stratum-del-btn');
+  btns.forEach(b => { b.disabled = fcNodes.length <= 1; if(fcNodes.length<=1) b.style.opacity='0.3'; else b.style.opacity=''; });
+}
+
+function fcAddNode() {
+  fcNodes.push({ name: 'New Stratum', pop: 100, n: 10 });
+  rebuildFcNodeEditList();
+  renderFcChart();
+  // Scroll to bottom of edit list
+  const list = document.getElementById('fc-strata-edit-list');
+  if(list) list.lastElementChild?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ── Open flowchart modal ──────────────────────────────────────────
 function openFcModal(prefix) {
   const data = lastResult[prefix];
   if(!data || !data.allocs || !data.allocs.length){
@@ -2399,15 +2597,34 @@ function openFcModal(prefix) {
     return;
   }
   fcCurrentPrefix = prefix;
-  // Pre-fill title from formula name
+
+  // Snapshot original data for full reset
+  fcOriginalData = {
+    formula: data.formula,
+    adj: data.adj,
+    totalPop: data.totalPop,
+    nr: data.nr || 0,
+    allocs: data.allocs.map(a => ({ name: a.name, pop: a.pop, n: a.n, prop: a.prop }))
+  };
+
+  // Initialize editable nodes from calculation result
+  fcNodes = data.allocs.map(a => ({ name: a.name, pop: a.pop, n: a.n }));
+  fcHeaderLabel = 'Target Population';
+
+  // Pre-fill controls
+  document.getElementById('fc-header-label').value = fcHeaderLabel;
   document.getElementById('fc-title').value = data.formula + ' — Sample Size Allocation';
   document.getElementById('fc-subtitle').value = '';
   document.getElementById('fc-footer').value = 'Calculated with CalcuStats Lite · mudasiribrahim.vercel.app';
+
+  // Build node edit list
+  rebuildFcNodeEditList();
 
   document.getElementById('fc-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(renderFcChart, 80);
 }
+
 function closeFcModal() {
   document.getElementById('fc-overlay').classList.remove('open');
   document.getElementById('fc-modal').classList.remove('fullscreen');
@@ -2426,11 +2643,14 @@ function toggleFcFullscreen() {
   setTimeout(renderFcChart, 100);
 }
 
-// ── Core SVG builder ──────────────────────────────────────────────
+// ── Core SVG builder — now uses fcNodes instead of data.allocs ────
 function renderFcChart() {
-  if(!fcCurrentPrefix) return;
-  const data = lastResult[fcCurrentPrefix];
-  if(!data || !data.allocs) return;
+  if(!fcCurrentPrefix || !fcNodes.length) return;
+  const data = fcOriginalData;
+  if(!data) return;
+
+  // Read header label from input
+  fcHeaderLabel = document.getElementById('fc-header-label')?.value || 'Target Population';
 
   const direction   = fcVal('fc-direction');
   const shape       = fcVal('fc-shape');
@@ -2467,11 +2687,18 @@ function renderFcChart() {
   const subtitle    = fcVal('fc-subtitle');
   const footer      = fcVal('fc-footer');
 
-  const allocs = data.allocs;
-  // totalPop: use data.totalPop if available, else null (no pop field in header)
-  const totalPop = data.totalPop;
-  const adj = data.adj;
+  // Use live fcNodes for rendering
+  const allocs = fcNodes;
+  // Compute live totals from fcNodes
+  const totalPop = allocs.reduce((s, a) => s + (a.pop || 0), 0);
+  const adj = allocs.reduce((s, a) => s + (a.n || 0), 0);
   const nr = data.nr || 0;
+
+  // Compute proportions live from current node populations
+  const allocsWithProp = allocs.map(a => ({
+    ...a,
+    prop: totalPop > 0 ? (a.pop / totalPop) : (1 / allocs.length)
+  }));
 
   // ── Layout math ────────────────────────────────────────────────
   const PAD = 30;
@@ -2496,7 +2723,7 @@ function renderFcChart() {
   let stratNodes = [];
 
   if(direction === 'TB') {
-    const totalStrataW = allocs.length * SNW + (allocs.length - 1) * spacing;
+    const totalStrataW = allocsWithProp.length * SNW + (allocsWithProp.length - 1) * spacing;
     svgW = Math.max(totalStrataW + PAD * 2, HNW + PAD * 2);
     const centerX = svgW / 2;
     headerX = centerX - HNW / 2;
@@ -2504,7 +2731,7 @@ function renderFcChart() {
 
     const strataY = headerY + HNH + spacing;
     const strataStartX = centerX - totalStrataW / 2;
-    allocs.forEach((a, i) => {
+    allocsWithProp.forEach((a, i) => {
       stratNodes.push({
         x: strataStartX + i * (SNW + spacing),
         y: strataY,
@@ -2513,16 +2740,15 @@ function renderFcChart() {
     });
     svgH = strataY + SNH + PAD + LEGEND_H + FOOTER_H + 10;
   } else {
-    const totalStrataH = allocs.length * SNH + (allocs.length - 1) * spacing;
+    const totalStrataH = allocsWithProp.length * SNH + (allocsWithProp.length - 1) * spacing;
     svgH = Math.max(totalStrataH + PAD * 2, HNH + PAD * 2) + headerExtraH + LEGEND_H + FOOTER_H + 10;
-    const centerY = (PAD + headerExtraH + HNH / 2 + (svgH - LEGEND_H - FOOTER_H - PAD * 2 - headerExtraH) / 2 + PAD + headerExtraH);
 
     headerX = PAD;
     headerY = svgH / 2 - HNH / 2 - (LEGEND_H + FOOTER_H) / 2;
 
     const strataX = PAD + HNW + spacing;
     const strataStartY = svgH / 2 - totalStrataH / 2 - (LEGEND_H + FOOTER_H) / 2;
-    allocs.forEach((a, i) => {
+    allocsWithProp.forEach((a, i) => {
       stratNodes.push({
         x: strataX,
         y: strataStartY + i * (SNH + spacing),
@@ -2583,8 +2809,7 @@ function renderFcChart() {
 
     let lines = [];
     if(isHeader) {
-      lines.push({ text: 'Target Population', size: fsizeH, weight: 'bold' });
-      // Header node content based on showHeaderValues
+      lines.push({ text: fcHeaderLabel, size: fsizeH, weight: 'bold' });
       if(showHeaderValues === 'both') {
         if(totalPop) lines.push({ text: `N = ${fmtN(totalPop)}`, size: fsizeH - 2, weight: 'normal' });
         lines.push({ text: `n = ${fmtN(adj)}`, size: fsizeH - 2, weight: 'bold' });
@@ -2594,7 +2819,6 @@ function renderFcChart() {
         if(totalPop) lines.push({ text: `N = ${fmtN(totalPop)}`, size: fsizeH - 2, weight: 'normal' });
         else lines.push({ text: 'N = (not specified)', size: fsizeH - 2, weight: 'normal', opacity: 0.6 });
       }
-      // name only: just the "Target Population" title already added
       if(showFormula && data.formula) lines.push({ text: data.formula, size: Math.max(9, fsizeH - 4), weight: 'normal', opacity: 0.8 });
       if(showNR && nr > 0) lines.push({ text: `Non-response: ${nr}%`, size: Math.max(9, fsizeH - 4), weight: 'normal', opacity: 0.75 });
     } else {
@@ -2609,7 +2833,6 @@ function renderFcChart() {
       } else if(showValues === 'pct') {
         lines.push({ text: `${(alloc.prop*100).toFixed(1)}%`, size: fsizeN, weight: 'bold' });
       }
-      // name-only: just name already added
     }
 
     const lineH = 16;
@@ -2647,7 +2870,7 @@ function renderFcChart() {
   // Background
   svgParts.push(`<rect width="${svgW}" height="${svgH}" fill="${colBg}"/>`);
 
-  // Title / subtitle / formula header (above nodes)
+  // Title / subtitle above nodes
   let titleY = PAD;
   if(title) {
     svgParts.push(`<text x="${(svgW/2).toFixed(1)}" y="${(titleY + fsizeH).toFixed(1)}" text-anchor="middle" font-family="${font}" font-size="${fsizeH + 2}" font-weight="bold" fill="${colHeader === '#ffffff' ? colLine : colHeader}">${escSVG(title)}</text>`);
@@ -2665,9 +2888,9 @@ function renderFcChart() {
   svgParts.push('<!-- header node -->');
   svgParts.push(buildNodeLabel(null, -1, true));
 
-  // Connector from header to stratum nodes
+  // Connectors
   svgParts.push('<!-- connectors -->');
-  allocs.forEach((a, i) => {
+  allocsWithProp.forEach((a, i) => {
     const sn = stratNodes[i];
     if(direction === 'TB') {
       const x1 = headerX + HNW / 2;
@@ -2690,7 +2913,7 @@ function renderFcChart() {
 
   // Stratum nodes
   svgParts.push('<!-- stratum nodes -->');
-  allocs.forEach((a, i) => {
+  allocsWithProp.forEach((a, i) => {
     svgParts.push(buildNodeLabel(a, i, false));
   });
 
@@ -2713,7 +2936,7 @@ function renderFcChart() {
   document.getElementById('fc-svg-container').innerHTML = svgStr;
 
   // Update label
-  document.getElementById('fc-preview-label').textContent = `${allocs.length} strata · n = ${fmtN(adj)}${totalPop ? ' · N = ' + fmtN(totalPop) : ''} · ${direction === 'TB' ? 'Top→Bottom' : 'Left→Right'}`;
+  document.getElementById('fc-preview-label').textContent = `${allocsWithProp.length} strata · n = ${fmtN(adj)}${totalPop ? ' · N = ' + fmtN(totalPop) : ''} · ${direction === 'TB' ? 'Top→Bottom' : 'Left→Right'}`;
 }
 
 // ── Download helpers ──────────────────────────────────────────────
