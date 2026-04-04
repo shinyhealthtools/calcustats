@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CalcuStats | Sample Size & Descriptive Statistics | Proportional, Yamane, Cochran & More</title>
+    <title>CalcuStats | Sample Size Calculation & Descriptive Statistics | Proportional, Yamane, Cochran & More</title>
     
     <!-- SEO Meta Tags -->
     <meta name="title" content="CalcuStats ">
@@ -2328,7 +2328,7 @@ window.addEventListener('load', () => {
   // Stats counter animation on scroll
   setupStatsObserver();
 
-  toast('Welcome to CalcuStats ', 'Professional sample size calculation and descriptive analysis hub', 'info');
+  toast('Welcome to CalcuStats ', 'Sample size calculation and descriptive analysis hub', 'info');
 });
 
 // ─── STATS COUNTER ANIMATION ─────────────────────────────────────
@@ -4267,11 +4267,11 @@ function calculateNumericStats(values) {
   
   // Quartiles
   const q1 = sorted[Math.floor(n * 0.25)];
-  const q2 = sorted[Math.floor(n * 0.5)]; // median
+  const q2 = sorted[Math.floor(n * 0.5)];
   const q3 = sorted[Math.floor(n * 0.75)];
   const iqr = q3 - q1;
   
-  // Percentiles (5th, 10th, 20th, 25th, 30th, 40th, 50th, 60th, 70th, 75th, 80th, 90th, 95th)
+  // Percentiles
   const percentiles = [5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95];
   const percentileValues = {};
   percentiles.forEach(p => {
@@ -4317,13 +4317,11 @@ function shapiroWilkTest(values) {
   const sorted = [...values].sort((a, b) => a - b);
   const mean = values.reduce((a, b) => a + b, 0) / n;
   
-  // Calculate denominator (sum of squared deviations)
   let denominator = 0;
   for (let i = 0; i < n; i++) {
     denominator += Math.pow(values[i] - mean, 2);
   }
   
-  // Coefficients approximation (from Royston 1992)
   const coefficients = [];
   const m = [];
   for (let i = 1; i <= n; i++) {
@@ -4340,7 +4338,6 @@ function shapiroWilkTest(values) {
     coefficients.push(a);
   }
   
-  // Calculate numerator
   let numerator = 0;
   for (let i = 0; i < Math.floor(n / 2); i++) {
     numerator += coefficients[i] * (sorted[n - 1 - i] - sorted[i]);
@@ -4349,7 +4346,6 @@ function shapiroWilkTest(values) {
   
   const w = numerator / denominator;
   
-  // Approximate p-value
   let pValue;
   if (n >= 4 && n <= 2000) {
     const lnW = Math.log(1 - w);
@@ -4372,7 +4368,6 @@ function shapiroWilkTest(values) {
   };
 }
 
-// Standard normal CDF approximation
 function phi(x) {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
   const d = 0.3989423 * Math.exp(-x * x / 2);
@@ -4423,7 +4418,6 @@ function runDescriptiveAnalysis() {
     }
   }
   
-  // Add export buttons to results
   const exportBtnsDiv = document.createElement('div');
   exportBtnsDiv.style.marginTop = '30px';
   exportBtnsDiv.style.paddingTop = '20px';
@@ -4447,7 +4441,6 @@ function createNumericResultsHTML(varName, stats, values) {
   container.style.borderBottom = '2px solid var(--border)';
   container.style.paddingBottom = '20px';
   
-  // Statistics selection UI
   const statOptions = `
     <div class="desc-options-group">
       <div class="desc-options-title">📈 Select Statistics to Display for "${escapeHtml(varName)}"</div>
@@ -4467,7 +4460,6 @@ function createNumericResultsHTML(varName, stats, values) {
     </div>
   `;
   
-  // Quartiles and Percentiles section (unchecked by default)
   const quartilesPercentilesOptions = `
     <div class="desc-options-group">
       <div class="desc-options-title">📐 Quartiles & Percentiles</div>
@@ -4483,7 +4475,6 @@ function createNumericResultsHTML(varName, stats, values) {
   
   const statsGrid = `<div id="stats-grid-${varName.replace(/[^a-zA-Z0-9]/g, '_')}" class="desc-stats-grid"></div>`;
   
-  // Graph options with enhanced customization
   const graphOptions = `
     <div class="desc-options-group">
       <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
@@ -4506,25 +4497,21 @@ function createNumericResultsHTML(varName, stats, values) {
     <div id="graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
   `;
   
-  // Store stats data for dynamic updates
   container.statsData = stats;
   container.varName = varName;
   container.values = values;
   
-  // Add event listeners for checkboxes
   const checkboxes = container.querySelectorAll('.stat-checkbox');
   checkboxes.forEach(cb => {
     cb.addEventListener('change', () => updateStatsDisplay(container, varName, stats));
   });
   
-  // Quartiles checkbox event
   const quartilesCb = container.querySelector('.quartiles-checkbox');
   if (quartilesCb) {
     quartilesCb.addEventListener('change', (e) => {
       const panel = container.querySelector(`#quartiles-panel-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
       if (e.target.checked) {
         panel.style.display = 'block';
-        // Populate percentiles list
         const percentilesDiv = container.querySelector(`#percentiles-list-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
         if (percentilesDiv && stats.percentiles) {
           let html = `<div><strong>Quartiles:</strong> Q1=${stats.q1.toFixed(4)}, Q2(Median)=${stats.median.toFixed(4)}, Q3=${stats.q3.toFixed(4)}, IQR=${stats.iqr.toFixed(4)}</div>`;
@@ -4540,7 +4527,6 @@ function createNumericResultsHTML(varName, stats, values) {
     });
   }
   
-  // Initial stats display
   updateStatsDisplay(container, varName, stats);
   
   return container;
@@ -4600,7 +4586,6 @@ function showGraphModal(varName, varType) {
   const numValues = isNumeric ? values.map(v => parseFloat(v)).filter(v => !isNaN(v)) : null;
   const freqTable = !isNumeric ? calculateFreqTable(values) : null;
   
-  // Default colors for categorical variables
   const defaultColors = ['#5b52f0', '#00b896', '#e09a10', '#e8524a', '#28a55e', '#9b59b6', '#3498db', '#e67e22', '#2ecc71', '#e74c3c'];
   const categoryColors = {};
   if (freqTable) {
@@ -4625,11 +4610,10 @@ function showGraphModal(varName, varType) {
     xLabel: isNumeric ? 'Value' : 'Category',
     yLabel: isNumeric ? 'Frequency' : 'Count',
     fontSize: 12,
-    showNormalityCurve: false,  // Changed: default is unchecked
+    showNormalityCurve: false,
     rotation: 0
   };
   
-  // Build color pickers for categorical levels
   let colorPickersHtml = '';
   if (!isNumeric && freqTable) {
     colorPickersHtml = `<div class="fc-section">
@@ -4755,14 +4739,12 @@ function showGraphModal(varName, varType) {
     </div>
   `;
   
-  // Remove existing modal if any
   const existingModal = document.getElementById('graph-modal-overlay');
   if (existingModal) existingModal.remove();
   
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   document.body.style.overflow = 'hidden';
   
-  // Add event listeners for range displays
   const fontSizeSlider = document.getElementById('graph-fontsize');
   const rotationSlider = document.getElementById('graph-rotation');
   if (fontSizeSlider) {
@@ -4778,7 +4760,6 @@ function showGraphModal(varName, varType) {
     });
   }
   
-  // Initial draw
   setTimeout(() => drawPreviewGraph(), 100);
 }
 
@@ -4786,7 +4767,6 @@ function closeGraphModal() {
   const modal = document.getElementById('graph-modal-overlay');
   if (modal) modal.remove();
   document.body.style.overflow = '';
-  // Destroy any chart instance
   if (window.currentChart) {
     window.currentChart.destroy();
     window.currentChart = null;
@@ -4838,7 +4818,6 @@ function resetGraphDefaults() {
   document.getElementById('graph-rotation').value = '0';
   document.getElementById('rotation-val').textContent = '0°';
   
-  // Reset colors
   const defaultColors = ['#5b52f0', '#00b896', '#e09a10', '#e8524a', '#28a55e', '#9b59b6', '#3498db', '#e67e22', '#2ecc71', '#e74c3c'];
   if (!currentGraphConfig.isNumeric && currentGraphConfig.freqTable) {
     currentGraphConfig.colors = {};
@@ -4857,7 +4836,7 @@ function resetGraphDefaults() {
     if (histColor) histColor.value = '#5b52f0';
     currentGraphConfig.histColor = '#5b52f0';
     const normSw = document.getElementById('normality-sw');
-    if (normSw) normSw.classList.remove('on');  // Default: off
+    if (normSw) normSw.classList.remove('on');
     currentGraphConfig.showNormalityCurve = false;
   }
   
@@ -4918,11 +4897,9 @@ function drawNumericGraph(canvas) {
     const plotHeight = canvas.height - padding.top - padding.bottom;
     const barWidth = plotWidth / numBins;
     
-    // Clear canvas
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw axes
     ctx.strokeStyle = '#333';
     ctx.fillStyle = '#333';
     ctx.font = `${currentGraphConfig.fontSize}px Arial`;
@@ -4932,7 +4909,6 @@ function drawNumericGraph(canvas) {
     ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
     ctx.stroke();
     
-    // Draw bars
     for (let i = 0; i < numBins; i++) {
       const barHeight = (bins[i] / maxFreq) * plotHeight;
       const x = padding.left + i * barWidth;
@@ -4940,7 +4916,6 @@ function drawNumericGraph(canvas) {
       ctx.fillStyle = currentGraphConfig.histColor || '#5b52f0';
       ctx.fillRect(x, y, barWidth - 1, barHeight);
       
-      // X-axis labels with rotation
       const labelX = x + barWidth / 2;
       const labelY = canvas.height - padding.bottom + 15;
       ctx.save();
@@ -4948,22 +4923,22 @@ function drawNumericGraph(canvas) {
       ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
       ctx.fillStyle = '#333';
       ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.textAlign = "center";
       ctx.fillText(binEdges[i].toFixed(1), 0, 0);
       ctx.restore();
       
-      // Value labels on bars
       if (showLabels !== 'none' && bins[i] > 0) {
         ctx.fillStyle = '#333';
         ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        ctx.textAlign = "center";
         let labelText = '';
         if (showLabels === 'counts') labelText = bins[i];
         else if (showLabels === 'percentages') labelText = `${((bins[i] / values.length) * 100).toFixed(1)}%`;
         else if (showLabels === 'both') labelText = `${bins[i]} (${((bins[i] / values.length) * 100).toFixed(1)}%)`;
-        ctx.fillText(labelText, x + barWidth / 2 - 15, y - 5);
+        ctx.fillText(labelText, x + barWidth / 2, y - 5);
       }
     }
     
-    // Normality curve overlay (only if checked)
     if (currentGraphConfig.showNormalityCurve && values.length > 1) {
       const mean = values.reduce((a, b) => a + b, 0) / values.length;
       const sd = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / (values.length - 1));
@@ -4992,20 +4967,20 @@ function drawNumericGraph(canvas) {
       ctx.stroke();
     }
     
-    // Labels
     ctx.fillStyle = '#333';
     ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
     ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
     ctx.save();
     ctx.translate(20, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.yLabel, 0, 0);
     ctx.restore();
     
   } else if (chartType === 'boxplot') {
-    // Box plot drawing
     const sorted = [...values].sort((a, b) => a - b);
     const q1 = sorted[Math.floor(sorted.length * 0.25)];
     const median = sorted[Math.floor(sorted.length * 0.5)];
@@ -5030,7 +5005,6 @@ function drawNumericGraph(canvas) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw whiskers
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -5047,12 +5021,10 @@ function drawNumericGraph(canvas) {
     ctx.lineTo(boxX + boxWidth, mapY(upperWhisker));
     ctx.stroke();
     
-    // Draw box
     ctx.fillStyle = currentGraphConfig.histColor || '#5b52f0';
     ctx.fillRect(boxX, mapY(q3), boxWidth, mapY(q1) - mapY(q3));
     ctx.strokeRect(boxX, mapY(q3), boxWidth, mapY(q1) - mapY(q3));
     
-    // Draw median
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -5060,16 +5032,17 @@ function drawNumericGraph(canvas) {
     ctx.lineTo(boxX + boxWidth, mapY(median));
     ctx.stroke();
     
-    // Labels
     ctx.fillStyle = '#333';
     ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
     ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
     ctx.save();
     ctx.translate(20, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.yLabel, 0, 0);
     ctx.restore();
   }
 }
@@ -5082,7 +5055,7 @@ function drawCategoricalGraph(canvas) {
   const total = freqTable.reduce((sum, row) => sum + row.count, 0);
   
   if (chartType === 'bar') {
-    const padding = { left: 60, right: 40, top: 50, bottom: 80 };
+    const padding = { left: 80, right: 80, top: 50, bottom: 80 };
     const plotWidth = canvas.width - padding.left - padding.right;
     const plotHeight = canvas.height - padding.top - padding.bottom;
     const barWidth = plotWidth / freqTable.length;
@@ -5091,7 +5064,6 @@ function drawCategoricalGraph(canvas) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw axes
     ctx.strokeStyle = '#333';
     ctx.fillStyle = '#333';
     ctx.font = `${currentGraphConfig.fontSize}px Arial`;
@@ -5101,17 +5073,14 @@ function drawCategoricalGraph(canvas) {
     ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
     ctx.stroke();
     
-    // Draw bars with their specific colors
     for (let i = 0; i < freqTable.length; i++) {
       const barHeight = (freqTable[i].count / maxCount) * plotHeight;
       const x = padding.left + i * barWidth;
       const y = canvas.height - padding.bottom - barHeight;
-      // Use the stored color for this category
       const color = currentGraphConfig.colors?.[i] || '#5b52f0';
       ctx.fillStyle = color;
       ctx.fillRect(x, y, barWidth - 2, barHeight);
       
-      // Category label with rotation
       const labelX = x + barWidth / 2;
       const labelY = canvas.height - padding.bottom + 15;
       ctx.save();
@@ -5119,31 +5088,34 @@ function drawCategoricalGraph(canvas) {
       ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
       ctx.fillStyle = '#333';
       ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
-      ctx.fillText(freqTable[i].category.substring(0, 15), 0, 0);
+      ctx.textAlign = "center";
+      // FIX: Display full category label without truncation
+      ctx.fillText(freqTable[i].category, 0, 0);
       ctx.restore();
       
-      // Value labels on bars
       if (showLabels !== 'none') {
         ctx.fillStyle = '#333';
         ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        ctx.textAlign = "center";
         let labelText = '';
         if (showLabels === 'counts') labelText = freqTable[i].count;
         else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
         else if (showLabels === 'both') labelText = `${freqTable[i].count} (${freqTable[i].percent}%)`;
-        ctx.fillText(labelText, x + barWidth / 2 - 20, y - 5);
+        ctx.fillText(labelText, x + barWidth / 2, y - 5);
       }
     }
     
-    // Labels
     ctx.fillStyle = '#333';
     ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
     ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
     ctx.save();
     ctx.translate(20, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.yLabel, 0, 0);
     ctx.restore();
     
   } else if (chartType === 'pie') {
@@ -5166,22 +5138,21 @@ function drawCategoricalGraph(canvas) {
       ctx.arc(centerX, centerY, radius, startAngle, endAngle);
       ctx.fill();
       
-      // Label on pie slice
       const midAngle = startAngle + angle / 2;
       const labelX = centerX + Math.cos(midAngle) * radius * 0.7;
       const labelY = centerY + Math.sin(midAngle) * radius * 0.7;
       ctx.fillStyle = '#fff';
       ctx.font = `bold ${currentGraphConfig.fontSize}px Arial`;
+      ctx.textAlign = "center";
       let labelText = '';
       if (showLabels === 'counts') labelText = freqTable[i].count;
       else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
       else if (showLabels === 'both') labelText = `${freqTable[i].count} (${freqTable[i].percent}%)`;
-      ctx.fillText(labelText, labelX - 15, labelY);
+      ctx.fillText(labelText, labelX, labelY);
       
       startAngle = endAngle;
     }
     
-    // Legend
     let legendY = 40;
     for (let i = 0; i < freqTable.length; i++) {
       const color = currentGraphConfig.colors?.[i] || '#5b52f0';
@@ -5189,13 +5160,16 @@ function drawCategoricalGraph(canvas) {
       ctx.fillRect(canvas.width - 120, legendY, 15, 15);
       ctx.fillStyle = '#333';
       ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.textAlign = "left";
+      // FIX: Display full category label without truncation
       ctx.fillText(`${freqTable[i].category} (${freqTable[i].percent}%)`, canvas.width - 100, legendY + 12);
       legendY += 22;
     }
     
     ctx.fillStyle = '#333';
     ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.textAlign = "center";
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
   }
 }
 
@@ -5203,7 +5177,6 @@ function openFullGraphWindow() {
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
   
-  // Create modal with larger canvas for high-res download
   const fullWindowHtml = `
     <div class="fc-overlay" id="full-graph-overlay" style="display:flex; z-index:4000;">
       <div class="fc-modal" style="max-width:90vw; width:auto;">
@@ -5230,7 +5203,6 @@ function openFullGraphWindow() {
   document.body.insertAdjacentHTML('beforeend', fullWindowHtml);
   document.body.style.overflow = 'hidden';
   
-  // Draw high-res version
   setTimeout(() => {
     const fullCanvas = document.getElementById('full-graph-canvas');
     if (fullCanvas) {
@@ -5272,7 +5244,6 @@ function createCategoricalResultsHTML(varName, freqTable, totalCount) {
   container.style.borderBottom = '2px solid var(--border)';
   container.style.paddingBottom = '20px';
   
-  // Create frequency table
   let tableHtml = `
     <table class="desc-table">
       <thead>
@@ -5282,12 +5253,11 @@ function createCategoricalResultsHTML(varName, freqTable, totalCount) {
   `;
   
   freqTable.forEach(row => {
-    tableHtml += `<tr><td>${escapeHtml(row.category)}</td><td>${row.count}</td><td>${row.percent}%</td><td>${row.cumFreq}</td><td>${row.cumPercent}%</td></tr>`;
+    tableHtml += `<tr><td style="text-align:center;">${escapeHtml(row.category)}</td><td style="text-align:center;">${row.count}</td><td style="text-align:center;">${row.percent}%</td><td style="text-align:center;">${row.cumFreq}</td><td style="text-align:center;">${row.cumPercent}%</td></tr>`;
   });
   
   tableHtml += `</tbody></table><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
   
-  // Graph options
   const graphOptions = `
     <div class="desc-options-group" style="margin-top:20px;">
       <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
@@ -5320,7 +5290,6 @@ function clearDescriptiveData() {
   toast('Cleared', 'All data has been cleared.', 'info');
 }
 
-// Export functions for Word/Excel from descriptives
 function exportDescriptivesToExcel() {
   if (!descriptiveData || descriptiveSelectedVars.length === 0) {
     toast('No Data', 'Please load data and select variables first.', 'warn');
@@ -5330,7 +5299,6 @@ function exportDescriptivesToExcel() {
   loadSheetJS(() => {
     const wb = XLSX.utils.book_new();
     
-    // Summary sheet
     const summaryData = [['Variable', 'Type', 'N', 'Mean', 'SD', 'Min', 'Max', 'Missing']];
     for (let col of descriptiveSelectedVars) {
       const isNumeric = descriptiveVarTypes[col] === 'numeric';
@@ -5362,7 +5330,6 @@ function exportFullAnalysisToWord() {
   
   const now = new Date().toLocaleString();
   
-  // Collect all stats and graphs info
   let analysisDetails = '';
   for (let col of descriptiveSelectedVars) {
     const isNumeric = descriptiveVarTypes[col] === 'numeric';
