@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CalcuStats | Free Multipurpose Sample Size Calculator |  Proportional Allocation, Taro Yamane, Cochran's Formula & More</title>
+    <title>CalcuStats | Sample Size & Descriptive Statistics | Proportional, Yamane, Cochran & More</title>
     
     <!-- SEO Meta Tags -->
     <meta name="title" content="CalcuStats ">
@@ -230,6 +230,7 @@ body.dark::before {
   object-fit: cover;
   display: block;
 }
+
 
 /* ── HEADER ───────────────────────────────────────────────────── */
 .header {
@@ -856,6 +857,29 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
   color: #fff;
 }
 
+/* ── DESCRIPTIVE STATISTICS CARD ── */
+.calc-card.c-green::before { 
+  background: linear-gradient(90deg, var(--green), transparent); 
+}
+
+.c-green .card-icon { 
+  background: var(--green-dim); 
+}
+
+.c-green .card-link { 
+  color: var(--green); 
+}
+
+/* Hover effect for green card */
+.calc-card.c-green:hover .card-link::after {
+  transform: translateX(4px);
+}
+
+/* Optional: Add a subtle green border on hover */
+.calc-card.c-green:hover {
+  border-color: rgba(40, 165, 94, 0.3);
+}
+
 /* LEFT: Controls panel — scrollable */
 .fc-controls {
   border-right:1px solid var(--border);
@@ -1026,6 +1050,121 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   .stratum-row { grid-template-columns:1fr auto; }
   .stratum-row input:first-child { display:none; }
 }
+
+/* ── DESCRIPTIVES SPECIFIC STYLES ──────────────────────────────── */
+.desc-var-card {
+  background: var(--bg3);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  text-align: center;
+}
+.desc-var-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.desc-var-card.selected {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  border-width: 2px;
+}
+.desc-var-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+.desc-var-type {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+.desc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.desc-stat-card {
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.desc-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.desc-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent2);
+}
+.desc-options-group {
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px 0;
+}
+.desc-options-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.desc-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.desc-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 5px 10px;
+  background: var(--bg2);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+.desc-checkbox-group input {
+  cursor: pointer;
+}
+.desc-graph-container {
+  margin: 20px 0;
+  padding: 15px;
+  background: var(--bg2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.desc-graph-container canvas {
+  max-width: 100%;
+  height: auto;
+}
+.desc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 13px;
+}
+.desc-table th,
+.desc-table td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+.desc-table th {
+  background: var(--bg3);
+  font-weight: 600;
+}
 </style>
 </head>
 <body>
@@ -1046,29 +1185,32 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
       </div>
       <div>
         <span class="logo-text">CalcuStats </span>
-        <span class="logo-sub">Sample Size Calculation Hub</span>
+        <span class="logo-sub">Calculate. Analyze.</span>
       </div>
     </a>
-    <nav class="nav">
-      <button class="nav-btn active" data-page="home"><span class="nav-icon">◈</span> Home</button>
-      <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional</button>
-      <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
-      <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran</button>
-      <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
-    </nav>
+<nav class="nav">
+  <button class="nav-btn active" data-page="home"><span class="nav-icon">◈</span> Home</button>
+  <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional</button>
+  <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
+  <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran</button>
+  <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
+  <button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
+</nav>
     <button class="theme-btn" id="themeBtn" title="Toggle theme">☾</button>
     <button class="hamburger" id="hamburger">≡</button>
   </div>
 </header>
 
 <div class="mobile-drawer" id="mobileDrawer">
-  <div class="mobile-nav">
-    <button class="mobile-nav-btn active" data-page="home">◈  &nbsp;Home</button>
-    <button class="mobile-nav-btn" data-page="proportional">◉  &nbsp;Proportional Allocation</button>
-    <button class="mobile-nav-btn" data-page="yamane">◐  &nbsp;Taro Yamane</button>
-    <button class="mobile-nav-btn" data-page="cochran">◑  &nbsp;Cochran Formula</button>
-    <button class="mobile-nav-btn" data-page="other">◇  &nbsp;Other Formulas</button>
-  </div>
+<div class="mobile-nav">
+  <button class="mobile-nav-btn active" data-page="home">◈  &nbsp;Home</button>
+  <button class="mobile-nav-btn" data-page="proportional">◉  &nbsp;Proportional Allocation</button>
+  <button class="mobile-nav-btn" data-page="yamane">◐  &nbsp;Taro Yamane</button>
+  <button class="mobile-nav-btn" data-page="cochran">◑  &nbsp;Cochran Formula</button>
+  <button class="mobile-nav-btn" data-page="other">◇  &nbsp;Other Formulas</button>
+  <button class="mobile-nav-btn" data-page="descriptives">▣  &nbsp;Descriptive Statistics</button>
+</div>
+  
 </div>
 
 <main>
@@ -1076,36 +1218,42 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 <!-- ══ HOME ══════════════════════════════════════════════════════ -->
 <div class="page active" id="page-home">
   <div class="hero">
-    <div class="hero-badge"><span></span> Professional Research Tools</div>
-    <h1>Precise <em>sample sizes</em><br>for confident research</h1>
-    <p class="hero-desc">A complete suite of validated statistical formulas to determine the optimal sample size for your study — with instant export to Excel, Word, and publication-ready flowcharts.</p>
+    <div class="hero-badge"><span></span> Sample Size Calculator + Descriptive Statistics</div>
+ <h1><em>Calculate</em> sample sizes &<br><em>analyze</em> your data<br>with confidence</h1>
+    <p class="hero-desc">A complete suite of validated statistical formulas to determine the optimal sample size for your study, plus powerful descriptive statistics for data analysis — with instant export to Excel, Word, and publication-ready flowcharts.</p>
   </div>
-  <div class="card-grid">
-    <div class="calc-card c-purple" onclick="goTo('proportional')">
-      <div class="card-icon">⊕</div>
-      <h3>Proportional Allocation</h3>
-      <p>Distribute your sample proportionally across population strata, with full non-response rate adjustment.</p>
-      <div class="card-link">Open Calculator</div>
-    </div>
-    <div class="calc-card c-teal" onclick="goTo('yamane')">
-      <div class="card-icon">∑</div>
-      <h3>Taro Yamane</h3>
-      <p>Classic finite population formula for survey sampling. Fast, reliable, and universally recognized.</p>
-      <div class="card-link">Open Calculator</div>
-    </div>
-    <div class="calc-card c-amber" onclick="goTo('cochran')">
-      <div class="card-icon">%</div>
-      <h3>Cochran's Formula</h3>
-      <p>Precision calculation for population proportions. Supports finite population correction and flexible input formats.</p>
-      <div class="card-link">Open Calculator</div>
-    </div>
-    <div class="calc-card c-coral" onclick="goTo('other')">
-      <div class="card-icon">∫</div>
-      <h3>Other Formulas</h3>
-      <p>Proportion, mean estimation, case-control, cohort, correlation, and prevalence studies — all in one place.</p>
-      <div class="card-link">Open Calculator</div>
-    </div>
+<div class="card-grid">
+  <div class="calc-card c-purple" onclick="goTo('proportional')">
+    <div class="card-icon">⊕</div>
+    <h3>Proportional Allocation</h3>
+    <p>Distribute your sample proportionally across population strata, with full non-response rate adjustment.</p>
+    <div class="card-link">Open Calculator</div>
   </div>
+  <div class="calc-card c-teal" onclick="goTo('yamane')">
+    <div class="card-icon">∑</div>
+    <h3>Taro Yamane</h3>
+    <p>Classic finite population formula for survey sampling. Fast, reliable, and universally recognized.</p>
+    <div class="card-link">Open Calculator</div>
+  </div>
+  <div class="calc-card c-amber" onclick="goTo('cochran')">
+    <div class="card-icon">%</div>
+    <h3>Cochran's Formula</h3>
+    <p>Precision calculation for population proportions. Supports finite population correction and flexible input formats.</p>
+    <div class="card-link">Open Calculator</div>
+  </div>
+  <div class="calc-card c-coral" onclick="goTo('other')">
+    <div class="card-icon">∫</div>
+    <h3>Other Formulas</h3>
+    <p>Proportion, mean estimation, case-control, cohort, correlation, and prevalence studies — all in one place.</p>
+    <div class="card-link">Open Calculator</div>
+  </div>
+  <div class="calc-card c-green" onclick="goTo('descriptives')">
+    <div class="card-icon">χ</div>
+    <h3>Descriptive Statistics</h3>
+    <p>Mean, median, mode, variance, standard deviation, range, quartiles, and summary statistics for your data.</p>
+    <div class="card-link">Open Analyzer</div>
+  </div>
+</div>
   <div class="stats-row" id="stats-row">
     <div class="stat-item"><div class="stat-num" data-target="8" id="stat-0">0</div><div class="stat-label">Formula Types</div></div>
     <div class="stat-item"><div class="stat-num" id="stat-inf">0</div><div class="stat-label">Strata Support</div></div>
@@ -1549,6 +1697,54 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   }
 })();
 </script>
+
+<!-- ══ DESCRIPTIVES ═══════════════════════════════════════════════ -->
+<div class="page" id="page-descriptives">
+  <div class="calc-header">
+    <div class="calc-header-icon" style="background:rgba(0,184,150,.15);">▣</div>
+    <div class="calc-header-text">
+      <h2>Descriptive Statistics Analyzer</h2>
+      <p>Paste your data (with headers), select variables, and get comprehensive statistics — just like SPSS! Supports both numerical and categorical data.</p>
+    </div>
+  </div>
+  
+  <div class="calc-layout" style="grid-template-columns: 1fr;">
+    <div class="panel">
+      <div class="panel-title">Data Input</div>
+      <div class="field">
+        <label>Paste your data here (first row = headers)</label>
+        <textarea id="desc-data-input" rows="10" placeholder="Paste your data with headers here...&#10;Example:&#10;Age,Gender,Income,Score&#10;25,Male,50000,85&#10;30,Female,60000,90&#10;28,Male,55000,88&#10;35,Female,70000,92" style="width:100%; padding:12px; font-family: monospace; font-size:13px; background:var(--bg3); border:1px solid var(--border2); border-radius:9px; color:var(--text);"></textarea>
+        <div class="field-hint">📋 Copy from Excel, Google Sheets, or any spreadsheet. First row must be column headers. Supports any number of columns (10+ columns work great!).</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="loadDescriptiveData()">📊 &nbsp;Load & Analyze Data</button>
+        <button class="btn-secondary" onclick="clearDescriptiveData()">↺ Clear</button>
+      </div>
+      <div class="field-hint" style="margin-top:12px; padding:10px; background:var(--bg3); border-radius:8px;">
+        <strong>✨ Features:</strong> Automatically detects numeric vs categorical variables • Choose which statistics to display • High-quality graphs • Export results to Word/Excel • Download graphs as PNG
+      </div>
+    </div>
+  </div>
+
+  <!-- Variable Selection Panel (shows after data load) -->
+  <div id="desc-var-panel" style="display:none; margin-top:24px;">
+    <div class="panel">
+      <div class="panel-title">Variable Selection</div>
+      <div id="desc-var-list" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px;"></div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="runDescriptiveAnalysis()">▶ &nbsp;Run Analysis</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis Results Panel -->
+  <div id="desc-results-panel" style="display:none; margin-top:24px;">
+    <div class="panel">
+      <div class="panel-title">Analysis Results</div>
+      <div id="desc-results-content"></div>
+    </div>
+  </div>
+</div>
 
 </main>
 
@@ -3684,6 +3880,1320 @@ ${strataTable}
   toast('Word exported', a.download, 'success');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ─── DESCRIPTIVE STATISTICS MODULE (ENHANCED & FIXED) ───────────
+// ═══════════════════════════════════════════════════════════════
+
+let descriptiveData = null;
+let descriptiveColumns = [];
+let descriptiveSelectedVars = [];
+let descriptiveVarTypes = {};
+let activeGraphModal = null;
+let currentGraphConfig = {};
+
+// Chart.js instance storage
+let chartInstances = {};
+
+function loadDescriptiveData() {
+  const rawData = document.getElementById('desc-data-input').value;
+  if (!rawData.trim()) {
+    toast('No Data', 'Please paste your data first.', 'warn');
+    return;
+  }
+  
+  // Parse CSV/TSV data
+  const lines = rawData.trim().split(/\r?\n/);
+  if (lines.length < 2) {
+    toast('Invalid Data', 'Need at least header row and one data row.', 'warn');
+    return;
+  }
+  
+  // Detect delimiter (comma or tab)
+  let delimiter = ',';
+  const firstLine = lines[0];
+  if (firstLine.includes('\t')) delimiter = '\t';
+  else if (firstLine.includes(',')) delimiter = ',';
+  
+  // Parse headers
+  const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+  
+  // Parse data rows
+  const data = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = lines[i].split(delimiter);
+    const row = {};
+    headers.forEach((header, idx) => {
+      let val = values[idx] ? values[idx].trim().replace(/^["']|["']$/g, '') : '';
+      row[header] = val;
+    });
+    data.push(row);
+  }
+  
+  if (data.length === 0) {
+    toast('No Data Rows', 'Please provide at least one data row.', 'warn');
+    return;
+  }
+  
+  // Detect variable types
+  descriptiveData = data;
+  descriptiveColumns = headers;
+  descriptiveVarTypes = {};
+  
+  headers.forEach(col => {
+    const sampleValues = data.slice(0, Math.min(10, data.length)).map(row => row[col]).filter(v => v !== '');
+    let isNumeric = true;
+    for (let val of sampleValues) {
+      if (val === '' || val === undefined) continue;
+      const num = parseFloat(val);
+      if (isNaN(num)) {
+        isNumeric = false;
+        break;
+      }
+    }
+    descriptiveVarTypes[col] = isNumeric ? 'numeric' : 'categorical';
+  });
+  
+  // Build variable selection UI
+  const varListDiv = document.getElementById('desc-var-list');
+  varListDiv.innerHTML = '';
+  
+  headers.forEach(col => {
+    const typeIcon = descriptiveVarTypes[col] === 'numeric' ? '🔢' : '📝';
+    const typeText = descriptiveVarTypes[col] === 'numeric' ? 'Numeric' : 'Categorical';
+    const card = document.createElement('div');
+    card.className = 'desc-var-card';
+    card.setAttribute('data-var', col);
+    card.onclick = () => toggleVariableSelection(col, card);
+    card.innerHTML = `
+      <div class="desc-var-name">${typeIcon} ${escapeHtml(col)}</div>
+      <div class="desc-var-type">${typeText}</div>
+    `;
+    varListDiv.appendChild(card);
+  });
+  
+  descriptiveSelectedVars = [];
+  document.getElementById('desc-var-panel').style.display = 'block';
+  document.getElementById('desc-results-panel').style.display = 'none';
+  
+  toast('Data Loaded', `${data.length} rows, ${headers.length} columns detected.`, 'success');
+}
+
+function toggleVariableSelection(col, element) {
+  const index = descriptiveSelectedVars.indexOf(col);
+  if (index === -1) {
+    descriptiveSelectedVars.push(col);
+    element.classList.add('selected');
+  } else {
+    descriptiveSelectedVars.splice(index, 1);
+    element.classList.remove('selected');
+  }
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+function calculateNumericStats(values) {
+  if (values.length === 0) return null;
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const n = values.length;
+  const sum = values.reduce((a, b) => a + b, 0);
+  const mean = sum / n;
+  
+  // Variance and SD
+  const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+  const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
+  const sd = Math.sqrt(variance);
+  
+  // Min, Max, Range
+  const min = sorted[0];
+  const max = sorted[n - 1];
+  const range = max - min;
+  
+  // Quartiles
+  const q1 = sorted[Math.floor(n * 0.25)];
+  const q2 = sorted[Math.floor(n * 0.5)]; // median
+  const q3 = sorted[Math.floor(n * 0.75)];
+  const iqr = q3 - q1;
+  
+  // Percentiles (5th, 10th, 20th, 25th, 30th, 40th, 50th, 60th, 70th, 75th, 80th, 90th, 95th)
+  const percentiles = [5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95];
+  const percentileValues = {};
+  percentiles.forEach(p => {
+    const idx = (p / 100) * (n - 1);
+    const lower = Math.floor(idx);
+    const upper = Math.ceil(idx);
+    if (lower === upper) {
+      percentileValues[p] = sorted[lower];
+    } else {
+      const weight = idx - lower;
+      percentileValues[p] = sorted[lower] * (1 - weight) + sorted[upper] * weight;
+    }
+  });
+  
+  // Skewness
+  const cubedDiffs = values.map(v => Math.pow(v - mean, 3));
+  const skewness = (cubedDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 3);
+  
+  // Kurtosis
+  const fourthDiffs = values.map(v => Math.pow(v - mean, 4));
+  const kurtosis = (fourthDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 4) - 3;
+  
+  // Missing count
+  const missing = descriptiveData.length - values.length;
+  
+  // Normality test (Shapiro-Wilk)
+  const normality = shapiroWilkTest(values);
+  
+  return {
+    n, mean, median: q2, sd, variance,
+    min, max, range, q1, q3, iqr,
+    percentiles: percentileValues,
+    skewness, kurtosis, missing, normality, values, sorted
+  };
+}
+
+// Shapiro-Wilk test implementation (approximation)
+function shapiroWilkTest(values) {
+  const n = values.length;
+  if (n < 3) return { test: 'Shapiro-Wilk', statistic: null, pValue: null, interpretation: 'Insufficient data (n<3)' };
+  if (n > 5000) return { test: 'Shapiro-Wilk', statistic: null, pValue: null, interpretation: 'Sample too large (>5000)' };
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  
+  // Calculate denominator (sum of squared deviations)
+  let denominator = 0;
+  for (let i = 0; i < n; i++) {
+    denominator += Math.pow(values[i] - mean, 2);
+  }
+  
+  // Coefficients approximation (from Royston 1992)
+  const coefficients = [];
+  const m = [];
+  for (let i = 1; i <= n; i++) {
+    m.push((i - 0.375) / (n + 0.25));
+  }
+  
+  for (let i = 0; i < Math.floor(n / 2); i++) {
+    const u = m[i];
+    const v = Math.pow(u, 0.14);
+    const a = v / Math.sqrt(2 * m.reduce((sum, val, idx) => {
+      if (idx < Math.floor(n / 2)) return sum + Math.pow(val, 0.28);
+      return sum;
+    }, 0));
+    coefficients.push(a);
+  }
+  
+  // Calculate numerator
+  let numerator = 0;
+  for (let i = 0; i < Math.floor(n / 2); i++) {
+    numerator += coefficients[i] * (sorted[n - 1 - i] - sorted[i]);
+  }
+  numerator = Math.pow(numerator, 2);
+  
+  const w = numerator / denominator;
+  
+  // Approximate p-value
+  let pValue;
+  if (n >= 4 && n <= 2000) {
+    const lnW = Math.log(1 - w);
+    const mu = -1.2725 + 1.0521 * Math.log(n);
+    const sigma = 0.4597 - 0.2913 * Math.log(n);
+    const z = (lnW - mu) / sigma;
+    pValue = 1 - phi(z);
+  } else {
+    pValue = w > 0.95 ? 0.1 : (w > 0.9 ? 0.05 : 0.01);
+  }
+  
+  const isNormal = pValue > 0.05;
+  
+  return {
+    test: 'Shapiro-Wilk',
+    statistic: w.toFixed(4),
+    pValue: pValue.toFixed(4),
+    interpretation: isNormal ? 'Data appears normally distributed (p > 0.05)' : 'Data deviates from normality (p < 0.05)',
+    normal: isNormal
+  };
+}
+
+// Standard normal CDF approximation
+function phi(x) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  if (x > 0) p = 1 - p;
+  return p;
+}
+
+function calculateFreqTable(values) {
+  const freq = {};
+  values.forEach(v => {
+    const key = String(v);
+    freq[key] = (freq[key] || 0) + 1;
+  });
+  
+  const total = values.length;
+  const sortedEntries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  
+  let cumFreq = 0;
+  return sortedEntries.map(([category, count]) => {
+    cumFreq += count;
+    const percent = (count / total) * 100;
+    const cumPercent = (cumFreq / total) * 100;
+    return { category, count, percent: percent.toFixed(1), cumFreq, cumPercent: cumPercent.toFixed(1) };
+  });
+}
+
+function runDescriptiveAnalysis() {
+  if (descriptiveSelectedVars.length === 0) {
+    toast('No Variables', 'Please select at least one variable to analyze.', 'warn');
+    return;
+  }
+  
+  const resultsDiv = document.getElementById('desc-results-content');
+  resultsDiv.innerHTML = '';
+  
+  for (let col of descriptiveSelectedVars) {
+    const isNumeric = descriptiveVarTypes[col] === 'numeric';
+    const values = descriptiveData.map(row => row[col]).filter(v => v !== '' && v !== undefined);
+    
+    if (isNumeric) {
+      const numValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+      const stats = calculateNumericStats(numValues);
+      resultsDiv.appendChild(createNumericResultsHTML(col, stats, numValues));
+    } else {
+      const freqTable = calculateFreqTable(values);
+      resultsDiv.appendChild(createCategoricalResultsHTML(col, freqTable, values.length));
+    }
+  }
+  
+  // Add export buttons to results
+  const exportBtnsDiv = document.createElement('div');
+  exportBtnsDiv.style.marginTop = '30px';
+  exportBtnsDiv.style.paddingTop = '20px';
+  exportBtnsDiv.style.borderTop = '2px solid var(--border)';
+  exportBtnsDiv.style.display = 'flex';
+  exportBtnsDiv.style.gap = '12px';
+  exportBtnsDiv.style.flexWrap = 'wrap';
+  exportBtnsDiv.innerHTML = `
+    <button class="export-btn xl" onclick="exportDescriptivesToExcel()">📊 &nbsp;Export to Excel</button>
+    <button class="export-btn wd" onclick="exportFullAnalysisToWord()">📄 &nbsp;Export to Word (Full Analysis)</button>
+  `;
+  resultsDiv.appendChild(exportBtnsDiv);
+  
+  document.getElementById('desc-results-panel').style.display = 'block';
+  toast('Analysis Complete', `Analyzed ${descriptiveSelectedVars.length} variable(s).`, 'success');
+}
+
+function createNumericResultsHTML(varName, stats, values) {
+  const container = document.createElement('div');
+  container.style.marginBottom = '40px';
+  container.style.borderBottom = '2px solid var(--border)';
+  container.style.paddingBottom = '20px';
+  
+  // Statistics selection UI
+  const statOptions = `
+    <div class="desc-options-group">
+      <div class="desc-options-title">📈 Select Statistics to Display for "${escapeHtml(varName)}"</div>
+      <div class="desc-checkbox-group">
+        <label><input type="checkbox" class="stat-checkbox" data-stat="mean" checked> Mean</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="sd" checked> Std Dev</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="var"> Variance</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="min" checked> Min</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="max" checked> Max</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="range"> Range</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="iqr"> IQR</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="skewness"> Skewness</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="normality"> Normality Test</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="missing"> Missing Count</label>
+      </div>
+    </div>
+  `;
+  
+  // Quartiles and Percentiles section (unchecked by default)
+  const quartilesPercentilesOptions = `
+    <div class="desc-options-group">
+      <div class="desc-options-title">📐 Quartiles & Percentiles</div>
+      <div class="desc-checkbox-group">
+        <label><input type="checkbox" class="quartiles-checkbox" data-var="${varName}"> Show Quartiles & Percentiles</label>
+      </div>
+      <div id="quartiles-panel-${varName.replace(/[^a-zA-Z0-9]/g, '_')}" style="display:none; margin-top:12px; padding:12px; background:var(--bg3); border-radius:8px;">
+        <div style="font-weight:600; margin-bottom:8px;">Percentile Values:</div>
+        <div id="percentiles-list-${varName.replace(/[^a-zA-Z0-9]/g, '_')}" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; font-size:12px;"></div>
+      </div>
+    </div>
+  `;
+  
+  const statsGrid = `<div id="stats-grid-${varName.replace(/[^a-zA-Z0-9]/g, '_')}" class="desc-stats-grid"></div>`;
+  
+  // Graph options with enhanced customization
+  const graphOptions = `
+    <div class="desc-options-group">
+      <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
+      <div class="desc-checkbox-group">
+        <label><input type="checkbox" class="graph-checkbox" data-graph="histogram" data-var="${varName}"> Histogram</label>
+        <label><input type="checkbox" class="graph-checkbox" data-graph="boxplot" data-var="${varName}"> Box Plot</label>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'numeric')">🎨 Customize & Generate Graphs</button>
+      </div>
+    </div>
+  `;
+  
+  container.innerHTML = `
+    <h3 style="font-size:18px; margin-bottom:15px; color:var(--accent2);">📊 ${escapeHtml(varName)} <span style="font-size:12px; color:var(--text3);">(Numeric Variable)</span></h3>
+    ${statOptions}
+    ${statsGrid}
+    ${quartilesPercentilesOptions}
+    ${graphOptions}
+    <div id="graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
+  `;
+  
+  // Store stats data for dynamic updates
+  container.statsData = stats;
+  container.varName = varName;
+  container.values = values;
+  
+  // Add event listeners for checkboxes
+  const checkboxes = container.querySelectorAll('.stat-checkbox');
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => updateStatsDisplay(container, varName, stats));
+  });
+  
+  // Quartiles checkbox event
+  const quartilesCb = container.querySelector('.quartiles-checkbox');
+  if (quartilesCb) {
+    quartilesCb.addEventListener('change', (e) => {
+      const panel = container.querySelector(`#quartiles-panel-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+      if (e.target.checked) {
+        panel.style.display = 'block';
+        // Populate percentiles list
+        const percentilesDiv = container.querySelector(`#percentiles-list-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+        if (percentilesDiv && stats.percentiles) {
+          let html = `<div><strong>Quartiles:</strong> Q1=${stats.q1.toFixed(4)}, Q2(Median)=${stats.median.toFixed(4)}, Q3=${stats.q3.toFixed(4)}, IQR=${stats.iqr.toFixed(4)}</div>`;
+          html += `<div style="margin-top:8px;"><strong>Percentiles:</strong></div>`;
+          Object.entries(stats.percentiles).forEach(([p, val]) => {
+            html += `<div>${p}th: ${val.toFixed(4)}</div>`;
+          });
+          percentilesDiv.innerHTML = html;
+        }
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+  }
+  
+  // Initial stats display
+  updateStatsDisplay(container, varName, stats);
+  
+  return container;
+}
+
+function updateStatsDisplay(container, varName, stats) {
+  const gridId = `stats-grid-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const grid = container.querySelector(`#${gridId}`);
+  if (!grid) return;
+  
+  const selectedStats = [];
+  const checkboxes = container.querySelectorAll('.stat-checkbox');
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      const stat = cb.getAttribute('data-stat');
+      selectedStats.push(stat);
+    }
+  });
+  
+  const statMap = {
+    mean: { label: 'Mean', value: stats.mean.toFixed(4) },
+    sd: { label: 'Std. Deviation', value: stats.sd.toFixed(4) },
+    var: { label: 'Variance', value: stats.variance.toFixed(4) },
+    min: { label: 'Minimum', value: stats.min.toFixed(4) },
+    max: { label: 'Maximum', value: stats.max.toFixed(4) },
+    range: { label: 'Range', value: stats.range.toFixed(4) },
+    iqr: { label: 'Interquartile Range (IQR)', value: stats.iqr.toFixed(4) },
+    skewness: { label: 'Skewness', value: stats.skewness.toFixed(4) },
+    kurtosis: { label: 'Kurtosis', value: stats.kurtosis.toFixed(4) },
+    normality: { label: 'Normality Test', value: `${stats.normality.test}: W=${stats.normality.statistic}, p=${stats.normality.pValue} - ${stats.normality.interpretation}` },
+    missing: { label: 'Missing Values', value: stats.missing }
+  };
+  
+  let html = '';
+  selectedStats.forEach(stat => {
+    if (statMap[stat]) {
+      html += `
+        <div class="desc-stat-card">
+          <div class="desc-stat-label">${statMap[stat].label}</div>
+          <div class="desc-stat-value">${statMap[stat].value}</div>
+        </div>
+      `;
+    }
+  });
+  
+  if (html === '') {
+    html = '<div style="text-align:center; padding:20px; color:var(--text3);">Select statistics above to display</div>';
+  }
+  
+  grid.innerHTML = html;
+}
+
+// Graph Modal Functions
+function showGraphModal(varName, varType) {
+  const isNumeric = varType === 'numeric';
+  const values = descriptiveData.map(row => row[varName]).filter(v => v !== '' && v !== undefined);
+  const numValues = isNumeric ? values.map(v => parseFloat(v)).filter(v => !isNaN(v)) : null;
+  const freqTable = !isNumeric ? calculateFreqTable(values) : null;
+  
+  // Default colors for categorical variables
+  const defaultColors = ['#5b52f0', '#00b896', '#e09a10', '#e8524a', '#28a55e', '#9b59b6', '#3498db', '#e67e22', '#2ecc71', '#e74c3c'];
+  const categoryColors = {};
+  if (freqTable) {
+    freqTable.forEach((item, idx) => {
+      categoryColors[idx] = defaultColors[idx % defaultColors.length];
+    });
+  }
+  
+  currentGraphConfig = {
+    varName,
+    varType,
+    values: isNumeric ? numValues : values,
+    freqTable,
+    isNumeric,
+    chartType: isNumeric ? 'histogram' : 'bar',
+    colors: categoryColors,
+    histColor: '#5b52f0',
+    showLabels: 'both',
+    width: 600,
+    height: 400,
+    title: `${varName} - Distribution`,
+    xLabel: isNumeric ? 'Value' : 'Category',
+    yLabel: isNumeric ? 'Frequency' : 'Count',
+    fontSize: 12,
+    showNormalityCurve: false,  // Changed: default is unchecked
+    rotation: 0
+  };
+  
+  // Build color pickers for categorical levels
+  let colorPickersHtml = '';
+  if (!isNumeric && freqTable) {
+    colorPickersHtml = `<div class="fc-section">
+      <div class="fc-section-title">Category Colors</div>`;
+    freqTable.forEach((item, idx) => {
+      const defaultColor = defaultColors[idx % defaultColors.length];
+      colorPickersHtml += `
+        <div class="fc-field">
+          <label>${escapeHtml(item.category)}</label>
+          <input type="color" id="color-${idx}" value="${defaultColor}" onchange="updateGraphColor(${idx}, this.value)">
+        </div>`;
+    });
+    colorPickersHtml += `</div>`;
+  } else if (isNumeric) {
+    colorPickersHtml = `<div class="fc-section">
+      <div class="fc-section-title">Histogram Color</div>
+      <div class="fc-field">
+        <label>Bar Color</label>
+        <input type="color" id="hist-color" value="#5b52f0" onchange="updateHistogramColor(this.value)">
+      </div>
+    </div>`;
+  }
+  
+  const modalHtml = `
+    <div class="fc-overlay" id="graph-modal-overlay" style="display:flex; z-index:3000;">
+      <div class="fc-modal" style="max-width:1200px; width:90%;">
+        <div class="fc-modal-header">
+          <h3><span>📊</span> Customize Graph: ${escapeHtml(varName)}</h3>
+          <div class="fc-header-btns">
+            <button class="fc-close-btn" onclick="closeGraphModal()">✕</button>
+          </div>
+        </div>
+        <div class="fc-body" style="grid-template-columns: 320px 1fr;">
+          <div class="fc-controls" style="overflow-y:auto; max-height:70vh;">
+            <div class="fc-section">
+              <div class="fc-section-title">Chart Type</div>
+              <div class="fc-field">
+                <select id="graph-chart-type" onchange="updateGraphPreview()">
+                  ${isNumeric ? '<option value="histogram">Histogram</option><option value="boxplot">Box Plot</option>' : '<option value="bar">Bar Chart</option><option value="pie">Pie Chart</option>'}
+                </select>
+              </div>
+            </div>
+            
+            <div class="fc-section">
+              <div class="fc-section-title">Labels</div>
+              <div class="fc-field">
+                <label>Show Labels</label>
+                <select id="graph-show-labels" onchange="updateGraphPreview()">
+                  <option value="both" selected>Counts + Percentages</option>
+                  <option value="counts">Counts Only</option>
+                  <option value="percentages">Percentages Only</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+              <div class="fc-field">
+                <label>Title</label>
+                <input type="text" id="graph-title" value="${currentGraphConfig.title}" onchange="updateGraphPreview()">
+              </div>
+              <div class="fc-field-row">
+                <div class="fc-field">
+                  <label>X Label</label>
+                  <input type="text" id="graph-xlabel" value="${currentGraphConfig.xLabel}" onchange="updateGraphPreview()">
+                </div>
+                <div class="fc-field">
+                  <label>Y Label</label>
+                  <input type="text" id="graph-ylabel" value="${currentGraphConfig.yLabel}" onchange="updateGraphPreview()">
+                </div>
+              </div>
+              <div class="fc-field">
+                <label>Font Size (px)</label>
+                <input type="range" min="8" max="20" value="12" id="graph-fontsize" onchange="updateGraphPreview()">
+                <span id="fontsize-val">12px</span>
+              </div>
+            </div>
+            
+            <div class="fc-section">
+              <div class="fc-section-title">Dimensions & Rotation</div>
+              <div class="fc-field-row">
+                <div class="fc-field">
+                  <label>Width (px)</label>
+                  <input type="number" id="graph-width" value="600" step="50" onchange="updateGraphPreview()">
+                </div>
+                <div class="fc-field">
+                  <label>Height (px)</label>
+                  <input type="number" id="graph-height" value="400" step="50" onchange="updateGraphPreview()">
+                </div>
+              </div>
+              <div class="fc-field">
+                <label>X-Axis Rotation (degrees)</label>
+                <input type="range" min="-45" max="45" value="0" id="graph-rotation" onchange="updateGraphPreview()">
+                <span id="rotation-val">0°</span>
+              </div>
+            </div>
+            
+            ${colorPickersHtml}
+            
+            ${isNumeric ? `
+            <div class="fc-section">
+              <div class="fc-section-title">Normality Curve</div>
+              <div class="fc-toggle-row" onclick="toggleNormalityCurve()">
+                <div class="fc-toggle-mini" id="normality-sw"><div class="fc-toggle-mini-knob"></div></div>
+                <span class="fc-toggle-label">Show Normality Curve (default: off)</span>
+              </div>
+            </div>
+            ` : ''}
+            
+            <div class="fc-section">
+              <button class="fc-apply-btn" onclick="redrawGraph()">🔄 Apply & Redraw</button>
+              <button class="fc-reset-btn" style="margin-top:8px;" onclick="resetGraphDefaults()">↺ Reset to Defaults</button>
+            </div>
+          </div>
+          <div class="fc-preview">
+            <div class="fc-preview-toolbar">
+              <span>Graph Preview - Click on graph to open in full window for high-res download</span>
+              <button class="fc-dl-btn png" onclick="downloadGraphAsPNG('preview-canvas')">⬇ Download PNG</button>
+            </div>
+            <div class="fc-canvas-wrap" style="display:flex; justify-content:center; align-items:center; min-height:450px;">
+              <canvas id="preview-canvas" width="600" height="400" style="max-width:100%; height:auto; cursor:pointer;" onclick="openFullGraphWindow()"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Remove existing modal if any
+  const existingModal = document.getElementById('graph-modal-overlay');
+  if (existingModal) existingModal.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.body.style.overflow = 'hidden';
+  
+  // Add event listeners for range displays
+  const fontSizeSlider = document.getElementById('graph-fontsize');
+  const rotationSlider = document.getElementById('graph-rotation');
+  if (fontSizeSlider) {
+    fontSizeSlider.addEventListener('input', (e) => {
+      document.getElementById('fontsize-val').textContent = e.target.value + 'px';
+      updateGraphPreview();
+    });
+  }
+  if (rotationSlider) {
+    rotationSlider.addEventListener('input', (e) => {
+      document.getElementById('rotation-val').textContent = e.target.value + '°';
+      updateGraphPreview();
+    });
+  }
+  
+  // Initial draw
+  setTimeout(() => drawPreviewGraph(), 100);
+}
+
+function closeGraphModal() {
+  const modal = document.getElementById('graph-modal-overlay');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+  // Destroy any chart instance
+  if (window.currentChart) {
+    window.currentChart.destroy();
+    window.currentChart = null;
+  }
+}
+
+function updateGraphColor(idx, color) {
+  if (!currentGraphConfig.colors) currentGraphConfig.colors = {};
+  currentGraphConfig.colors[idx] = color;
+  drawPreviewGraph();
+}
+
+function updateHistogramColor(color) {
+  currentGraphConfig.histColor = color;
+  drawPreviewGraph();
+}
+
+function toggleNormalityCurve() {
+  const sw = document.getElementById('normality-sw');
+  sw.classList.toggle('on');
+  currentGraphConfig.showNormalityCurve = sw.classList.contains('on');
+  drawPreviewGraph();
+}
+
+function updateGraphPreview() {
+  currentGraphConfig.chartType = document.getElementById('graph-chart-type')?.value || currentGraphConfig.chartType;
+  currentGraphConfig.showLabels = document.getElementById('graph-show-labels')?.value || currentGraphConfig.showLabels;
+  currentGraphConfig.title = document.getElementById('graph-title')?.value || currentGraphConfig.title;
+  currentGraphConfig.xLabel = document.getElementById('graph-xlabel')?.value || currentGraphConfig.xLabel;
+  currentGraphConfig.yLabel = document.getElementById('graph-ylabel')?.value || currentGraphConfig.yLabel;
+  currentGraphConfig.fontSize = parseInt(document.getElementById('graph-fontsize')?.value) || 12;
+  currentGraphConfig.width = parseInt(document.getElementById('graph-width')?.value) || 600;
+  currentGraphConfig.height = parseInt(document.getElementById('graph-height')?.value) || 400;
+  currentGraphConfig.rotation = parseInt(document.getElementById('graph-rotation')?.value) || 0;
+  
+  drawPreviewGraph();
+}
+
+function resetGraphDefaults() {
+  document.getElementById('graph-chart-type').value = currentGraphConfig.isNumeric ? 'histogram' : 'bar';
+  document.getElementById('graph-show-labels').value = 'both';
+  document.getElementById('graph-title').value = `${currentGraphConfig.varName} - Distribution`;
+  document.getElementById('graph-xlabel').value = currentGraphConfig.isNumeric ? 'Value' : 'Category';
+  document.getElementById('graph-ylabel').value = currentGraphConfig.isNumeric ? 'Frequency' : 'Count';
+  document.getElementById('graph-fontsize').value = '12';
+  document.getElementById('fontsize-val').textContent = '12px';
+  document.getElementById('graph-width').value = '600';
+  document.getElementById('graph-height').value = '400';
+  document.getElementById('graph-rotation').value = '0';
+  document.getElementById('rotation-val').textContent = '0°';
+  
+  // Reset colors
+  const defaultColors = ['#5b52f0', '#00b896', '#e09a10', '#e8524a', '#28a55e', '#9b59b6', '#3498db', '#e67e22', '#2ecc71', '#e74c3c'];
+  if (!currentGraphConfig.isNumeric && currentGraphConfig.freqTable) {
+    currentGraphConfig.colors = {};
+    currentGraphConfig.freqTable.forEach((item, idx) => {
+      const colorInput = document.getElementById(`color-${idx}`);
+      if (colorInput) {
+        const defaultColor = defaultColors[idx % defaultColors.length];
+        colorInput.value = defaultColor;
+        currentGraphConfig.colors[idx] = defaultColor;
+      }
+    });
+  }
+  
+  if (currentGraphConfig.isNumeric) {
+    const histColor = document.getElementById('hist-color');
+    if (histColor) histColor.value = '#5b52f0';
+    currentGraphConfig.histColor = '#5b52f0';
+    const normSw = document.getElementById('normality-sw');
+    if (normSw) normSw.classList.remove('on');  // Default: off
+    currentGraphConfig.showNormalityCurve = false;
+  }
+  
+  drawPreviewGraph();
+}
+
+function redrawGraph() {
+  drawPreviewGraph();
+}
+
+function drawPreviewGraph() {
+  const canvas = document.getElementById('preview-canvas');
+  if (!canvas) return;
+  
+  canvas.width = currentGraphConfig.width;
+  canvas.height = currentGraphConfig.height;
+  canvas.style.width = '100%';
+  canvas.style.height = 'auto';
+  
+  if (window.currentChart) {
+    window.currentChart.destroy();
+  }
+  
+  if (currentGraphConfig.isNumeric) {
+    drawNumericGraph(canvas);
+  } else {
+    drawCategoricalGraph(canvas);
+  }
+}
+
+function drawNumericGraph(canvas) {
+  const ctx = canvas.getContext('2d');
+  const values = currentGraphConfig.values;
+  const chartType = currentGraphConfig.chartType;
+  const showLabels = currentGraphConfig.showLabels;
+  
+  if (chartType === 'histogram') {
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const numBins = Math.min(30, Math.ceil(Math.sqrt(values.length)));
+    const binWidth = (max - min) / numBins;
+    
+    const bins = new Array(numBins).fill(0);
+    const binEdges = [];
+    for (let i = 0; i <= numBins; i++) {
+      binEdges.push(min + i * binWidth);
+    }
+    
+    values.forEach(v => {
+      let binIndex = Math.floor((v - min) / binWidth);
+      if (binIndex === numBins) binIndex = numBins - 1;
+      if (binIndex >= 0 && binIndex < numBins) bins[binIndex]++;
+    });
+    
+    const maxFreq = Math.max(...bins);
+    const padding = { left: 60, right: 40, top: 50, bottom: 70 };
+    const plotWidth = canvas.width - padding.left - padding.right;
+    const plotHeight = canvas.height - padding.top - padding.bottom;
+    const barWidth = plotWidth / numBins;
+    
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw axes
+    ctx.strokeStyle = '#333';
+    ctx.fillStyle = '#333';
+    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, canvas.height - padding.bottom);
+    ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
+    ctx.stroke();
+    
+    // Draw bars
+    for (let i = 0; i < numBins; i++) {
+      const barHeight = (bins[i] / maxFreq) * plotHeight;
+      const x = padding.left + i * barWidth;
+      const y = canvas.height - padding.bottom - barHeight;
+      ctx.fillStyle = currentGraphConfig.histColor || '#5b52f0';
+      ctx.fillRect(x, y, barWidth - 1, barHeight);
+      
+      // X-axis labels with rotation
+      const labelX = x + barWidth / 2;
+      const labelY = canvas.height - padding.bottom + 15;
+      ctx.save();
+      ctx.translate(labelX, labelY);
+      ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
+      ctx.fillStyle = '#333';
+      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.fillText(binEdges[i].toFixed(1), 0, 0);
+      ctx.restore();
+      
+      // Value labels on bars
+      if (showLabels !== 'none' && bins[i] > 0) {
+        ctx.fillStyle = '#333';
+        ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        let labelText = '';
+        if (showLabels === 'counts') labelText = bins[i];
+        else if (showLabels === 'percentages') labelText = `${((bins[i] / values.length) * 100).toFixed(1)}%`;
+        else if (showLabels === 'both') labelText = `${bins[i]} (${((bins[i] / values.length) * 100).toFixed(1)}%)`;
+        ctx.fillText(labelText, x + barWidth / 2 - 15, y - 5);
+      }
+    }
+    
+    // Normality curve overlay (only if checked)
+    if (currentGraphConfig.showNormalityCurve && values.length > 1) {
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const sd = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / (values.length - 1));
+      
+      ctx.beginPath();
+      ctx.strokeStyle = '#e8524a';
+      ctx.lineWidth = 2;
+      
+      const step = (max - min) / 200;
+      let firstPoint = true;
+      for (let x = min; x <= max; x += step) {
+        const pdf = (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mean, 2) / (2 * sd * sd));
+        const normalizedY = (pdf / (maxFreq / plotHeight / (binWidth || 1))) * plotHeight;
+        const canvasX = padding.left + ((x - min) / (max - min)) * plotWidth;
+        const canvasY = canvas.height - padding.bottom - normalizedY;
+        
+        if (canvasX >= padding.left && canvasX <= canvas.width - padding.right && canvasY >= padding.top && canvasY <= canvas.height - padding.bottom) {
+          if (firstPoint) {
+            ctx.moveTo(canvasX, canvasY);
+            firstPoint = false;
+          } else {
+            ctx.lineTo(canvasX, canvasY);
+          }
+        }
+      }
+      ctx.stroke();
+    }
+    
+    // Labels
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.save();
+    ctx.translate(20, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.restore();
+    
+  } else if (chartType === 'boxplot') {
+    // Box plot drawing
+    const sorted = [...values].sort((a, b) => a - b);
+    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+    const median = sorted[Math.floor(sorted.length * 0.5)];
+    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    const iqr = q3 - q1;
+    const lowerWhisker = Math.max(Math.min(...values), q1 - 1.5 * iqr);
+    const upperWhisker = Math.min(Math.max(...values), q3 + 1.5 * iqr);
+    
+    const padding = { left: 80, right: 80, top: 60, bottom: 60 };
+    const plotWidth = canvas.width - padding.left - padding.right;
+    const boxX = padding.left + plotWidth / 2 - 40;
+    const boxWidth = 80;
+    const boxY = 100;
+    const boxHeight = 200;
+    
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const mapY = (val) => {
+      return boxY + boxHeight - ((val - minVal) / (maxVal - minVal)) * boxHeight;
+    };
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw whiskers
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(boxX + boxWidth / 2, mapY(lowerWhisker));
+    ctx.lineTo(boxX + boxWidth / 2, mapY(upperWhisker));
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(boxX, mapY(lowerWhisker));
+    ctx.lineTo(boxX + boxWidth, mapY(lowerWhisker));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(boxX, mapY(upperWhisker));
+    ctx.lineTo(boxX + boxWidth, mapY(upperWhisker));
+    ctx.stroke();
+    
+    // Draw box
+    ctx.fillStyle = currentGraphConfig.histColor || '#5b52f0';
+    ctx.fillRect(boxX, mapY(q3), boxWidth, mapY(q1) - mapY(q3));
+    ctx.strokeRect(boxX, mapY(q3), boxWidth, mapY(q1) - mapY(q3));
+    
+    // Draw median
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(boxX, mapY(median));
+    ctx.lineTo(boxX + boxWidth, mapY(median));
+    ctx.stroke();
+    
+    // Labels
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.save();
+    ctx.translate(20, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.restore();
+  }
+}
+
+function drawCategoricalGraph(canvas) {
+  const ctx = canvas.getContext('2d');
+  const freqTable = currentGraphConfig.freqTable;
+  const chartType = currentGraphConfig.chartType;
+  const showLabels = currentGraphConfig.showLabels;
+  const total = freqTable.reduce((sum, row) => sum + row.count, 0);
+  
+  if (chartType === 'bar') {
+    const padding = { left: 60, right: 40, top: 50, bottom: 80 };
+    const plotWidth = canvas.width - padding.left - padding.right;
+    const plotHeight = canvas.height - padding.top - padding.bottom;
+    const barWidth = plotWidth / freqTable.length;
+    const maxCount = Math.max(...freqTable.map(r => r.count));
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw axes
+    ctx.strokeStyle = '#333';
+    ctx.fillStyle = '#333';
+    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, canvas.height - padding.bottom);
+    ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
+    ctx.stroke();
+    
+    // Draw bars with their specific colors
+    for (let i = 0; i < freqTable.length; i++) {
+      const barHeight = (freqTable[i].count / maxCount) * plotHeight;
+      const x = padding.left + i * barWidth;
+      const y = canvas.height - padding.bottom - barHeight;
+      // Use the stored color for this category
+      const color = currentGraphConfig.colors?.[i] || '#5b52f0';
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, barWidth - 2, barHeight);
+      
+      // Category label with rotation
+      const labelX = x + barWidth / 2;
+      const labelY = canvas.height - padding.bottom + 15;
+      ctx.save();
+      ctx.translate(labelX, labelY);
+      ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
+      ctx.fillStyle = '#333';
+      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.fillText(freqTable[i].category.substring(0, 15), 0, 0);
+      ctx.restore();
+      
+      // Value labels on bars
+      if (showLabels !== 'none') {
+        ctx.fillStyle = '#333';
+        ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        let labelText = '';
+        if (showLabels === 'counts') labelText = freqTable[i].count;
+        else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
+        else if (showLabels === 'both') labelText = `${freqTable[i].count} (${freqTable[i].percent}%)`;
+        ctx.fillText(labelText, x + barWidth / 2 - 20, y - 5);
+      }
+    }
+    
+    // Labels
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2 - 30, canvas.height - 10);
+    ctx.save();
+    ctx.translate(20, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(currentGraphConfig.yLabel, -20, 0);
+    ctx.restore();
+    
+  } else if (chartType === 'pie') {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) / 3;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    let startAngle = -Math.PI / 2;
+    for (let i = 0; i < freqTable.length; i++) {
+      const angle = (freqTable[i].count / total) * Math.PI * 2;
+      const endAngle = startAngle + angle;
+      const color = currentGraphConfig.colors?.[i] || '#5b52f0';
+      
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+      ctx.fill();
+      
+      // Label on pie slice
+      const midAngle = startAngle + angle / 2;
+      const labelX = centerX + Math.cos(midAngle) * radius * 0.7;
+      const labelY = centerY + Math.sin(midAngle) * radius * 0.7;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${currentGraphConfig.fontSize}px Arial`;
+      let labelText = '';
+      if (showLabels === 'counts') labelText = freqTable[i].count;
+      else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
+      else if (showLabels === 'both') labelText = `${freqTable[i].count} (${freqTable[i].percent}%)`;
+      ctx.fillText(labelText, labelX - 15, labelY);
+      
+      startAngle = endAngle;
+    }
+    
+    // Legend
+    let legendY = 40;
+    for (let i = 0; i < freqTable.length; i++) {
+      const color = currentGraphConfig.colors?.[i] || '#5b52f0';
+      ctx.fillStyle = color;
+      ctx.fillRect(canvas.width - 120, legendY, 15, 15);
+      ctx.fillStyle = '#333';
+      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.fillText(`${freqTable[i].category} (${freqTable[i].percent}%)`, canvas.width - 100, legendY + 12);
+      legendY += 22;
+    }
+    
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2 - 100, 30);
+  }
+}
+
+function openFullGraphWindow() {
+  const canvas = document.getElementById('preview-canvas');
+  if (!canvas) return;
+  
+  // Create modal with larger canvas for high-res download
+  const fullWindowHtml = `
+    <div class="fc-overlay" id="full-graph-overlay" style="display:flex; z-index:4000;">
+      <div class="fc-modal" style="max-width:90vw; width:auto;">
+        <div class="fc-modal-header">
+          <h3><span>📊</span> Full Size Graph: ${escapeHtml(currentGraphConfig.varName)}</h3>
+          <div class="fc-header-btns">
+            <button class="fc-close-btn" onclick="closeFullGraphWindow()">✕</button>
+          </div>
+        </div>
+        <div style="padding:20px; text-align:center;">
+          <canvas id="full-graph-canvas" width="${currentGraphConfig.width * 2}" height="${currentGraphConfig.height * 2}" style="max-width:100%; height:auto; border:1px solid var(--border);"></canvas>
+          <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+            <button class="fc-dl-btn png" onclick="downloadGraphAsPNG('full-graph-canvas')">⬇ Download High-Res PNG</button>
+            <button class="btn-secondary" onclick="closeFullGraphWindow()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const existing = document.getElementById('full-graph-overlay');
+  if (existing) existing.remove();
+  
+  document.body.insertAdjacentHTML('beforeend', fullWindowHtml);
+  document.body.style.overflow = 'hidden';
+  
+  // Draw high-res version
+  setTimeout(() => {
+    const fullCanvas = document.getElementById('full-graph-canvas');
+    if (fullCanvas) {
+      const tempConfig = { ...currentGraphConfig };
+      tempConfig.width = currentGraphConfig.width * 2;
+      tempConfig.height = currentGraphConfig.height * 2;
+      const originalConfig = { ...currentGraphConfig };
+      Object.assign(currentGraphConfig, tempConfig);
+      if (currentGraphConfig.isNumeric) {
+        drawNumericGraph(fullCanvas);
+      } else {
+        drawCategoricalGraph(fullCanvas);
+      }
+      Object.assign(currentGraphConfig, originalConfig);
+    }
+  }, 50);
+}
+
+function closeFullGraphWindow() {
+  const modal = document.getElementById('full-graph-overlay');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
+function downloadGraphAsPNG(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const link = document.createElement('a');
+  link.download = `graph_${currentGraphConfig.varName}_${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('Graph Downloaded', 'High-resolution PNG saved.', 'success');
+}
+
+function createCategoricalResultsHTML(varName, freqTable, totalCount) {
+  const container = document.createElement('div');
+  container.style.marginBottom = '40px';
+  container.style.borderBottom = '2px solid var(--border)';
+  container.style.paddingBottom = '20px';
+  
+  // Create frequency table
+  let tableHtml = `
+    <table class="desc-table">
+      <thead>
+        <tr><th>Category</th><th>Frequency</th><th>Percent (%)</th><th>Cumulative Frequency</th><th>Cumulative Percent (%)</th></tr>
+      </thead>
+      <tbody>
+  `;
+  
+  freqTable.forEach(row => {
+    tableHtml += `<tr><td>${escapeHtml(row.category)}</td><td>${row.count}</td><td>${row.percent}%</td><td>${row.cumFreq}</td><td>${row.cumPercent}%</td></tr>`;
+  });
+  
+  tableHtml += `</tbody></table><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
+  
+  // Graph options
+  const graphOptions = `
+    <div class="desc-options-group" style="margin-top:20px;">
+      <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
+      <div style="margin-top:10px;">
+        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'categorical')">🎨 Customize & Generate Graphs</button>
+      </div>
+    </div>
+    <div id="cat-graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
+  `;
+  
+  container.innerHTML = `
+    <h3 style="font-size:18px; margin-bottom:15px; color:var(--accent2);">📋 ${escapeHtml(varName)} <span style="font-size:12px; color:var(--text3);">(Categorical Variable)</span></h3>
+    ${tableHtml}
+    ${graphOptions}
+  `;
+  
+  container.freqTable = freqTable;
+  container.varName = varName;
+  
+  return container;
+}
+
+function clearDescriptiveData() {
+  document.getElementById('desc-data-input').value = '';
+  descriptiveData = null;
+  descriptiveColumns = [];
+  descriptiveSelectedVars = [];
+  document.getElementById('desc-var-panel').style.display = 'none';
+  document.getElementById('desc-results-panel').style.display = 'none';
+  toast('Cleared', 'All data has been cleared.', 'info');
+}
+
+// Export functions for Word/Excel from descriptives
+function exportDescriptivesToExcel() {
+  if (!descriptiveData || descriptiveSelectedVars.length === 0) {
+    toast('No Data', 'Please load data and select variables first.', 'warn');
+    return;
+  }
+  
+  loadSheetJS(() => {
+    const wb = XLSX.utils.book_new();
+    
+    // Summary sheet
+    const summaryData = [['Variable', 'Type', 'N', 'Mean', 'SD', 'Min', 'Max', 'Missing']];
+    for (let col of descriptiveSelectedVars) {
+      const isNumeric = descriptiveVarTypes[col] === 'numeric';
+      const values = descriptiveData.map(row => row[col]).filter(v => v !== '');
+      if (isNumeric) {
+        const numValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+        const stats = calculateNumericStats(numValues);
+        summaryData.push([col, 'Numeric', stats.n, stats.mean.toFixed(4), stats.sd.toFixed(4), stats.min, stats.max, stats.missing]);
+      } else {
+        summaryData.push([col, 'Categorical', values.length, 'N/A', 'N/A', 'N/A', 'N/A', descriptiveData.length - values.length]);
+      }
+    }
+    
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    
+    const fname = `Descriptive_Stats_${Date.now()}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    toast('Exported', 'Excel file saved.', 'success');
+  });
+}
+
+function exportFullAnalysisToWord() {
+  const resultsContent = document.getElementById('desc-results-content');
+  if (!resultsContent || resultsContent.innerHTML === '') {
+    toast('No Results', 'Please run analysis first.', 'warn');
+    return;
+  }
+  
+  const now = new Date().toLocaleString();
+  
+  // Collect all stats and graphs info
+  let analysisDetails = '';
+  for (let col of descriptiveSelectedVars) {
+    const isNumeric = descriptiveVarTypes[col] === 'numeric';
+    const values = descriptiveData.map(row => row[col]).filter(v => v !== '');
+    
+    analysisDetails += `<div style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px;">
+      <h3>Variable: ${escapeHtml(col)} (${isNumeric ? 'Numeric' : 'Categorical'})</h3>`;
+    
+    if (isNumeric) {
+      const numValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
+      const stats = calculateNumericStats(numValues);
+      analysisDetails += `
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+          <tr><th style="border:1px solid #000; padding:6px;">Statistic</th><th style="border:1px solid #000; padding:6px;">Value</th></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Sample Size (n)</td><td style="border:1px solid #000; padding:6px;">${stats.n}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Mean</td><td style="border:1px solid #000; padding:6px;">${stats.mean.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Standard Deviation</td><td style="border:1px solid #000; padding:6px;">${stats.sd.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Minimum</td><td style="border:1px solid #000; padding:6px;">${stats.min}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Maximum</td><td style="border:1px solid #000; padding:6px;">${stats.max}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Range</td><td style="border:1px solid #000; padding:6px;">${stats.range.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Q1 (25th percentile)</td><td style="border:1px solid #000; padding:6px;">${stats.q1.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Median (Q2)</td><td style="border:1px solid #000; padding:6px;">${stats.median.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Q3 (75th percentile)</td><td style="border:1px solid #000; padding:6px;">${stats.q3.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">IQR</td><td style="border:1px solid #000; padding:6px;">${stats.iqr.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Skewness</td><td style="border:1px solid #000; padding:6px;">${stats.skewness.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Kurtosis</td><td style="border:1px solid #000; padding:6px;">${stats.kurtosis.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Shapiro-Wilk W</td><td style="border:1px solid #000; padding:6px;">${stats.normality.statistic}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Shapiro-Wilk p-value</td><td style="border:1px solid #000; padding:6px;">${stats.normality.pValue}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Normality Interpretation</td><td style="border:1px solid #000; padding:6px;">${stats.normality.interpretation}</td></tr>
+          <tr><td style="border:1px solid #000; padding:6px;">Missing Values</td><td style="border:1px solid #000; padding:6px;">${stats.missing}</td></tr>
+        </table>`;
+    } else {
+      const freqTable = calculateFreqTable(values);
+      analysisDetails += `
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+          <tr><th style="border:1px solid #000; padding:6px;">Category</th><th style="border:1px solid #000; padding:6px;">Frequency</th><th style="border:1px solid #000; padding:6px;">Percent (%)</th></tr>`;
+      freqTable.forEach(row => {
+        analysisDetails += `<tr><td style="border:1px solid #000; padding:6px;">${escapeHtml(row.category)}</td><td style="border:1px solid #000; padding:6px;">${row.count}</td><td style="border:1px solid #000; padding:6px;">${row.percent}%</td></tr>`;
+      });
+      analysisDetails += `</table><p><strong>Total:</strong> ${values.length} observations</p>`;
+    }
+    analysisDetails += `</div>`;
+  }
+  
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Descriptive Statistics Report</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2.54cm; line-height: 1.5; }
+  h1 { text-align: center; color: #1a56db; }
+  h2 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
+  h3 { color: #555; margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+  th { background: #f0f0f0; }
+  .footer { margin-top: 40px; text-align: center; font-size: 10px; border-top: 1px solid #ccc; padding-top: 10px; }
+</style>
+</head>
+<body>
+<h1>CalcuStats - Descriptive Statistics Report</h1>
+<p style="text-align:center;">Generated: ${now}</p>
+<hr>
+${analysisDetails}
+<div class="footer">
+  <p>Created with CalcuStats (https://calcustats-.mudasiribrahim.com/)</p>
+  <p>© ${new Date().getFullYear()} CalcuStats · Mudasir Mohammed Ibrahim</p>
+</div>
+</body>
+</html>`;
+  
+  const blob = new Blob([html], {type: 'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Descriptive_Stats_Report_${Date.now()}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported', 'Word document with full analysis saved.', 'success');
+}
 </script>
 </body>
 </html>
