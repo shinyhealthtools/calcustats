@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CalcuStats Lite (Free Multipurpose Sample Size Calculator) - Proportional Allocation, Taro Yamane, Cochran's Formula & More</title>
+    <title>CalcuStats | Free Multipurpose Sample Size Calculator |  Proportional Allocation, Taro Yamane, Cochran's Formula & More</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="title" content="CalcuStats Lite">
+    <meta name="title" content="CalcuStats ">
     <meta name="description" content="Free online sample size calculatorsuite for research and analysis. Calculate sample sizes, proportional allocation, Taro Yamane formula, Cochran's formula, and other statistical calculations.">
     <meta name="keywords" content="statistics calculator, sample size calculator, research tools, proportional allocation, Taro Yamane formula, Cochran's formula, statistical analysis, free calculator, research calculator, academic tools">
     <meta name="theme-color" content="#1a56db">
@@ -29,22 +29,22 @@
     <link rel="manifest" href="https://raw.githubusercontent.com/mudassiribrahim12/AHSBQ-NS/main/site.webmanifest">
     
     <!-- Open Graph / Social Media -->
-    <meta property="og:site_name" content="CalcuStats Lite">
-    <meta property="og:title" content="CalcuStats Lite | Free sample size calculatorSuite">
+    <meta property="og:site_name" content="CalcuStats ">
+    <meta property="og:title" content="CalcuStats  | Free sample size calculatorSuite">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://calcustats-lite.mudasiribrahim.com/">
+    <meta property="og:url" content="https://calcustats-.mudasiribrahim.com/">
     <meta property="og:description" content="Free online sample size calculatorsuite for research and analysis. Calculate sample sizes, proportional allocation, Taro Yamane formula, Cochran's formula, and other statistical calculations.">
     <meta property="og:image" content="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/favicon-32x32.png">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://calcustats-lite.mudasiribrahim.com/">
-    <meta property="twitter:title" content="CalcuStats Lite | Free sample size calculatorSuite">
+    <meta property="twitter:url" content="https://calcustats-.mudasiribrahim.com/">
+    <meta property="twitter:title" content="CalcuStats  | Free sample size calculatorSuite">
     <meta property="twitter:description" content="Free online sample size calculatorsuite for research and analysis. Calculate sample sizes, proportional allocation, Taro Yamane formula, Cochran's formula, and other statistical calculations.">
     <meta property="twitter:image" content="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/favicon-32x32.png">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://calcustats-lite.mudasiribrahim.com/">
+    <link rel="canonical" href="https://calcustats-.mudasiribrahim.com/">
     
     <!-- Robots -->
     <meta name="robots" content="index, follow">
@@ -60,9 +60,9 @@
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "@id": "https://calcustats-lite.mudasiribrahim.com/#webapp",
-        "name": "CalcuStats Lite",
-        "url": "https://calcustats-lite.mudasiribrahim.com/",
+        "@id": "https://calcustats-.mudasiribrahim.com/#webapp",
+        "name": "CalcuStats ",
+        "url": "https://calcustats-.mudasiribrahim.com/",
         "description": "Free online sample size calculatorsuite for research and analysis",
         "applicationCategory": "StatisticalAnalysisApplication",
         "operatingSystem": "Any",
@@ -86,8 +86,8 @@
         },
         "publisher": {
             "@type": "Organization",
-            "@id": "https://calcustats-lite.mudasiribrahim.com/#organization",
-            "name": "CalcuStats Lite",
+            "@id": "https://calcustats-.mudasiribrahim.com/#organization",
+            "name": "CalcuStats ",
             "logo": {
                 "@type": "ImageObject",
                 "url": "https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/favicon-32x32.png"
@@ -216,6 +216,20 @@ body.dark::before {
 .loader-rings div:nth-child(3) { border-bottom-color: var(--amber); animation-delay:-1s; inset:16px; }
 @keyframes spin { to { transform:rotate(360deg); } }
 #loader p { font-family:var(--mono); font-size:13px; color:var(--text3); letter-spacing:.1em; }
+
+.logo-mark {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.logo-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 /* ── HEADER ───────────────────────────────────────────────────── */
 .header {
@@ -557,6 +571,52 @@ body.dark .export-btn.fc {
 .export-btn.fc:hover { background:#e09a10; color:#fff; border-color:#e09a10; }
 body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color:#f5a623; }
 
+/* ── AUTO-FIT FLOWCHART CONTAINER ─────────────────────────────── */
+.fc-canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 24px;
+  min-height: 0;
+  background: var(--bg);
+}
+
+#fc-svg-container {
+  display: inline-block;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+#fc-svg-container svg {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Make the preview area respect the container size */
+.fc-preview {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Ensure the SVG scales down when needed */
+.fc-canvas-wrap {
+  overflow: auto !important;
+}
+
+#fc-svg-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ── RESULTS ──────────────────────────────────────────────────── */
 .results-empty {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -729,12 +789,72 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 
 /* ── fc-body: two-column, fixed height, left scrolls, right scrolls ── */
 .fc-body {
-  display:grid;
-  grid-template-columns:300px 1fr;
-  height:680px;
-  overflow:hidden;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 70vh;
+  min-height: 500px;
+  max-height: 80vh;
+  overflow: hidden;
 }
-.fc-modal.fullscreen .fc-body { height: calc(100vh - 73px); }
+
+.fc-modal.fullscreen .fc-body {
+  height: calc(100vh - 73px);
+  max-height: none;
+}
+
+/* Force SVG to scale down to fit container width */
+#fc-svg-container svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* ── FIX FULLSCREEN BUTTON ICON (Font Awesome version) ─────────── */
+.fc-fullscreen-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--bg4);
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  padding: 0;
+  font-family: "Font Awesome 6 Free", "Segoe UI", Arial, sans-serif;
+}
+
+.fc-fullscreen-btn::before {
+  content: "\f065";
+  font-weight: 900;
+}
+
+.fc-fullscreen-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* When in fullscreen mode, change the icon */
+.fc-modal.fullscreen .fc-fullscreen-btn::before {
+  content: "\f00d";
+  font-weight: 900;
+}
+
+.fc-modal.fullscreen .fc-fullscreen-btn {
+  background: var(--coral-dim);
+  color: var(--coral);
+}
+
+.fc-modal.fullscreen .fc-fullscreen-btn:hover {
+  background: var(--coral);
+  color: #fff;
+}
 
 /* LEFT: Controls panel — scrollable */
 .fc-controls {
@@ -912,19 +1032,21 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 
 <div id="loader">
   <div class="loader-rings"><div></div><div></div><div></div></div>
-  <p>Initializing CalcuStats Lite…</p>
+  <p>Initializing CalcuStats…</p>
 </div>
 
 <!-- Fixed copyright bottom-left -->
-<div class="copyright-fixed">© <span id="copyright-year"></span> CalcuStats Lite · Mudasir Mohammed Ibrahim</div>
+<div class="copyright-fixed"><span id="copyright-year"></span></div>
 
 <header class="header">
   <div class="header-inner">
     <a class="logo" href="#">
-      <div class="logo-mark">Cl</div>
+      <div class="logo-mark">
+        <img src="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/CalcuStatslogo.png" alt="CalcuStats Logo" style="width: 38px; height: 38px; object-fit: cover; border-radius: 11px; image-rendering: crisp-edges;">
+      </div>
       <div>
-        <span class="logo-text">CalcuStats Lite</span>
-        <span class="logo-sub">Calculation Hub</span>
+        <span class="logo-text">CalcuStats </span>
+        <span class="logo-sub">Sample Size Calculation Hub</span>
       </div>
     </a>
     <nav class="nav">
@@ -1236,17 +1358,198 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   </div>
 </div>
 
-<!-- ── CREDIT ───────────────────────────────────────────────────── -->
-<div class="site-credit">
-  Site built in Ghana by 
-  <a href="https://mudasiribrahim.vercel.app/" target="_blank" rel="noopener noreferrer">
-    Mudasir Mohammed Ibrahim
-  </a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/mudassiribrahim12/Stats" target="_blank" rel="noopener noreferrer">
-    Source Code
-  </a>
-</div>
+<!-- ── FOOTER with Ghana Flag Colors + Website Link 🇬🇭 ─────────── -->
+<footer class="site-footer">
+  <!-- Ghana flag color bar -->
+  <div class="ghana-flag-bar">
+    <div class="flag-red"></div>
+    <div class="flag-yellow"></div>
+    <div class="flag-green"></div>
+  </div>
+  
+  <div class="footer-inner">
+    <div class="footer-left">
+      <p class="feedback-text">
+        <span class="ghana-heart">🇬🇭</span>
+        If you like CalcuStats or have a suggestion — 
+        <a href="https://linkedin.com/in/mudasir-mohammed-ibrahim-16b5141b0" target="_blank" rel="noopener noreferrer" class="hello-link">
+          feel free to say hello 👋
+        </a>
+      </p>
+      <p class="copyright">
+        <span id="copyright-full"></span>
+      </p>
+    </div>
+    <div class="footer-right">
+      <a href="https://buymeacoffee.com/mudasiribrahim30" target="_blank" rel="noopener noreferrer" class="buymeacoffee-btn">
+        <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy me a coffee">
+        <span>Buy me a coffee</span>
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+.site-footer {
+  margin-top: 40px;
+  background: var(--bg2, #ffffff);
+  position: relative;
+}
+
+/* Ghana flag color bar */
+.ghana-flag-bar {
+  display: flex;
+  height: 4px;
+  width: 100%;
+}
+
+.flag-red {
+  flex: 1;
+  background-color: #CE1126; /* Ghana red */
+}
+
+.flag-yellow {
+  flex: 1;
+  background-color: #FCD116; /* Ghana yellow/gold */
+}
+
+.flag-green {
+  flex: 1;
+  background-color: #006B3F; /* Ghana green */
+}
+
+.footer-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px 32px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid var(--border, rgba(0,0,0,0.08));
+}
+
+.footer-left {
+  flex: 2;
+}
+
+.feedback-text {
+  font-size: 15px;
+  color: var(--text2, #4a4a6a);
+  margin: 0 0 6px 0;
+  line-height: 1.5;
+}
+
+.ghana-heart {
+  font-size: 18px;
+  margin-right: 6px;
+  display: inline-block;
+  animation: wave 1s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.feedback-text strong {
+  color: var(--accent, #5b52f0);
+}
+
+.hello-link {
+  color: var(--accent, #5b52f0);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hello-link:hover {
+  text-decoration: underline;
+  transform: translateX(2px);
+}
+
+.feedback-note {
+  font-size: 12px;
+  color: var(--text3, #9090b0);
+  margin: 0 0 8px 0;
+  font-style: italic;
+}
+
+.copyright {
+  font-size: 12px;
+  color: var(--text3, #9090b0);
+  margin: 0;
+}
+
+.footer-right {
+  flex: 0 0 auto;
+}
+
+.buymeacoffee-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFDD00;
+  color: #000000;
+  padding: 10px 20px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.buymeacoffee-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+.buymeacoffee-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Ghana colors on hover for Buy Me a Coffee button */
+.buymeacoffee-btn:hover {
+  background: linear-gradient(135deg, #CE1126, #FCD116, #006B3F);
+  background-size: 200% 200%;
+  color: white;
+  animation: gradientShift 0.5s ease;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@media (max-width: 700px) {
+  .footer-inner {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer-left {
+    text-align: center;
+  }
+}
+</style>
+
+<script>
+// Static copyright with manual year range
+(function() {
+  const copyrightSpan = document.getElementById('copyright-full');
+  if (copyrightSpan) {
+    copyrightSpan.textContent = ` Copyright © 2025-present CalcuStats · Created by Mudasir Mohammed Ibrahim`;
+  }
+})();
+</script>
+
 </main>
 
 <button id="btt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
@@ -1265,7 +1568,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
     <div class="fc-modal-header">
       <h3><span>◈</span> Publication-Ready Flowchart Generator</h3>
       <div class="fc-header-btns">
-        <button class="fc-fullscreen-btn" onclick="toggleFcFullscreen()" title="Toggle Fullscreen">⛶</button>
+<button class="fc-fullscreen-btn" onclick="toggleFcFullscreen()" title="Toggle Fullscreen"></button>
         <button class="fc-close-btn" onclick="closeFcModal()">✕</button>
       </div>
     </div>
@@ -1509,7 +1812,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
           </div>
           <div class="fc-field">
             <label>Footer note</label>
-            <input type="text" id="fc-footer" placeholder="e.g. Calculated with CalcuStats Lite" oninput="renderFcChart()">
+            <input type="text" id="fc-footer" placeholder="e.g. Calculated with CalcuStats " oninput="renderFcChart()">
           </div>
         </div>
 
@@ -1581,7 +1884,7 @@ window.addEventListener('load', () => {
   // Stats counter animation on scroll
   setupStatsObserver();
 
-  toast('Welcome to CalcuStats Lite', 'Professional sample size hub', 'info');
+  toast('Welcome to CalcuStats ', 'Professional sample size calculation hub', 'info');
 });
 
 // ─── STATS COUNTER ANIMATION ─────────────────────────────────────
@@ -2511,7 +2814,7 @@ function fcFullReset() {
   // Reset title/subtitle/footer
   document.getElementById('fc-title').value = fcOriginalData.formula + ' — Sample Size Allocation';
   document.getElementById('fc-subtitle').value = '';
-  document.getElementById('fc-footer').value = 'Calculated with CalcuStats Lite · mudasiribrahim.vercel.app';
+  document.getElementById('fc-footer').value = 'Calculated with CalcuStats  · mudasiribrahim.vercel.app';
 
   // Reset header label
   document.getElementById('fc-header-label').value = 'Target Population';
@@ -2615,7 +2918,7 @@ function openFcModal(prefix) {
   document.getElementById('fc-header-label').value = fcHeaderLabel;
   document.getElementById('fc-title').value = data.formula + ' — Sample Size Allocation';
   document.getElementById('fc-subtitle').value = '';
-  document.getElementById('fc-footer').value = 'Calculated with CalcuStats Lite · mudasiribrahim.vercel.app';
+  document.getElementById('fc-footer').value = 'Calculated with CalcuStats  · mudasiribrahim.vercel.app';
 
   // Build node edit list
   rebuildFcNodeEditList();
@@ -2634,12 +2937,12 @@ function closeFcModal() {
 function fcOverlayClick(e) {
   if(e.target === document.getElementById('fc-overlay')) closeFcModal();
 }
+
 function toggleFcFullscreen() {
   const modal = document.getElementById('fc-modal');
   fcIsFullscreen = !fcIsFullscreen;
   modal.classList.toggle('fullscreen', fcIsFullscreen);
-  const btn = document.querySelector('.fc-fullscreen-btn');
-  if(btn) btn.textContent = fcIsFullscreen ? '⊠' : '⛶';
+  // No need to change button text manually - CSS handles it with ::before
   setTimeout(renderFcChart, 100);
 }
 
@@ -3028,7 +3331,7 @@ function exportExcel(prefix) {
     const now = new Date().toLocaleString();
 
     const summaryRows = [
-      ['CALCUSTATS LITE — SAMPLE SIZE REPORT'],
+      ['CALCUSTATS  — SAMPLE SIZE REPORT'],
       ['Formula:', data.formula],
       ['Generated:', now],
       [''],
@@ -3134,131 +3437,242 @@ function exportWord(prefix) {
   let paramRows = '';
   if (prefix === 'prop') {
     paramRows = `
-    <tr><td>Total Desired Sample Size (n)</td><td>${data.n}</td></tr>
-    <tr><td>Non-Response Rate</td><td>${data.nr}%</td></tr>
-    <tr><td>Total Population (N)</td><td>${fmtN(data.totalPop)}</td></tr>
-    <tr><td>Number of Strata</td><td>${data.strata ? data.strata.length : '—'}</td></tr>
-    <tr style="background:#eeeeff;font-weight:bold;"><td><b>Final Adjusted Sample Size</b></td><td><b>${fmtN(data.adj)}</b></td></tr>`;
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Total Desired Sample Size (n)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.n}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Non-Response Rate</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nr}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Total Population (N)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${fmtN(data.totalPop)}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Number of Strata</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.strata ? data.strata.length : '—'}</td></tr>
+      <tr style="border-top:2px solid #000;"><td style="padding:8px 8px 4px 8px; text-align:center;"><strong>Final Adjusted Sample Size</strong></td><td style="padding:8px 8px 4px 8px; text-align:center; font-size:16pt; font-weight:bold;">${fmtN(data.adj)}</td></tr>`;
   } else if (prefix === 'yam') {
     paramRows = `
-    <tr><td>Population Size (N)</td><td>${fmtN(data.N)}</td></tr>
-    <tr><td>Margin of Error (e)</td><td>${(data.e*100).toFixed(2)}%</td></tr>
-    <tr><td>Confidence Level (assumed)</td><td>95% (Z = 1.96)</td></tr>
-    <tr><td>Non-Response Rate</td><td>${data.nr}%</td></tr>
-    <tr><td>Initial Sample Size (n₀)</td><td>${data.n0}</td></tr>
-    <tr style="background:#eeeeff;font-weight:bold;"><td><b>Final Adjusted Sample Size</b></td><td><b>${fmtN(data.adj)}</b></td></tr>`;
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Population Size (N)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${fmtN(data.N)}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Margin of Error (e)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${(data.e*100).toFixed(2)}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Confidence Level</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">95% (Z = 1.96)</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Non-Response Rate</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nr}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Initial Sample Size (n₀)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.n0}</td></tr>
+      <tr style="border-top:2px solid #000;"><td style="padding:8px 8px 4px 8px; text-align:center;"><strong>Final Adjusted Sample Size</strong></td><td style="padding:8px 8px 4px 8px; text-align:center; font-size:16pt; font-weight:bold;">${fmtN(data.adj)}</td></tr>`;
   } else if (prefix === 'coch') {
     paramRows = `
-    <tr><td>Input Proportion</td><td>${data.pRaw}</td></tr>
-    <tr><td>Proportion (decimal)</td><td>${parseFloat(data.p).toFixed(4)}</td></tr>
-    <tr><td>Z-Score</td><td>${data.z} (${data.confLabel})</td></tr>
-    <tr><td>Margin of Error (e)</td><td>${(data.e*100).toFixed(2)}%</td></tr>
-    <tr><td>Population Size (N)</td><td>${data.Npop ? fmtN(data.Npop) : 'Infinite (not provided)'}</td></tr>
-    <tr><td>Finite Population Correction</td><td>${data.fpc ? 'Yes — Applied' : 'No'}</td></tr>
-    <tr><td>Non-Response Rate</td><td>${data.nr}%</td></tr>
-    <tr><td>Initial n₀ (unrounded)</td><td>${parseFloat(data.n0).toFixed(4)}</td></tr>
-    <tr><td>Rounded Initial n₀</td><td>${data.nCeil}</td></tr>
-    <tr style="background:#eeeeff;font-weight:bold;"><td><b>Final Adjusted Sample Size</b></td><td><b>${fmtN(data.adj)}</b></td></tr>`;
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Input Proportion</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.pRaw}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Proportion (decimal)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${parseFloat(data.p).toFixed(4)}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Z-Score</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.z} (${data.confLabel})</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Margin of Error (e)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${(data.e*100).toFixed(2)}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Population Size (N)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.Npop ? fmtN(data.Npop) : 'Infinite'}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Finite Population Correction</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.fpc ? 'Applied' : 'Not applied'}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Non-Response Rate</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nr}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Initial n₀ (unrounded)</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${parseFloat(data.n0).toFixed(4)}</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Rounded Initial n₀</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nCeil}</td></tr>
+      <tr style="border-top:2px solid #000;"><td style="padding:8px 8px 4px 8px; text-align:center;"><strong>Final Adjusted Sample Size</strong></td><td style="padding:8px 8px 4px 8px; text-align:center; font-size:16pt; font-weight:bold;">${fmtN(data.adj)}</td></tr>`;
   } else {
     const inp = data.inputs || {};
-    paramRows = `<tr><td>Formula Type</td><td>${data.formula}</td></tr>`;
-    Object.entries(inp).forEach(([k,v]) => { paramRows += `<tr><td>${k}</td><td>${v}</td></tr>`; });
+    paramRows = `<tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Formula Type</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.formula}</td></tr>`;
+    Object.entries(inp).forEach(([k,v]) => { 
+      paramRows += `<tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>${k}</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${v}</td></tr>`;
+    });
     paramRows += `
-    <tr><td>Non-Response Rate</td><td>${data.nr}%</td></tr>
-    <tr><td>Initial Sample Size</td><td>${data.nCeil}</td></tr>
-    <tr style="background:#eeeeff;font-weight:bold;"><td><b>Final Adjusted Sample Size</b></td><td><b>${fmtN(data.adj)}</b></td></tr>`;
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Non-Response Rate</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nr}%</td></tr>
+      <tr><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;"><strong>Initial Sample Size</strong></td><td style="padding:6px 8px; border-bottom:1px solid #ddd; text-align:center;">${data.nCeil}</td></tr>
+      <tr style="border-top:2px solid #000;"><td style="padding:8px 8px 4px 8px; text-align:center;"><strong>Final Adjusted Sample Size</strong></td><td style="padding:8px 8px 4px 8px; text-align:center; font-size:16pt; font-weight:bold;">${fmtN(data.adj)}</td></tr>`;
   }
 
   let strataTable = '';
   if (data.allocs && data.allocs.length) {
     const tp = data.totalPop || data.allocs.reduce((a,b)=>a+b.pop,0);
+    const adj = data.adj;
+    
+    let tableRows = '';
+    data.allocs.forEach((a, i) => {
+      const calculation = `(${a.pop} / ${tp}) × ${adj} = ${((a.pop/tp)*adj).toFixed(2)} → ${a.n}`;
+      tableRows += `
+        <tr>
+          <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;">${a.name}</td>
+          <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;">${fmtN(a.pop)}</td>
+          <td style="padding: 6px 10px; border: 1px solid #000; text-align: left;">${calculation}</td>
+          <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;"><strong>${fmtN(a.n)}</strong></td>
+        </tr>
+      `;
+    });
+    
+    tableRows += `
+      <tr style="border-top: 2px solid #000;">
+        <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;"><strong>TOTAL</strong></td>
+        <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;"><strong>${fmtN(tp)}</strong></td>
+        <td style="padding: 6px 10px; border: 1px solid #000; text-align: left;">—</td>
+        <td style="padding: 6px 10px; border: 1px solid #000; text-align: center;"><strong>${fmtN(adj)}</strong></td>
+      </tr>
+    `;
+    
     strataTable = `
-    <h2 style="font-family:Calibri;font-size:14pt;color:#2c2c6e;margin-top:24pt;border-bottom:1pt solid #ccc;padding-bottom:4pt;">Stratum Allocation</h2>
-    <p style="font-family:Calibri;font-size:11pt;color:#333;">Total adjusted sample: <b>${data.adj}</b> &nbsp;|&nbsp; Total population: <b>${tp ? tp.toLocaleString() : 'N/A'}</b></p>
-    <table border="1" cellspacing="0" cellpadding="7" style="border-collapse:collapse;width:100%;font-family:Calibri;font-size:11pt;margin-top:8pt;">
-      <tr style="background:#2c2c6e;color:white;">
-        <th align="left">Stratum Name</th>
-        <th align="right">Population</th>
-        <th align="right">Proportion (%)</th>
-        <th align="right">Sample (n)</th>
-        <th align="left">Calculation</th>
-      </tr>
-      ${data.allocs.map((a,i)=>`<tr style="background:${i%2===0?'#ffffff':'#f0f0f8'};">
-        <td>${a.name}</td>
-        <td align="right">${a.pop.toLocaleString()}</td>
-        <td align="right">${(a.prop*100).toFixed(1)}%</td>
-        <td align="right"><b>${a.n}</b></td>
-        <td>(${a.pop}/${tp||'?'}) × ${data.adj} = <b>${a.n}</b></td>
-      </tr>`).join('')}
-      <tr style="background:#2c2c6e;color:white;font-weight:bold;">
-        <td><b>TOTAL</b></td>
-        <td align="right"><b>${tp ? tp.toLocaleString() : 'N/A'}</b></td>
-        <td align="right"><b>100.0%</b></td>
-        <td align="right"><b>${data.adj}</b></td>
-        <td></td>
-      </tr>
-    </table>`;
+      <h2 style="font-size: 13pt; font-weight: 600; margin: 20pt 0 8pt 0; text-align: center;">Stratum Allocation</h2>
+      <p style="margin: 0 0 10pt 0; text-align: center; font-size: 10pt;"><strong>Total population (N):</strong> ${fmtN(tp)} &nbsp;|&nbsp; <strong>Total sample (n):</strong> ${fmtN(adj)}</p>
+      <div style="display: flex; justify-content: center;">
+        <table style="width: auto; min-width: 500px; max-width: 90%; border-collapse: collapse; margin: 0 auto; font-size: 10pt; border: 1px solid #000;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 8px 12px; border: 1px solid #000; text-align: center; font-weight: bold;">Stratum</th>
+              <th style="padding: 8px 12px; border: 1px solid #000; text-align: center; font-weight: bold;">Population (N)</th>
+              <th style="padding: 8px 12px; border: 1px solid #000; text-align: center; font-weight: bold;">Calculation</th>
+              <th style="padding: 8px 12px; border: 1px solid #000; text-align: center; font-weight: bold;">Sample (n)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+    `;
   }
 
   const wordSteps = plain
     .split('\n')
     .map(line => {
       const trimmed = line.trim();
-      if(!trimmed) return '<br>';
-      if(trimmed.startsWith('━━━')) return `<p style="margin:10pt 0 4pt;font-weight:bold;color:#2c2c6e;font-size:12pt;">${trimmed}</p>`;
-      return `<p style="margin:2pt 0 2pt 16pt;font-family:'Courier New',monospace;font-size:10pt;color:#111;">${trimmed}</p>`;
+      if (!trimmed) return '';
+      if (trimmed.startsWith('━━━')) {
+        const cleanTitle = trimmed.replace(/━/g, '').trim();
+        return `<p style="margin: 12pt 0 4pt 0; font-weight: bold; font-size: 11pt; text-align: center;">${cleanTitle}</p>`;
+      }
+      if (trimmed.match(/^\d+\./)) {
+        return `<p style="margin: 2pt 0 1pt 0; font-family: 'Courier New', monospace; font-size: 9pt; text-align: left;">${trimmed}</p>`;
+      }
+      return `<p style="margin: 1pt 0 1pt 16pt; font-family: 'Courier New', monospace; font-size: 9pt; text-align: left;">${trimmed}</p>`;
     })
+    .filter(line => line !== '')
     .join('');
 
-  const html = `
-<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
-<head><meta charset="UTF-8">
-<style>
-  body { font-family:Calibri,sans-serif; font-size:12pt; color:#0d0d1a; margin:2cm 2.5cm; }
-  h1   { font-family:Calibri; font-size:22pt; color:#2c2c6e; border-bottom:3pt solid #2c2c6e; padding-bottom:6pt; margin-bottom:4pt; }
-  h2   { font-family:Calibri; font-size:14pt; color:#2c2c6e; margin-top:18pt; margin-bottom:4pt; }
-  table{ border-collapse:collapse; width:100%; margin-top:10pt; }
-  th,td{ border:1pt solid #aaa; padding:6pt 9pt; text-align:left; }
-  th   { background:#2c2c6e; color:white; font-weight:bold; }
-  .meta { font-size:10pt; color:#555; margin-bottom:12pt; }
-  .result-box { background:#eeeeff; border:1.5pt solid #2c2c6e; padding:12pt 16pt; margin:14pt 0; border-radius:4pt; }
-  .result-box span { font-size:10pt; color:#555; }
-  .result-box strong { font-size:16pt; color:#2c2c6e; display:block; }
-  .footer-box { margin-top:32pt; font-size:9pt; color:#666; border-top:1.5pt solid #ccc; padding-top:8pt; }
-  .footer-box b { color:#2c2c6e; }
-</style>
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>CalcuStats  - Sample Size Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: #000;
+      margin: 2.54cm 2.54cm;
+      max-width: 100%;
+    }
+    h1 {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 18pt;
+      font-weight: bold;
+      margin: 0 0 4pt 0;
+      color: #000;
+      text-align: center;
+    }
+    .subtitle {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 10pt;
+      margin-bottom: 20pt;
+      border-bottom: 1px solid #000;
+      padding-bottom: 6pt;
+      text-align: center;
+    }
+    .result-box {
+      text-align: center;
+      margin: 16pt 0;
+      padding: 10pt;
+      border: 1px solid #000;
+      background: #fff;
+    }
+    .result-box .label {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .result-box .value {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 22pt;
+      font-weight: bold;
+      margin-top: 4pt;
+    }
+    h2 {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 16pt 0 8pt 0;
+      color: #000;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+    }
+    .params-table {
+      width: 50%;
+      margin: 10pt auto;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+    .params-table td {
+      border: 1px solid #ddd;
+      padding: 5px 8px;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 30pt;
+      padding-top: 8pt;
+      border-top: 1px solid #000;
+      text-align: center;
+      font-size: 9pt;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+    }
+    .footer a {
+      color: #000;
+      text-decoration: none;
+    }
+    @media print {
+      body {
+        margin: 2.54cm;
+      }
+      table {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
 <body>
-<h1>CalcuStats Lite — Sample Size Report</h1>
-<p class="meta">Formula: <b>${data.formula}</b> &nbsp;|&nbsp; Generated: ${now}</p>
 
-<div class="result-box">
-  <span>Recommended Sample Size</span>
-  <strong>${fmtN(data.adj)}</strong>
+<h1>CalcuStats </h1>
+<div class="subtitle">
+  ${data.formula} · Generated ${now}
 </div>
 
-<h2>1. Input Parameters</h2>
-<table>
-  <tr style="background:#2c2c6e;color:white;"><th>Parameter</th><th>Value</th></tr>
+<div class="result-box">
+  <div class="label">Recommended Sample Size</div>
+  <div class="value">${fmtN(data.adj)}</div>
+</div>
+
+<h2>Input Parameters</h2>
+<table class="params-table">
   ${paramRows}
 </table>
 
 ${strataTable}
 
-<h2>${data.allocs && data.allocs.length ? '3' : '2'}. Detailed Calculation Steps</h2>
-<div style="border-left:3pt solid #2c2c6e;padding-left:14pt;margin-top:8pt;">
-${wordSteps}
+<h2>Calculation Steps</h2>
+<div>
+  ${wordSteps}
 </div>
 
-<div class="footer-box">
-  <b>Site built by:</b> ${SITE_AUTHOR}<br>
-  <b>Email:</b> ${SITE_EMAIL}<br>
-  <b>Website:</b> ${SITE_URL}<br>
-  <b>ResearchGate:</b> ${SITE_RG}<br>
-  <br>Generated by CalcuStats Lite — Professional Statistical Sample Size Calculator
+<div class="footer">
+  <strong>CalcuStats</strong> — Professional Sample Size Calculator<br>
+  Created by Mudasir Mohammed Ibrahim<br>
+  <a href="https://www.researchgate.net/profile/Mudasir-Ibrahim" target="_blank" style="color: #1a56db; text-decoration: underline;">https://www.researchgate.net/profile/Mudasir-Ibrahim</a>
 </div>
-</body></html>`;
+
+</body>
+</html>`;
 
   const blob = new Blob([html], {type:'application/msword'});
   const url = URL.createObjectURL(blob);
@@ -3269,6 +3683,7 @@ ${wordSteps}
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
   toast('Word exported', a.download, 'success');
 }
+
 </script>
 </body>
 </html>
