@@ -32,19 +32,19 @@
     <meta property="og:site_name" content="CalcuStats ">
     <meta property="og:title" content="CalcuStats  | Free sample size calculatorSuite">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://calcustats-.mudasiribrahim.com/">
+    <meta property="og:url" content="https://calcustats.vercel.app/">
     <meta property="og:description" content="Free online sample size calculatorsuite for research and analysis. Calculate sample sizes, proportional allocation, Taro Yamane formula, Cochran's formula, and other statistical calculations.">
     <meta property="og:image" content="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/favicon-32x32.png">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://calcustats-.mudasiribrahim.com/">
+    <meta property="twitter:url" content="https://calcustats.vercel.app/">
     <meta property="twitter:title" content="CalcuStats  | Free sample size calculatorSuite">
     <meta property="twitter:description" content="Free online sample size calculatorsuite for research and analysis. Calculate sample sizes, proportional allocation, Taro Yamane formula, Cochran's formula, and other statistical calculations.">
     <meta property="twitter:image" content="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/favicon-32x32.png">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://calcustats-.mudasiribrahim.com/">
+    <link rel="canonical" href="https://calcustats.vercel.app/">
     
     <!-- Robots -->
     <meta name="robots" content="index, follow">
@@ -60,9 +60,9 @@
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "@id": "https://calcustats-.mudasiribrahim.com/#webapp",
+        "@id": "https://calcustats.vercel.app/#webapp",
         "name": "CalcuStats ",
-        "url": "https://calcustats-.mudasiribrahim.com/",
+        "url": "https://calcustats.vercel.app/",
         "description": "Free online sample size calculatorsuite for research and analysis",
         "applicationCategory": "StatisticalAnalysisApplication",
         "operatingSystem": "Any",
@@ -80,13 +80,13 @@
         "author": {
             "@type": "Person",
             "name": "Mudasir Mohammed Ibrahim",
-            "url": "https://mudasiribrahim.com/",
+            "url": "https://mudasiribrahim.vercel.app/",
             "jobTitle": "Health Researcher and Registered Nurse",
             "knowsAbout": ["Healthcare Research", "Statistical Analysis", "R Shiny Applications"]
         },
         "publisher": {
             "@type": "Organization",
-            "@id": "https://calcustats-.mudasiribrahim.com/#organization",
+            "@id": "https://calcustats.vercel.app/#organization",
             "name": "CalcuStats ",
             "logo": {
                 "@type": "ImageObject",
@@ -4129,7 +4129,7 @@ ${strataTable}
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ─── DESCRIPTIVE STATISTICS MODULE (ENHANCED & FIXED) ───────────
+// ─── DESCRIPTIVE STATISTICS MODULE (HIGH-QUALITY CHARTS) ────────
 // ═══════════════════════════════════════════════════════════════
 
 let descriptiveData = null;
@@ -4139,9 +4139,6 @@ let descriptiveVarTypes = {};
 let activeGraphModal = null;
 let currentGraphConfig = {};
 
-// Chart.js instance storage
-let chartInstances = {};
-
 function loadDescriptiveData() {
   const rawData = document.getElementById('desc-data-input').value;
   if (!rawData.trim()) {
@@ -4149,23 +4146,19 @@ function loadDescriptiveData() {
     return;
   }
   
-  // Parse CSV/TSV data
   const lines = rawData.trim().split(/\r?\n/);
   if (lines.length < 2) {
     toast('Invalid Data', 'Need at least header row and one data row.', 'warn');
     return;
   }
   
-  // Detect delimiter (comma or tab)
   let delimiter = ',';
   const firstLine = lines[0];
   if (firstLine.includes('\t')) delimiter = '\t';
   else if (firstLine.includes(',')) delimiter = ',';
   
-  // Parse headers
   const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
   
-  // Parse data rows
   const data = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
@@ -4183,7 +4176,6 @@ function loadDescriptiveData() {
     return;
   }
   
-  // Detect variable types
   descriptiveData = data;
   descriptiveColumns = headers;
   descriptiveVarTypes = {};
@@ -4202,7 +4194,6 @@ function loadDescriptiveData() {
     descriptiveVarTypes[col] = isNumeric ? 'numeric' : 'categorical';
   });
   
-  // Build variable selection UI
   const varListDiv = document.getElementById('desc-var-list');
   varListDiv.innerHTML = '';
   
@@ -4255,23 +4246,19 @@ function calculateNumericStats(values) {
   const sum = values.reduce((a, b) => a + b, 0);
   const mean = sum / n;
   
-  // Variance and SD
   const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
   const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
   const sd = Math.sqrt(variance);
   
-  // Min, Max, Range
   const min = sorted[0];
   const max = sorted[n - 1];
   const range = max - min;
   
-  // Quartiles
   const q1 = sorted[Math.floor(n * 0.25)];
   const q2 = sorted[Math.floor(n * 0.5)];
   const q3 = sorted[Math.floor(n * 0.75)];
   const iqr = q3 - q1;
   
-  // Percentiles
   const percentiles = [5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95];
   const percentileValues = {};
   percentiles.forEach(p => {
@@ -4286,18 +4273,13 @@ function calculateNumericStats(values) {
     }
   });
   
-  // Skewness
   const cubedDiffs = values.map(v => Math.pow(v - mean, 3));
   const skewness = (cubedDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 3);
   
-  // Kurtosis
   const fourthDiffs = values.map(v => Math.pow(v - mean, 4));
   const kurtosis = (fourthDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 4) - 3;
   
-  // Missing count
   const missing = descriptiveData.length - values.length;
-  
-  // Normality test (Shapiro-Wilk)
   const normality = shapiroWilkTest(values);
   
   return {
@@ -4308,7 +4290,6 @@ function calculateNumericStats(values) {
   };
 }
 
-// Shapiro-Wilk test implementation (approximation)
 function shapiroWilkTest(values) {
   const n = values.length;
   if (n < 3) return { test: 'Shapiro-Wilk', statistic: null, pValue: null, interpretation: 'Insufficient data (n<3)' };
@@ -4579,7 +4560,7 @@ function updateStatsDisplay(container, varName, stats) {
   grid.innerHTML = html;
 }
 
-// Graph Modal Functions
+// HIGH-QUALITY GRAPH FUNCTIONS
 function showGraphModal(varName, varType) {
   const isNumeric = varType === 'numeric';
   const values = descriptiveData.map(row => row[varName]).filter(v => v !== '' && v !== undefined);
@@ -4604,12 +4585,12 @@ function showGraphModal(varName, varType) {
     colors: categoryColors,
     histColor: '#5b52f0',
     showLabels: 'both',
-    width: 600,
-    height: 400,
+    width: 800,
+    height: 500,
     title: `${varName} - Distribution`,
     xLabel: isNumeric ? 'Value' : 'Category',
     yLabel: isNumeric ? 'Frequency' : 'Count',
-    fontSize: 12,
+    fontSize: 14,
     showNormalityCurve: false,
     rotation: 0
   };
@@ -4639,14 +4620,14 @@ function showGraphModal(varName, varType) {
   
   const modalHtml = `
     <div class="fc-overlay" id="graph-modal-overlay" style="display:flex; z-index:3000;">
-      <div class="fc-modal" style="max-width:1200px; width:90%;">
+      <div class="fc-modal" style="max-width:95vw; width:auto;">
         <div class="fc-modal-header">
           <h3><span>📊</span> Customize Graph: ${escapeHtml(varName)}</h3>
           <div class="fc-header-btns">
             <button class="fc-close-btn" onclick="closeGraphModal()">✕</button>
           </div>
         </div>
-        <div class="fc-body" style="grid-template-columns: 320px 1fr;">
+        <div class="fc-body" style="grid-template-columns: 320px 1fr; min-height:600px;">
           <div class="fc-controls" style="overflow-y:auto; max-height:70vh;">
             <div class="fc-section">
               <div class="fc-section-title">Chart Type</div>
@@ -4684,8 +4665,8 @@ function showGraphModal(varName, varType) {
               </div>
               <div class="fc-field">
                 <label>Font Size (px)</label>
-                <input type="range" min="8" max="20" value="12" id="graph-fontsize" onchange="updateGraphPreview()">
-                <span id="fontsize-val">12px</span>
+                <input type="range" min="10" max="24" value="14" id="graph-fontsize" onchange="updateGraphPreview()">
+                <span id="fontsize-val">14px</span>
               </div>
             </div>
             
@@ -4694,11 +4675,11 @@ function showGraphModal(varName, varType) {
               <div class="fc-field-row">
                 <div class="fc-field">
                   <label>Width (px)</label>
-                  <input type="number" id="graph-width" value="600" step="50" onchange="updateGraphPreview()">
+                  <input type="number" id="graph-width" value="800" step="50" onchange="updateGraphPreview()">
                 </div>
                 <div class="fc-field">
                   <label>Height (px)</label>
-                  <input type="number" id="graph-height" value="400" step="50" onchange="updateGraphPreview()">
+                  <input type="number" id="graph-height" value="500" step="50" onchange="updateGraphPreview()">
                 </div>
               </div>
               <div class="fc-field">
@@ -4728,10 +4709,10 @@ function showGraphModal(varName, varType) {
           <div class="fc-preview">
             <div class="fc-preview-toolbar">
               <span>Graph Preview - Click on graph to open in full window for high-res download</span>
-              <button class="fc-dl-btn png" onclick="downloadGraphAsPNG('preview-canvas')">⬇ Download PNG</button>
+              <button class="fc-dl-btn png" onclick="downloadGraphAsPNG('preview-canvas')">⬇ Download High-Res PNG</button>
             </div>
-            <div class="fc-canvas-wrap" style="display:flex; justify-content:center; align-items:center; min-height:450px;">
-              <canvas id="preview-canvas" width="600" height="400" style="max-width:100%; height:auto; cursor:pointer;" onclick="openFullGraphWindow()"></canvas>
+            <div class="fc-canvas-wrap" style="display:flex; justify-content:center; align-items:center; min-height:500px;">
+              <canvas id="preview-canvas" width="800" height="500" style="max-width:100%; height:auto; cursor:pointer; border:1px solid var(--border); border-radius:8px;" onclick="openFullGraphWindow()"></canvas>
             </div>
           </div>
         </div>
@@ -4767,10 +4748,6 @@ function closeGraphModal() {
   const modal = document.getElementById('graph-modal-overlay');
   if (modal) modal.remove();
   document.body.style.overflow = '';
-  if (window.currentChart) {
-    window.currentChart.destroy();
-    window.currentChart = null;
-  }
 }
 
 function updateGraphColor(idx, color) {
@@ -4797,9 +4774,9 @@ function updateGraphPreview() {
   currentGraphConfig.title = document.getElementById('graph-title')?.value || currentGraphConfig.title;
   currentGraphConfig.xLabel = document.getElementById('graph-xlabel')?.value || currentGraphConfig.xLabel;
   currentGraphConfig.yLabel = document.getElementById('graph-ylabel')?.value || currentGraphConfig.yLabel;
-  currentGraphConfig.fontSize = parseInt(document.getElementById('graph-fontsize')?.value) || 12;
-  currentGraphConfig.width = parseInt(document.getElementById('graph-width')?.value) || 600;
-  currentGraphConfig.height = parseInt(document.getElementById('graph-height')?.value) || 400;
+  currentGraphConfig.fontSize = parseInt(document.getElementById('graph-fontsize')?.value) || 14;
+  currentGraphConfig.width = parseInt(document.getElementById('graph-width')?.value) || 800;
+  currentGraphConfig.height = parseInt(document.getElementById('graph-height')?.value) || 500;
   currentGraphConfig.rotation = parseInt(document.getElementById('graph-rotation')?.value) || 0;
   
   drawPreviewGraph();
@@ -4811,10 +4788,10 @@ function resetGraphDefaults() {
   document.getElementById('graph-title').value = `${currentGraphConfig.varName} - Distribution`;
   document.getElementById('graph-xlabel').value = currentGraphConfig.isNumeric ? 'Value' : 'Category';
   document.getElementById('graph-ylabel').value = currentGraphConfig.isNumeric ? 'Frequency' : 'Count';
-  document.getElementById('graph-fontsize').value = '12';
-  document.getElementById('fontsize-val').textContent = '12px';
-  document.getElementById('graph-width').value = '600';
-  document.getElementById('graph-height').value = '400';
+  document.getElementById('graph-fontsize').value = '14';
+  document.getElementById('fontsize-val').textContent = '14px';
+  document.getElementById('graph-width').value = '800';
+  document.getElementById('graph-height').value = '500';
   document.getElementById('graph-rotation').value = '0';
   document.getElementById('rotation-val').textContent = '0°';
   
@@ -4856,18 +4833,14 @@ function drawPreviewGraph() {
   canvas.style.width = '100%';
   canvas.style.height = 'auto';
   
-  if (window.currentChart) {
-    window.currentChart.destroy();
-  }
-  
   if (currentGraphConfig.isNumeric) {
-    drawNumericGraph(canvas);
+    drawHighQualityNumericGraph(canvas);
   } else {
-    drawCategoricalGraph(canvas);
+    drawHighQualityCategoricalGraph(canvas);
   }
 }
 
-function drawNumericGraph(canvas) {
+function drawHighQualityNumericGraph(canvas) {
   const ctx = canvas.getContext('2d');
   const values = currentGraphConfig.values;
   const chartType = currentGraphConfig.chartType;
@@ -4892,7 +4865,7 @@ function drawNumericGraph(canvas) {
     });
     
     const maxFreq = Math.max(...bins);
-    const padding = { left: 60, right: 40, top: 50, bottom: 70 };
+    const padding = { left: 70, right: 50, top: 60, bottom: 80 };
     const plotWidth = canvas.width - padding.left - padding.right;
     const plotHeight = canvas.height - padding.top - padding.bottom;
     const barWidth = plotWidth / numBins;
@@ -4902,7 +4875,8 @@ function drawNumericGraph(canvas) {
     
     ctx.strokeStyle = '#333';
     ctx.fillStyle = '#333';
-    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.lineWidth = 1.5;
+    ctx.font = `${currentGraphConfig.fontSize}px "Segoe UI", Arial, sans-serif`;
     ctx.beginPath();
     ctx.moveTo(padding.left, padding.top);
     ctx.lineTo(padding.left, canvas.height - padding.bottom);
@@ -4915,27 +4889,29 @@ function drawNumericGraph(canvas) {
       const y = canvas.height - padding.bottom - barHeight;
       ctx.fillStyle = currentGraphConfig.histColor || '#5b52f0';
       ctx.fillRect(x, y, barWidth - 1, barHeight);
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeRect(x, y, barWidth - 1, barHeight);
       
       const labelX = x + barWidth / 2;
-      const labelY = canvas.height - padding.bottom + 15;
+      const labelY = canvas.height - padding.bottom + 20;
       ctx.save();
       ctx.translate(labelX, labelY);
       ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
       ctx.fillStyle = '#333';
-      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.font = `${currentGraphConfig.fontSize - 2}px "Segoe UI", Arial, sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(binEdges[i].toFixed(1), 0, 0);
       ctx.restore();
       
       if (showLabels !== 'none' && bins[i] > 0) {
         ctx.fillStyle = '#333';
-        ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        ctx.font = `${currentGraphConfig.fontSize - 1}px "Segoe UI", Arial, sans-serif`;
         ctx.textAlign = "center";
         let labelText = '';
         if (showLabels === 'counts') labelText = bins[i];
         else if (showLabels === 'percentages') labelText = `${((bins[i] / values.length) * 100).toFixed(1)}%`;
         else if (showLabels === 'both') labelText = `${bins[i]} (${((bins[i] / values.length) * 100).toFixed(1)}%)`;
-        ctx.fillText(labelText, x + barWidth / 2, y - 5);
+        ctx.fillText(labelText, x + barWidth / 2, y - 8);
       }
     }
     
@@ -4945,7 +4921,7 @@ function drawNumericGraph(canvas) {
       
       ctx.beginPath();
       ctx.strokeStyle = '#e8524a';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       
       const step = (max - min) / 200;
       let firstPoint = true;
@@ -4967,14 +4943,14 @@ function drawNumericGraph(canvas) {
       ctx.stroke();
     }
     
-    ctx.fillStyle = '#333';
-    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 3}px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
-    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 35);
+    ctx.font = `${currentGraphConfig.fontSize}px "Segoe UI", Arial, sans-serif`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 15);
     ctx.save();
-    ctx.translate(20, canvas.height / 2);
+    ctx.translate(25, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
     ctx.fillText(currentGraphConfig.yLabel, 0, 0);
@@ -4989,12 +4965,12 @@ function drawNumericGraph(canvas) {
     const lowerWhisker = Math.max(Math.min(...values), q1 - 1.5 * iqr);
     const upperWhisker = Math.min(Math.max(...values), q3 + 1.5 * iqr);
     
-    const padding = { left: 80, right: 80, top: 60, bottom: 60 };
+    const padding = { left: 100, right: 100, top: 70, bottom: 70 };
     const plotWidth = canvas.width - padding.left - padding.right;
-    const boxX = padding.left + plotWidth / 2 - 40;
-    const boxWidth = 80;
-    const boxY = 100;
-    const boxHeight = 200;
+    const boxX = padding.left + plotWidth / 2 - 50;
+    const boxWidth = 100;
+    const boxY = 120;
+    const boxHeight = 250;
     
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
@@ -5026,20 +5002,20 @@ function drawNumericGraph(canvas) {
     ctx.strokeRect(boxX, mapY(q3), boxWidth, mapY(q1) - mapY(q3));
     
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(boxX, mapY(median));
     ctx.lineTo(boxX + boxWidth, mapY(median));
     ctx.stroke();
     
-    ctx.fillStyle = '#333';
-    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 3}px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
-    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 40);
+    ctx.font = `${currentGraphConfig.fontSize}px "Segoe UI", Arial, sans-serif`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 15);
     ctx.save();
-    ctx.translate(20, canvas.height / 2);
+    ctx.translate(25, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
     ctx.fillText(currentGraphConfig.yLabel, 0, 0);
@@ -5047,7 +5023,7 @@ function drawNumericGraph(canvas) {
   }
 }
 
-function drawCategoricalGraph(canvas) {
+function drawHighQualityCategoricalGraph(canvas) {
   const ctx = canvas.getContext('2d');
   const freqTable = currentGraphConfig.freqTable;
   const chartType = currentGraphConfig.chartType;
@@ -5055,7 +5031,7 @@ function drawCategoricalGraph(canvas) {
   const total = freqTable.reduce((sum, row) => sum + row.count, 0);
   
   if (chartType === 'bar') {
-    const padding = { left: 80, right: 80, top: 50, bottom: 80 };
+    const padding = { left: 90, right: 90, top: 60, bottom: 100 };
     const plotWidth = canvas.width - padding.left - padding.right;
     const plotHeight = canvas.height - padding.top - padding.bottom;
     const barWidth = plotWidth / freqTable.length;
@@ -5066,7 +5042,8 @@ function drawCategoricalGraph(canvas) {
     
     ctx.strokeStyle = '#333';
     ctx.fillStyle = '#333';
-    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
+    ctx.lineWidth = 1.5;
+    ctx.font = `${currentGraphConfig.fontSize}px "Segoe UI", Arial, sans-serif`;
     ctx.beginPath();
     ctx.moveTo(padding.left, padding.top);
     ctx.lineTo(padding.left, canvas.height - padding.bottom);
@@ -5080,39 +5057,40 @@ function drawCategoricalGraph(canvas) {
       const color = currentGraphConfig.colors?.[i] || '#5b52f0';
       ctx.fillStyle = color;
       ctx.fillRect(x, y, barWidth - 2, barHeight);
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeRect(x, y, barWidth - 2, barHeight);
       
       const labelX = x + barWidth / 2;
-      const labelY = canvas.height - padding.bottom + 15;
+      const labelY = canvas.height - padding.bottom + 25;
       ctx.save();
       ctx.translate(labelX, labelY);
       ctx.rotate(currentGraphConfig.rotation * Math.PI / 180);
       ctx.fillStyle = '#333';
-      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+      ctx.font = `${currentGraphConfig.fontSize - 1}px "Segoe UI", Arial, sans-serif`;
       ctx.textAlign = "center";
-      // FIX: Display full category label without truncation
       ctx.fillText(freqTable[i].category, 0, 0);
       ctx.restore();
       
       if (showLabels !== 'none') {
-        ctx.fillStyle = '#333';
-        ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
+        ctx.fillStyle = '#222';
+        ctx.font = `${currentGraphConfig.fontSize - 1}px "Segoe UI", Arial, sans-serif`;
         ctx.textAlign = "center";
         let labelText = '';
         if (showLabels === 'counts') labelText = freqTable[i].count;
         else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
         else if (showLabels === 'both') labelText = `${freqTable[i].count} (${freqTable[i].percent}%)`;
-        ctx.fillText(labelText, x + barWidth / 2, y - 5);
+        ctx.fillText(labelText, x + barWidth / 2, y - 8);
       }
     }
     
-    ctx.fillStyle = '#333';
-    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 3}px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
-    ctx.font = `${currentGraphConfig.fontSize}px Arial`;
-    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 10);
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 35);
+    ctx.font = `${currentGraphConfig.fontSize}px "Segoe UI", Arial, sans-serif`;
+    ctx.fillText(currentGraphConfig.xLabel, canvas.width / 2, canvas.height - 15);
     ctx.save();
-    ctx.translate(20, canvas.height / 2);
+    ctx.translate(25, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center";
     ctx.fillText(currentGraphConfig.yLabel, 0, 0);
@@ -5120,8 +5098,8 @@ function drawCategoricalGraph(canvas) {
     
   } else if (chartType === 'pie') {
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = Math.min(canvas.width, canvas.height) / 3;
+    const centerY = canvas.height / 2.2;
+    const radius = Math.min(canvas.width, canvas.height) / 3.5;
     
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5137,13 +5115,17 @@ function drawCategoricalGraph(canvas) {
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, startAngle, endAngle);
       ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
       
       const midAngle = startAngle + angle / 2;
-      const labelX = centerX + Math.cos(midAngle) * radius * 0.7;
-      const labelY = centerY + Math.sin(midAngle) * radius * 0.7;
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${currentGraphConfig.fontSize}px Arial`;
+      const labelX = centerX + Math.cos(midAngle) * radius * 0.75;
+      const labelY = centerY + Math.sin(midAngle) * radius * 0.75;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${currentGraphConfig.fontSize - 1}px "Segoe UI", Arial, sans-serif`;
       ctx.textAlign = "center";
+      ctx.shadowBlur = 0;
       let labelText = '';
       if (showLabels === 'counts') labelText = freqTable[i].count;
       else if (showLabels === 'percentages') labelText = `${freqTable[i].percent}%`;
@@ -5153,23 +5135,25 @@ function drawCategoricalGraph(canvas) {
       startAngle = endAngle;
     }
     
-    let legendY = 40;
+    // LEGEND: Show ONLY category names (no percentages, no counts)
+    let legendX = canvas.width - 150;
+    let legendY = 60;
+    ctx.font = `${currentGraphConfig.fontSize - 1}px "Segoe UI", Arial, sans-serif`;
     for (let i = 0; i < freqTable.length; i++) {
       const color = currentGraphConfig.colors?.[i] || '#5b52f0';
       ctx.fillStyle = color;
-      ctx.fillRect(canvas.width - 120, legendY, 15, 15);
+      ctx.fillRect(legendX, legendY, 16, 16);
       ctx.fillStyle = '#333';
-      ctx.font = `${currentGraphConfig.fontSize - 2}px Arial`;
       ctx.textAlign = "left";
-      // FIX: Display full category label without truncation
-      ctx.fillText(`${freqTable[i].category} (${freqTable[i].percent}%)`, canvas.width - 100, legendY + 12);
-      legendY += 22;
+      // FIX: Show ONLY category name, no percentages or counts
+      ctx.fillText(freqTable[i].category, legendX + 22, legendY + 13);
+      legendY += 24;
     }
     
-    ctx.fillStyle = '#333';
-    ctx.font = `bold ${currentGraphConfig.fontSize + 2}px Arial`;
+    ctx.fillStyle = '#222';
+    ctx.font = `bold ${currentGraphConfig.fontSize + 3}px "Segoe UI", Arial, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 30);
+    ctx.fillText(currentGraphConfig.title, canvas.width / 2, 40);
   }
 }
 
@@ -5177,19 +5161,22 @@ function openFullGraphWindow() {
   const canvas = document.getElementById('preview-canvas');
   if (!canvas) return;
   
+  const highResWidth = currentGraphConfig.width * 2;
+  const highResHeight = currentGraphConfig.height * 2;
+  
   const fullWindowHtml = `
     <div class="fc-overlay" id="full-graph-overlay" style="display:flex; z-index:4000;">
-      <div class="fc-modal" style="max-width:90vw; width:auto;">
+      <div class="fc-modal" style="max-width:95vw; width:auto; max-height:95vh;">
         <div class="fc-modal-header">
-          <h3><span>📊</span> Full Size Graph: ${escapeHtml(currentGraphConfig.varName)}</h3>
+          <h3><span>📊</span> High Resolution Graph: ${escapeHtml(currentGraphConfig.varName)}</h3>
           <div class="fc-header-btns">
             <button class="fc-close-btn" onclick="closeFullGraphWindow()">✕</button>
           </div>
         </div>
-        <div style="padding:20px; text-align:center;">
-          <canvas id="full-graph-canvas" width="${currentGraphConfig.width * 2}" height="${currentGraphConfig.height * 2}" style="max-width:100%; height:auto; border:1px solid var(--border);"></canvas>
-          <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
-            <button class="fc-dl-btn png" onclick="downloadGraphAsPNG('full-graph-canvas')">⬇ Download High-Res PNG</button>
+        <div style="padding:20px; text-align:center; overflow:auto; max-height:85vh;">
+          <canvas id="full-graph-canvas" width="${highResWidth}" height="${highResHeight}" style="max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.15);"></canvas>
+          <div style="margin-top:20px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <button class="fc-dl-btn png" style="background:var(--accent); color:#fff; border:none; padding:10px 24px;" onclick="downloadGraphAsPNG('full-graph-canvas')">⬇ Download High-Resolution PNG (${highResWidth}×${highResHeight})</button>
             <button class="btn-secondary" onclick="closeFullGraphWindow()">Close</button>
           </div>
         </div>
@@ -5207,14 +5194,14 @@ function openFullGraphWindow() {
     const fullCanvas = document.getElementById('full-graph-canvas');
     if (fullCanvas) {
       const tempConfig = { ...currentGraphConfig };
-      tempConfig.width = currentGraphConfig.width * 2;
-      tempConfig.height = currentGraphConfig.height * 2;
+      tempConfig.width = highResWidth;
+      tempConfig.height = highResHeight;
       const originalConfig = { ...currentGraphConfig };
       Object.assign(currentGraphConfig, tempConfig);
       if (currentGraphConfig.isNumeric) {
-        drawNumericGraph(fullCanvas);
+        drawHighQualityNumericGraph(fullCanvas);
       } else {
-        drawCategoricalGraph(fullCanvas);
+        drawHighQualityCategoricalGraph(fullCanvas);
       }
       Object.assign(currentGraphConfig, originalConfig);
     }
@@ -5232,10 +5219,13 @@ function downloadGraphAsPNG(canvasId) {
   if (!canvas) return;
   
   const link = document.createElement('a');
-  link.download = `graph_${currentGraphConfig.varName}_${Date.now()}.png`;
+  const timestamp = Date.now();
+  const width = canvas.width;
+  const height = canvas.height;
+  link.download = `graph_${currentGraphConfig.varName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${width}x${height}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
-  toast('Graph Downloaded', 'High-resolution PNG saved.', 'success');
+  toast('Graph Downloaded', `High-resolution PNG saved (${width}×${height}px).`, 'success');
 }
 
 function createCategoricalResultsHTML(varName, freqTable, totalCount) {
@@ -5262,7 +5252,7 @@ function createCategoricalResultsHTML(varName, freqTable, totalCount) {
     <div class="desc-options-group" style="margin-top:20px;">
       <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
       <div style="margin-top:10px;">
-        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'categorical')">🎨 Customize & Generate Graphs</button>
+        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'categorical')">🎨 Customize & Generate High-Quality Graphs</button>
       </div>
     </div>
     <div id="cat-graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
@@ -5343,31 +5333,31 @@ function exportFullAnalysisToWord() {
       const stats = calculateNumericStats(numValues);
       analysisDetails += `
         <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
-          <tr><th style="border:1px solid #000; padding:6px;">Statistic</th><th style="border:1px solid #000; padding:6px;">Value</th></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Sample Size (n)</td><td style="border:1px solid #000; padding:6px;">${stats.n}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Mean</td><td style="border:1px solid #000; padding:6px;">${stats.mean.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Standard Deviation</td><td style="border:1px solid #000; padding:6px;">${stats.sd.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Minimum</td><td style="border:1px solid #000; padding:6px;">${stats.min}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Maximum</td><td style="border:1px solid #000; padding:6px;">${stats.max}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Range</td><td style="border:1px solid #000; padding:6px;">${stats.range.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Q1 (25th percentile)</td><td style="border:1px solid #000; padding:6px;">${stats.q1.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Median (Q2)</td><td style="border:1px solid #000; padding:6px;">${stats.median.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Q3 (75th percentile)</td><td style="border:1px solid #000; padding:6px;">${stats.q3.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">IQR</td><td style="border:1px solid #000; padding:6px;">${stats.iqr.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Skewness</td><td style="border:1px solid #000; padding:6px;">${stats.skewness.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Kurtosis</td><td style="border:1px solid #000; padding:6px;">${stats.kurtosis.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Shapiro-Wilk W</td><td style="border:1px solid #000; padding:6px;">${stats.normality.statistic}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Shapiro-Wilk p-value</td><td style="border:1px solid #000; padding:6px;">${stats.normality.pValue}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Normality Interpretation</td><td style="border:1px solid #000; padding:6px;">${stats.normality.interpretation}</td></tr>
-          <tr><td style="border:1px solid #000; padding:6px;">Missing Values</td><td style="border:1px solid #000; padding:6px;">${stats.missing}</td></tr>
+          <tr><th style="border:1px solid #000; padding:8px;">Statistic</th><th style="border:1px solid #000; padding:8px;">Value</th></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Sample Size (n)</td><td style="border:1px solid #000; padding:8px;">${stats.n}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Mean</td><td style="border:1px solid #000; padding:8px;">${stats.mean.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Standard Deviation</td><td style="border:1px solid #000; padding:8px;">${stats.sd.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Minimum</td><td style="border:1px solid #000; padding:8px;">${stats.min}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Maximum</td><td style="border:1px solid #000; padding:8px;">${stats.max}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Range</td><td style="border:1px solid #000; padding:8px;">${stats.range.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Q1 (25th percentile)</td><td style="border:1px solid #000; padding:8px;">${stats.q1.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Median (Q2)</td><td style="border:1px solid #000; padding:8px;">${stats.median.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Q3 (75th percentile)</td><td style="border:1px solid #000; padding:8px;">${stats.q3.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">IQR</td><td style="border:1px solid #000; padding:8px;">${stats.iqr.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Skewness</td><td style="border:1px solid #000; padding:8px;">${stats.skewness.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Kurtosis</td><td style="border:1px solid #000; padding:8px;">${stats.kurtosis.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Shapiro-Wilk W</td><td style="border:1px solid #000; padding:8px;">${stats.normality.statistic}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Shapiro-Wilk p-value</td><td style="border:1px solid #000; padding:8px;">${stats.normality.pValue}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Normality Interpretation</td><td style="border:1px solid #000; padding:8px;">${stats.normality.interpretation}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Missing Values</td><td style="border:1px solid #000; padding:8px;">${stats.missing}</td></tr>
         </table>`;
     } else {
       const freqTable = calculateFreqTable(values);
       analysisDetails += `
         <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
-          <tr><th style="border:1px solid #000; padding:6px;">Category</th><th style="border:1px solid #000; padding:6px;">Frequency</th><th style="border:1px solid #000; padding:6px;">Percent (%)</th></tr>`;
+          <tr><th style="border:1px solid #000; padding:8px;">Category</th><th style="border:1px solid #000; padding:8px;">Frequency</th><th style="border:1px solid #000; padding:8px;">Percent (%)</th></tr>`;
       freqTable.forEach(row => {
-        analysisDetails += `<tr><td style="border:1px solid #000; padding:6px;">${escapeHtml(row.category)}</td><td style="border:1px solid #000; padding:6px;">${row.count}</td><td style="border:1px solid #000; padding:6px;">${row.percent}%</td></tr>`;
+        analysisDetails += `<tr><td style="border:1px solid #000; padding:8px;">${escapeHtml(row.category)}</td><td style="border:1px solid #000; padding:8px;">${row.count}</td><td style="border:1px solid #000; padding:8px;">${row.percent}%</td></tr>`;
       });
       analysisDetails += `</table><p><strong>Total:</strong> ${values.length} observations</p>`;
     }
@@ -5378,7 +5368,7 @@ function exportFullAnalysisToWord() {
 <html>
 <head><meta charset="UTF-8"><title>Descriptive Statistics Report</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 2.54cm; line-height: 1.5; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 2.54cm; line-height: 1.5; }
   h1 { text-align: center; color: #1a56db; }
   h2 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
   h3 { color: #555; margin-top: 20px; }
@@ -5394,7 +5384,7 @@ function exportFullAnalysisToWord() {
 <hr>
 ${analysisDetails}
 <div class="footer">
-  <p>Created with CalcuStats (https://calcustats-.mudasiribrahim.com/)</p>
+  <p>Created with CalcuStats (https://calcustats.vercel.app/)</p>
   <p>© ${new Date().getFullYear()} CalcuStats · Mudasir Mohammed Ibrahim</p>
 </div>
 </body>
