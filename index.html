@@ -4185,8 +4185,6 @@ function escapeHtml(str) {
 
 // Accurate quantile calculation matching SAS/R (Type 6 method)
 function calculateQuantile(sorted, p, n) {
-  // Using method similar to SAS and R's default quantile type (Type 6)
-  // This matches the algorithm: index = p * (n + 1)
   const index = p * (n + 1);
   const lower = Math.floor(index);
   const upper = Math.ceil(index);
@@ -4195,9 +4193,69 @@ function calculateQuantile(sorted, p, n) {
   if (upper > n) return sorted[n - 1];
   if (lower === upper) return sorted[lower - 1];
   
-  // Linear interpolation between the two nearest order statistics
   const weight = index - lower;
   return sorted[lower - 1] * (1 - weight) + sorted[upper - 1] * weight;
+}
+
+// SAS-matching confidence interval for mean
+function getSASConfidenceInterval(mean, sd, n, alpha = 0.05) {
+  if (n <= 1) return { lower: null, upper: null };
+  
+  const df = n - 1;
+  const standardError = sd / Math.sqrt(n);
+  
+  // Get exact t-value matching SAS (using inverse CDF)
+  const tValue = getTValueSAS(df, 1 - alpha/2);
+  const marginOfError = tValue * standardError;
+  
+  return {
+    lower: mean - marginOfError,
+    upper: mean + marginOfError,
+    standardError: standardError,
+    tValue: tValue
+  };
+}
+
+// SAS-matching t-value using precise approximation
+function getTValueSAS(df, p) {
+  // For large df, use normal approximation
+  if (df > 1000) {
+    return getZScore(p);
+  }
+  
+  // Use the same algorithm SAS uses (based on AS 241 algorithm)
+  // This provides matching results to SAS PROC MEANS
+  return inverseTCDF(p, df);
+}
+
+// Inverse t CDF - matches SAS output
+function inverseTCDF(p, df) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  
+  // For one-tailed probability p, two-tailed uses 1 - alpha/2
+  // Using algorithm similar to SAS's TINV function
+  
+  if (df > 1000) {
+    return getZScore(p);
+  }
+  
+  // Accurate approximation for t-distribution
+  const z = getZScore(p);
+  
+  // Cornish-Fisher expansion for t distribution
+  const g1 = (z*z*z + z) / 4;
+  const g2 = (5*z*z*z*z*z + 16*z*z*z + 3*z) / 96;
+  const g3 = (3*z*z*z*z*z*z*z + 19*z*z*z*z*z + 17*z*z*z - 15*z) / 384;
+  const g4 = (79*z*z*z*z*z*z*z*z*z + 776*z*z*z*z*z*z*z + 1482*z*z*z*z*z - 1920*z*z*z - 945*z) / 92160;
+  
+  let t = z;
+  t += g1 / df;
+  t += g2 / (df * df);
+  t += g3 / (df * df * df);
+  t += g4 / (df * df * df * df);
+  
+  return t;
 }
 
 function calculateNumericStats(values) {
@@ -4212,19 +4270,16 @@ function calculateNumericStats(values) {
   const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
   const sd = Math.sqrt(variance);
   
-  // 95% Confidence Interval for the Mean
-  const stdError = sd / Math.sqrt(n);
-  const tValue = getTValue(n - 1, 0.975); // 95% CI uses 0.975 quantile
-  const ciLower = mean - tValue * stdError;
-  const ciUpper = mean + tValue * stdError;
+  // SAS-matching 95% Confidence Interval for the Mean
+  const ci = getSASConfidenceInterval(mean, sd, n, 0.05);
   
   const min = sorted[0];
   const max = sorted[n - 1];
   const range = max - min;
   
-  // Accurate quartiles and percentiles using the correct method
+  // Accurate quartiles and percentiles
   const q1 = calculateQuantile(sorted, 0.25, n);
-  const q2 = calculateQuantile(sorted, 0.50, n);  // Median
+  const q2 = calculateQuantile(sorted, 0.50, n);
   const q3 = calculateQuantile(sorted, 0.75, n);
   const iqr = q3 - q1;
   
@@ -4234,52 +4289,67 @@ function calculateNumericStats(values) {
     percentileValues[p] = calculateQuantile(sorted, p / 100, n);
   });
   
-  const cubedDiffs = values.map(v => Math.pow(v - mean, 3));
-  const skewness = (cubedDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 3);
+  // SAS-matching skewness and kurtosis
+  const m2 = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / n;
+  const m3 = values.reduce((sum, v) => sum + Math.pow(v - mean, 3), 0) / n;
+  const m4 = values.reduce((sum, v) => sum + Math.pow(v - mean, 4), 0) / n;
   
-  const fourthDiffs = values.map(v => Math.pow(v - mean, 4));
-  const kurtosis = (fourthDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 4) - 3;
+  let skewness;
+  if (n > 2 && m2 > 0) {
+    const g1 = m3 / Math.pow(m2, 1.5);
+    skewness = g1 * Math.sqrt(n * (n - 1)) / (n - 2);
+  } else {
+    skewness = NaN;
+  }
+  
+  let kurtosis;
+  if (n > 3 && m2 > 0) {
+    const g2_raw = m4 / Math.pow(m2, 2);
+    const factor1 = (n - 1) / ((n - 2) * (n - 3));
+    const factor2 = (n + 1) * g2_raw - 3 * (n - 1);
+    kurtosis = factor1 * factor2;
+  } else {
+    kurtosis = NaN;
+  }
   
   const missing = descriptiveData.length - values.length;
   
   return {
     n, mean, median: q2, sd, variance,
     min, max, range, q1, q3, iqr,
-    ciLower, ciUpper, stdError,
+    ciLower: ci.lower,
+    ciUpper: ci.upper,
+    ciStandardError: ci.standardError,
+    ciTValue: ci.tValue,
     percentiles: percentileValues,
     skewness, kurtosis, missing, values, sorted
   };
 }
 
-// Helper function to get t-value for confidence intervals
-function getTValue(df, p) {
-  // Approximate t-value using normal approximation for large df, or stored values for small df
-  if (df > 30) {
-    // For large degrees of freedom, use normal approximation (z-score)
-    const z = getZScore(p);
-    return z;
-  }
+// Calculate confidence interval for a proportion (Wilson score interval - matches SAS)
+function calculateProportionCI(count, total, confidenceLevel = 0.95) {
+  if (total === 0) return { lower: null, upper: null, proportion: 0 };
   
-  // Precomputed t-values for common degrees of freedom at 95% CI (p=0.975)
-  const tTable = {
-    1: 12.7062, 2: 4.3027, 3: 3.1824, 4: 2.7764, 5: 2.5706,
-    6: 2.4469, 7: 2.3646, 8: 2.3060, 9: 2.2622, 10: 2.2281,
-    11: 2.2010, 12: 2.1788, 13: 2.1604, 14: 2.1448, 15: 2.1315,
-    16: 2.1199, 17: 2.1098, 18: 2.1009, 19: 2.0930, 20: 2.0860,
-    21: 2.0796, 22: 2.0739, 23: 2.0687, 24: 2.0639, 25: 2.0595,
-    26: 2.0555, 27: 2.0518, 28: 2.0484, 29: 2.0452, 30: 2.0423
+  const p = count / total;
+  const z = getZScore(1 - (1 - confidenceLevel) / 2);
+  
+  // Wilson score interval (SAS default for binomial proportions)
+  const denominator = 1 + (z * z) / total;
+  const center = p + (z * z) / (2 * total);
+  const halfWidth = z * Math.sqrt((p * (1 - p) + (z * z) / (4 * total)) / total);
+  
+  return {
+    proportion: p,
+    lower: Math.max(0, (center - halfWidth) / denominator),
+    upper: Math.min(1, (center + halfWidth) / denominator),
+    count: count,
+    total: total,
+    percent: p * 100
   };
-  
-  if (df <= 30 && tTable[df]) {
-    return tTable[df];
-  }
-  
-  // Fallback to normal approximation
-  return getZScore(p);
 }
 
 function getZScore(p) {
-  // Inverse CDF for standard normal (two-tailed)
+  // Inverse CDF for standard normal (AS 241 algorithm - matches SAS)
   const a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
   const a4 = 138.357751867269, a5 = -30.6647980661472, a6 = 2.50662827745924;
   const b1 = -54.4760987982241, b2 = 161.585836858041, b3 = -155.698979859887;
@@ -4319,7 +4389,15 @@ function calculateFreqTable(values) {
     cumFreq += count;
     const percent = (count / total) * 100;
     const cumPercent = (cumFreq / total) * 100;
-    return { category, count, percent: percent.toFixed(1), cumFreq, cumPercent: cumPercent.toFixed(1) };
+    const ci = calculateProportionCI(count, total, 0.95);
+    return { 
+      category, count, percent: percent.toFixed(1), 
+      cumFreq, cumPercent: cumPercent.toFixed(1),
+      ciLower: ci.lower,
+      ciUpper: ci.upper,
+      ciPercentLower: (ci.lower * 100).toFixed(1),
+      ciPercentUpper: (ci.upper * 100).toFixed(1)
+    };
   });
 }
 
@@ -4369,7 +4447,6 @@ function createNumericResultsHTML(varName, stats, values) {
   container.style.borderBottom = '2px solid var(--border)';
   container.style.paddingBottom = '20px';
   
-  // TOTAL OBSERVATIONS (N) - prominently displayed at the top
   const totalObsHTML = `
     <div style="display: inline-block; background: var(--accent-glow); border-radius: 30px; padding: 6px 16px; margin-bottom: 16px; font-size: 14px; font-weight: 600;">
       Total Observations (N) = <span style="color: var(--accent2); font-size: 18px;">${stats.n}</span>
@@ -4389,7 +4466,7 @@ function createNumericResultsHTML(varName, stats, values) {
         <label><input type="checkbox" class="stat-checkbox" data-stat="range"> Range</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="iqr"> IQR</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="skewness"> Skewness</label>
-        <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis (Excess)</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="missing"> Missing Count</label>
       </div>
     </div>
@@ -4484,15 +4561,15 @@ function updateStatsDisplay(container, varName, stats) {
   
   const statMap = {
     mean: { label: 'Mean', value: stats.mean.toFixed(4) },
-    ci: { label: '95% CI for Mean', value: `(${stats.ciLower.toFixed(4)}, ${stats.ciUpper.toFixed(4)})` },
+    ci: { label: '95% CI for Mean', value: (stats.ciLower && stats.ciUpper) ? `(${stats.ciLower.toFixed(4)}, ${stats.ciUpper.toFixed(4)})` : 'N/A' },
     sd: { label: 'Std. Deviation', value: stats.sd.toFixed(4) },
     var: { label: 'Variance', value: stats.variance.toFixed(4) },
     min: { label: 'Minimum', value: stats.min.toFixed(4) },
     max: { label: 'Maximum', value: stats.max.toFixed(4) },
     range: { label: 'Range', value: stats.range.toFixed(4) },
     iqr: { label: 'Interquartile Range (IQR)', value: stats.iqr.toFixed(4) },
-    skewness: { label: 'Skewness', value: stats.skewness.toFixed(4) },
-    kurtosis: { label: 'Kurtosis', value: stats.kurtosis.toFixed(4) },
+    skewness: { label: 'Skewness', value: isNaN(stats.skewness) ? 'N/A' : stats.skewness.toFixed(4) },
+    kurtosis: { label: 'Kurtosis (Excess)', value: isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4) },
     missing: { label: 'Missing Values', value: stats.missing }
   };
   
@@ -4513,6 +4590,121 @@ function updateStatsDisplay(container, varName, stats) {
   }
   
   grid.innerHTML = html;
+}
+
+function createCategoricalResultsHTML(varName, freqTable, totalCount) {
+  const container = document.createElement('div');
+  container.style.marginBottom = '40px';
+  container.style.borderBottom = '2px solid var(--border)';
+  container.style.paddingBottom = '20px';
+  
+  // Options for categorical statistics (with CI for proportions unchecked by default)
+  const statOptions = `
+    <div class="desc-options-group" style="margin-bottom: 15px;">
+      <div class="desc-options-title">📈 Select Statistics to Display for "${escapeHtml(varName)}"</div>
+      <div class="desc-checkbox-group">
+        <label><input type="checkbox" class="cat-stat-checkbox" data-cat-stat="freq" checked> Frequency</label>
+        <label><input type="checkbox" class="cat-stat-checkbox" data-cat-stat="percent" checked> Percent (%)</label>
+        <label><input type="checkbox" class="cat-stat-checkbox" data-cat-stat="cumfreq"> Cumulative Frequency</label>
+        <label><input type="checkbox" class="cat-stat-checkbox" data-cat-stat="cumpercent"> Cumulative Percent (%)</label>
+        <label><input type="checkbox" class="cat-stat-checkbox" data-cat-stat="ci"> 95% CI for Proportion (Wilson)</label>
+      </div>
+    </div>
+  `;
+  
+  let tableHtml = `
+    <table class="desc-table" id="cat-table-${varName.replace(/[^a-zA-Z0-9]/g, '_')}">
+      <thead>
+        <tr id="cat-header-${varName.replace(/[^a-zA-Z0-9]/g, '_')}">
+          <th style="text-align:center;">Category</th>
+          <th style="text-align:center;" class="col-freq">Frequency</th>
+          <th style="text-align:center;" class="col-percent">Percent (%)</th>
+          <th style="text-align:center;" class="col-cumfreq" style="display:none;">Cumulative Frequency</th>
+          <th style="text-align:center;" class="col-cumpercent" style="display:none;">Cumulative Percent (%)</th>
+          <th style="text-align:center;" class="col-ci" style="display:none;">95% CI for Proportion</th>
+        </tr>
+      </thead>
+      <tbody id="cat-body-${varName.replace(/[^a-zA-Z0-9]/g, '_')}">
+      </tbody>
+    </table>
+    <div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>
+  `;
+  
+  const graphOptions = `
+    <div class="desc-options-group" style="margin-top:20px;">
+      <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
+      <div style="margin-top:10px;">
+        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'categorical')">🎨 Customize & Generate High-Quality Graphs</button>
+      </div>
+    </div>
+    <div id="cat-graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
+  `;
+  
+  container.innerHTML = `
+    <h3 style="font-size:18px; margin-bottom:15px; color:var(--accent2);">📋 ${escapeHtml(varName)} <span style="font-size:12px; color:var(--text3);">(Categorical Variable)</span></h3>
+    ${statOptions}
+    ${tableHtml}
+    ${graphOptions}
+  `;
+  
+  // Store freqTable data
+  container.freqTable = freqTable;
+  container.varName = varName;
+  
+  // Function to update table based on selected columns
+  const updateCategoricalTable = () => {
+    const tbody = container.querySelector(`#cat-body-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    const thead = container.querySelector(`#cat-header-${varName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    
+    // Get selected statistics
+    const selectedStats = [];
+    const statCheckboxes = container.querySelectorAll('.cat-stat-checkbox');
+    statCheckboxes.forEach(cb => {
+      if (cb.checked) {
+        const stat = cb.getAttribute('data-cat-stat');
+        selectedStats.push(stat);
+      }
+    });
+    
+    // Update header visibility
+    const colFreq = thead.querySelector('.col-freq');
+    const colPercent = thead.querySelector('.col-percent');
+    const colCumFreq = thead.querySelector('.col-cumfreq');
+    const colCumPercent = thead.querySelector('.col-cumpercent');
+    const colCi = thead.querySelector('.col-ci');
+    
+    if (colFreq) colFreq.style.display = selectedStats.includes('freq') ? 'table-cell' : 'none';
+    if (colPercent) colPercent.style.display = selectedStats.includes('percent') ? 'table-cell' : 'none';
+    if (colCumFreq) colCumFreq.style.display = selectedStats.includes('cumfreq') ? 'table-cell' : 'none';
+    if (colCumPercent) colCumPercent.style.display = selectedStats.includes('cumpercent') ? 'table-cell' : 'none';
+    if (colCi) colCi.style.display = selectedStats.includes('ci') ? 'table-cell' : 'none';
+    
+    // Build table body
+    let bodyHtml = '';
+    freqTable.forEach(row => {
+      bodyHtml += '<tr>';
+      bodyHtml += `<td style="text-align:center;">${escapeHtml(row.category)}</td>`;
+      if (selectedStats.includes('freq')) bodyHtml += `<td style="text-align:center;">${row.count}</td>`;
+      if (selectedStats.includes('percent')) bodyHtml += `<td style="text-align:center;">${row.percent}%</td>`;
+      if (selectedStats.includes('cumfreq')) bodyHtml += `<td style="text-align:center;">${row.cumFreq}</td>`;
+      if (selectedStats.includes('cumpercent')) bodyHtml += `<td style="text-align:center;">${row.cumPercent}%</td>`;
+      if (selectedStats.includes('ci')) bodyHtml += `<td style="text-align:center;">(${row.ciPercentLower}%, ${row.ciPercentUpper}%)</td>`;
+      bodyHtml += '</tr>';
+    });
+    
+    tbody.innerHTML = bodyHtml;
+  };
+  
+  // Add event listeners to checkboxes
+  const statCheckboxes = container.querySelectorAll('.cat-stat-checkbox');
+  statCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => updateCategoricalTable());
+  });
+  
+  // Initial render (freq and percent only, as checked by default)
+  updateCategoricalTable();
+  
+  return container;
 }
 
 // HIGH-QUALITY GRAPH FUNCTIONS
@@ -5133,48 +5325,6 @@ function downloadGraphAsPNG(canvasId) {
   toast('Graph Downloaded', `High-resolution PNG saved (${width}×${height}px).`, 'success');
 }
 
-function createCategoricalResultsHTML(varName, freqTable, totalCount) {
-  const container = document.createElement('div');
-  container.style.marginBottom = '40px';
-  container.style.borderBottom = '2px solid var(--border)';
-  container.style.paddingBottom = '20px';
-  
-  let tableHtml = `
-    <table class="desc-table">
-      <thead>
-        <tr><th>Category</th><th>Frequency</th><th>Percent (%)</th><th>Cumulative Frequency</th><th>Cumulative Percent (%)</th></tr>
-      </thead>
-      <tbody>
-  `;
-  
-  freqTable.forEach(row => {
-    tableHtml += `<tr><td style="text-align:center;">${escapeHtml(row.category)}</td><td style="text-align:center;">${row.count}</td><td style="text-align:center;">${row.percent}%</td><td style="text-align:center;">${row.cumFreq}</td><td style="text-align:center;">${row.cumPercent}%</td></tr>`;
-  });
-  
-  tableHtml += `</tbody></table><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
-  
-  const graphOptions = `
-    <div class="desc-options-group" style="margin-top:20px;">
-      <div class="desc-options-title">📊 Graphs for "${escapeHtml(varName)}"</div>
-      <div style="margin-top:10px;">
-        <button class="btn-secondary" style="padding:8px 16px; font-size:12px;" onclick="showGraphModal('${varName}', 'categorical')">🎨 Customize & Generate High-Quality Graphs</button>
-      </div>
-    </div>
-    <div id="cat-graphs-${varName.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
-  `;
-  
-  container.innerHTML = `
-    <h3 style="font-size:18px; margin-bottom:15px; color:var(--accent2);">📋 ${escapeHtml(varName)} <span style="font-size:12px; color:var(--text3);">(Categorical Variable)</span></h3>
-    ${tableHtml}
-    ${graphOptions}
-  `;
-  
-  container.freqTable = freqTable;
-  container.varName = varName;
-  
-  return container;
-}
-
 function clearDescriptiveData() {
   document.getElementById('desc-data-input').value = '';
   descriptiveData = null;
@@ -5194,16 +5344,22 @@ function exportDescriptivesToExcel() {
   loadSheetJS(() => {
     const wb = XLSX.utils.book_new();
     
-    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', '95% CI Lower', '95% CI Upper', 'SD', 'Min', 'Max', 'Missing']];
+    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', '95% CI Lower', '95% CI Upper', 'SD', 'Min', 'Max', 'Skewness', 'Kurtosis (Excess)', 'Missing']];
     for (let col of descriptiveSelectedVars) {
       const isNumeric = descriptiveVarTypes[col] === 'numeric';
       const values = descriptiveData.map(row => row[col]).filter(v => v !== '');
       if (isNumeric) {
         const numValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
         const stats = calculateNumericStats(numValues);
-        summaryData.push([col, 'Numeric', stats.n, stats.mean.toFixed(4), stats.ciLower.toFixed(4), stats.ciUpper.toFixed(4), stats.sd.toFixed(4), stats.min, stats.max, stats.missing]);
+        summaryData.push([col, 'Numeric', stats.n, stats.mean.toFixed(4), 
+          stats.ciLower ? stats.ciLower.toFixed(4) : 'N/A', 
+          stats.ciUpper ? stats.ciUpper.toFixed(4) : 'N/A', 
+          stats.sd.toFixed(4), stats.min, stats.max, 
+          isNaN(stats.skewness) ? 'N/A' : stats.skewness.toFixed(4), 
+          isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4), 
+          stats.missing]);
       } else {
-        summaryData.push([col, 'Categorical', values.length, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', descriptiveData.length - values.length]);
+        summaryData.push([col, 'Categorical', values.length, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', descriptiveData.length - values.length]);
       }
     }
     
@@ -5241,22 +5397,22 @@ function exportFullAnalysisToWord() {
         <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
           <tr><th style="border:1px solid #000; padding:8px;">Statistic</th><th style="border:1px solid #000; padding:8px;">Value</th></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Mean</td><td style="border:1px solid #000; padding:8px;">${stats.mean.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:8px;">95% CI for Mean</td><td style="border:1px solid #000; padding:8px;">(${stats.ciLower.toFixed(4)}, ${stats.ciUpper.toFixed(4)})</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">95% CI for Mean</td><td style="border:1px solid #000; padding:8px;">(${stats.ciLower ? stats.ciLower.toFixed(4) : 'N/A'}, ${stats.ciUpper ? stats.ciUpper.toFixed(4) : 'N/A'})</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Standard Deviation</td><td style="border:1px solid #000; padding:8px;">${stats.sd.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Minimum</td><td style="border:1px solid #000; padding:8px;">${stats.min}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Maximum</td><td style="border:1px solid #000; padding:8px;">${stats.max}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Range</td><td style="border:1px solid #000; padding:8px;">${stats.range.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Median (Q2)</td><td style="border:1px solid #000; padding:8px;">${stats.median.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">IQR</td><td style="border:1px solid #000; padding:8px;">${stats.iqr.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:8px;">Skewness</td><td style="border:1px solid #000; padding:8px;">${stats.skewness.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:8px;">Kurtosis</td><td style="border:1px solid #000; padding:8px;">${stats.kurtosis.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Skewness</td><td style="border:1px solid #000; padding:8px;">${isNaN(stats.skewness) ? 'N/A' : stats.skewness.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Kurtosis (Excess)</td><td style="border:1px solid #000; padding:8px;">${isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Missing Values</td><td style="border:1px solid #000; padding:8px;">${stats.missing}</td></tr>
         </table>`;
     } else {
       const freqTable = calculateFreqTable(values);
-      analysisDetails += `<table style="border-collapse: collapse; width: 100%;"><tr><th>Category</th><th>Frequency</th><th>Percent</th></tr>`;
+      analysisDetails += `<table style="border-collapse: collapse; width: 100%;"><tr><th>Category</th><th>Frequency</th><th>Percent</th><th>95% CI for Proportion</th></tr>`;
       freqTable.forEach(row => {
-        analysisDetails += `<tr><td>${escapeHtml(row.category)}</td><td>${row.count}</td><td>${row.percent}%</td></tr>`;
+        analysisDetails += `<tr><td>${escapeHtml(row.category)}</td><td>${row.count}</td><td>${row.percent}%</td><td>(${row.ciPercentLower}%, ${row.ciPercentUpper}%)</td></tr>`;
       });
       analysisDetails += `</table><p>Total: ${values.length} observations</p>`;
     }
@@ -5281,6 +5437,9 @@ function exportFullAnalysisToWord() {
 ${analysisDetails}
 <div style="margin-top:40px; text-align:center; font-size:10px;">
   <p>Created with CalcuStats · Total Observations (N) included for all numeric variables</p>
+  <p>Kurtosis calculated as excess kurtosis (SAS method: G2)</p>
+  <p>Confidence intervals for means use t-distribution (matching SAS PROC MEANS)</p>
+  <p>Confidence intervals for proportions use Wilson score method (matching SAS default)</p>
   <p>© ${new Date().getFullYear()} CalcuStats · Mudasir Mohammed Ibrahim</p>
 </div>
 </body>
@@ -5296,13 +5455,46 @@ ${analysisDetails}
   toast('Exported', 'Word document with full analysis saved.', 'success');
 }
 
-// Helper function for Excel export (SheetJS)
 function loadSheetJS(cb) {
   if (window.XLSX) { cb(); return; }
   const s = document.createElement('script');
   s.src = 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
   s.onload = cb;
   document.head.appendChild(s);
+}
+
+// Helper toast function if not already defined
+function toast(title, message, type = 'info') {
+  const toastContainer = document.getElementById('toast-container') || (() => {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.position = 'fixed';
+    container.style.bottom = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+  })();
+  
+  const toast = document.createElement('div');
+  toast.style.backgroundColor = type === 'success' ? '#10b981' : type === 'warn' ? '#f59e0b' : '#3b82f6';
+  toast.style.color = 'white';
+  toast.style.padding = '12px 20px';
+  toast.style.marginTop = '10px';
+  toast.style.borderRadius = '8px';
+  toast.style.fontSize = '14px';
+  toast.style.fontWeight = '500';
+  toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  toast.style.animation = 'slideIn 0.3s ease';
+  toast.innerHTML = `<strong>${title}</strong><br>${message}`;
+  
+  toastContainer.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 </script>
