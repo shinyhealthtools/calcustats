@@ -4280,81 +4280,13 @@ function calculateNumericStats(values) {
   const kurtosis = (fourthDiffs.reduce((a, b) => a + b, 0) / n) / Math.pow(sd, 4) - 3;
   
   const missing = descriptiveData.length - values.length;
-  const normality = shapiroWilkTest(values);
   
   return {
     n, mean, median: q2, sd, variance,
     min, max, range, q1, q3, iqr,
     percentiles: percentileValues,
-    skewness, kurtosis, missing, normality, values, sorted
+    skewness, kurtosis, missing, values, sorted
   };
-}
-
-function shapiroWilkTest(values) {
-  const n = values.length;
-  if (n < 3) return { test: 'Shapiro-Wilk', statistic: null, pValue: null, interpretation: 'Insufficient data (n<3)' };
-  if (n > 5000) return { test: 'Shapiro-Wilk', statistic: null, pValue: null, interpretation: 'Sample too large (>5000)' };
-  
-  const sorted = [...values].sort((a, b) => a - b);
-  const mean = values.reduce((a, b) => a + b, 0) / n;
-  
-  let denominator = 0;
-  for (let i = 0; i < n; i++) {
-    denominator += Math.pow(values[i] - mean, 2);
-  }
-  
-  const coefficients = [];
-  const m = [];
-  for (let i = 1; i <= n; i++) {
-    m.push((i - 0.375) / (n + 0.25));
-  }
-  
-  for (let i = 0; i < Math.floor(n / 2); i++) {
-    const u = m[i];
-    const v = Math.pow(u, 0.14);
-    const a = v / Math.sqrt(2 * m.reduce((sum, val, idx) => {
-      if (idx < Math.floor(n / 2)) return sum + Math.pow(val, 0.28);
-      return sum;
-    }, 0));
-    coefficients.push(a);
-  }
-  
-  let numerator = 0;
-  for (let i = 0; i < Math.floor(n / 2); i++) {
-    numerator += coefficients[i] * (sorted[n - 1 - i] - sorted[i]);
-  }
-  numerator = Math.pow(numerator, 2);
-  
-  const w = numerator / denominator;
-  
-  let pValue;
-  if (n >= 4 && n <= 2000) {
-    const lnW = Math.log(1 - w);
-    const mu = -1.2725 + 1.0521 * Math.log(n);
-    const sigma = 0.4597 - 0.2913 * Math.log(n);
-    const z = (lnW - mu) / sigma;
-    pValue = 1 - phi(z);
-  } else {
-    pValue = w > 0.95 ? 0.1 : (w > 0.9 ? 0.05 : 0.01);
-  }
-  
-  const isNormal = pValue > 0.05;
-  
-  return {
-    test: 'Shapiro-Wilk',
-    statistic: w.toFixed(4),
-    pValue: pValue.toFixed(4),
-    interpretation: isNormal ? 'Data appears normally distributed (p > 0.05)' : 'Data deviates from normality (p < 0.05)',
-    normal: isNormal
-  };
-}
-
-function phi(x) {
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-x * x / 2);
-  let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  if (x > 0) p = 1 - p;
-  return p;
 }
 
 function calculateFreqTable(values) {
@@ -4442,7 +4374,6 @@ function createNumericResultsHTML(varName, stats, values) {
         <label><input type="checkbox" class="stat-checkbox" data-stat="iqr"> IQR</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="skewness"> Skewness</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis</label>
-        <label><input type="checkbox" class="stat-checkbox" data-stat="normality"> Normality Test</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="missing"> Missing Count</label>
       </div>
     </div>
@@ -4545,7 +4476,6 @@ function updateStatsDisplay(container, varName, stats) {
     iqr: { label: 'Interquartile Range (IQR)', value: stats.iqr.toFixed(4) },
     skewness: { label: 'Skewness', value: stats.skewness.toFixed(4) },
     kurtosis: { label: 'Kurtosis', value: stats.kurtosis.toFixed(4) },
-    normality: { label: 'Normality Test', value: `${stats.normality.test}: W=${stats.normality.statistic}, p=${stats.normality.pValue} - ${stats.normality.interpretation}` },
     missing: { label: 'Missing Values', value: stats.missing }
   };
   
@@ -4592,14 +4522,13 @@ function showGraphModal(varName, varType) {
     chartType: isNumeric ? 'histogram' : 'bar',
     colors: categoryColors,
     histColor: '#5b52f0',
-    showLabels: 'both',
+    showLabels: 'counts',         // Changed default to 'counts' (instead of 'both')
     width: 800,
     height: 500,
     title: `${varName} - Distribution`,
     xLabel: isNumeric ? 'Value' : 'Category',
-    yLabel: isNumeric ? 'Frequency' : 'Count',
+    yLabel: isNumeric ? 'Count' : 'Count',   // Changed from 'Frequency' to 'Count'
     fontSize: 14,
-    showNormalityCurve: false,
     rotation: 0
   };
   
@@ -4651,9 +4580,9 @@ function showGraphModal(varName, varType) {
               <div class="fc-field">
                 <label>Show Labels</label>
                 <select id="graph-show-labels" onchange="updateGraphPreview()">
-                  <option value="both" selected>Counts + Percentages</option>
-                  <option value="counts">Counts Only</option>
+                  <option value="counts" selected>Counts Only</option>
                   <option value="percentages">Percentages Only</option>
+                  <option value="both">Counts + Percentages</option>
                   <option value="none">None</option>
                 </select>
               </div>
@@ -4698,16 +4627,6 @@ function showGraphModal(varName, varType) {
             </div>
             
             ${colorPickersHtml}
-            
-            ${isNumeric ? `
-            <div class="fc-section">
-              <div class="fc-section-title">Normality Curve</div>
-              <div class="fc-toggle-row" onclick="toggleNormalityCurve()">
-                <div class="fc-toggle-mini" id="normality-sw"><div class="fc-toggle-mini-knob"></div></div>
-                <span class="fc-toggle-label">Show Normality Curve (default: off)</span>
-              </div>
-            </div>
-            ` : ''}
             
             <div class="fc-section">
               <button class="fc-apply-btn" onclick="redrawGraph()">🔄 Apply & Redraw</button>
@@ -4769,13 +4688,6 @@ function updateHistogramColor(color) {
   drawPreviewGraph();
 }
 
-function toggleNormalityCurve() {
-  const sw = document.getElementById('normality-sw');
-  sw.classList.toggle('on');
-  currentGraphConfig.showNormalityCurve = sw.classList.contains('on');
-  drawPreviewGraph();
-}
-
 function updateGraphPreview() {
   currentGraphConfig.chartType = document.getElementById('graph-chart-type')?.value || currentGraphConfig.chartType;
   currentGraphConfig.showLabels = document.getElementById('graph-show-labels')?.value || currentGraphConfig.showLabels;
@@ -4792,10 +4704,10 @@ function updateGraphPreview() {
 
 function resetGraphDefaults() {
   document.getElementById('graph-chart-type').value = currentGraphConfig.isNumeric ? 'histogram' : 'bar';
-  document.getElementById('graph-show-labels').value = 'both';
+  document.getElementById('graph-show-labels').value = 'counts';
   document.getElementById('graph-title').value = `${currentGraphConfig.varName} - Distribution`;
   document.getElementById('graph-xlabel').value = currentGraphConfig.isNumeric ? 'Value' : 'Category';
-  document.getElementById('graph-ylabel').value = currentGraphConfig.isNumeric ? 'Frequency' : 'Count';
+  document.getElementById('graph-ylabel').value = 'Count';
   document.getElementById('graph-fontsize').value = '14';
   document.getElementById('fontsize-val').textContent = '14px';
   document.getElementById('graph-width').value = '800';
@@ -4820,9 +4732,6 @@ function resetGraphDefaults() {
     const histColor = document.getElementById('hist-color');
     if (histColor) histColor.value = '#5b52f0';
     currentGraphConfig.histColor = '#5b52f0';
-    const normSw = document.getElementById('normality-sw');
-    if (normSw) normSw.classList.remove('on');
-    currentGraphConfig.showNormalityCurve = false;
   }
   
   drawPreviewGraph();
@@ -4921,34 +4830,6 @@ function drawHighQualityNumericGraph(canvas) {
         else if (showLabels === 'both') labelText = `${bins[i]} (${((bins[i] / values.length) * 100).toFixed(1)}%)`;
         ctx.fillText(labelText, x + barWidth / 2, y - 8);
       }
-    }
-    
-    if (currentGraphConfig.showNormalityCurve && values.length > 1) {
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const sd = Math.sqrt(values.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / (values.length - 1));
-      
-      ctx.beginPath();
-      ctx.strokeStyle = '#e8524a';
-      ctx.lineWidth = 2.5;
-      
-      const step = (max - min) / 200;
-      let firstPoint = true;
-      for (let x = min; x <= max; x += step) {
-        const pdf = (1 / (sd * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mean, 2) / (2 * sd * sd));
-        const normalizedY = (pdf / (maxFreq / plotHeight / (binWidth || 1))) * plotHeight;
-        const canvasX = padding.left + ((x - min) / (max - min)) * plotWidth;
-        const canvasY = canvas.height - padding.bottom - normalizedY;
-        
-        if (canvasX >= padding.left && canvasX <= canvas.width - padding.right && canvasY >= padding.top && canvasY <= canvas.height - padding.bottom) {
-          if (firstPoint) {
-            ctx.moveTo(canvasX, canvasY);
-            firstPoint = false;
-          } else {
-            ctx.lineTo(canvasX, canvasY);
-          }
-        }
-      }
-      ctx.stroke();
     }
     
     ctx.fillStyle = '#222';
@@ -5252,7 +5133,7 @@ function createCategoricalResultsHTML(varName, freqTable, totalCount) {
     tableHtml += `<tr><td style="text-align:center;">${escapeHtml(row.category)}</td><td style="text-align:center;">${row.count}</td><td style="text-align:center;">${row.percent}%</td><td style="text-align:center;">${row.cumFreq}</td><td style="text-align:center;">${row.cumPercent}%</td></tr>`;
   });
   
-  tableHtml += `</tbody></table><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
+  tableHtml += `</tbody></td><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
   
   const graphOptions = `
     <div class="desc-options-group" style="margin-top:20px;">
@@ -5404,6 +5285,7 @@ function loadSheetJS(cb) {
   s.onload = cb;
   document.head.appendChild(s);
 }
+
 </script>
 </body>
 </html>
