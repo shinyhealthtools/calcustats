@@ -4183,11 +4183,28 @@ function escapeHtml(str) {
   });
 }
 
+// Accurate quantile calculation matching SAS/R (Type 6 method)
+function calculateQuantile(sorted, p, n) {
+  // Using method similar to SAS and R's default quantile type (Type 6)
+  // This matches the algorithm: index = p * (n + 1)
+  const index = p * (n + 1);
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  
+  if (lower < 1) return sorted[0];
+  if (upper > n) return sorted[n - 1];
+  if (lower === upper) return sorted[lower - 1];
+  
+  // Linear interpolation between the two nearest order statistics
+  const weight = index - lower;
+  return sorted[lower - 1] * (1 - weight) + sorted[upper - 1] * weight;
+}
+
 function calculateNumericStats(values) {
   if (values.length === 0) return null;
   
   const sorted = [...values].sort((a, b) => a - b);
-  const n = values.length;  // ← TOTAL OBSERVATIONS (N)
+  const n = values.length;
   const sum = values.reduce((a, b) => a + b, 0);
   const mean = sum / n;
   
@@ -4195,27 +4212,26 @@ function calculateNumericStats(values) {
   const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
   const sd = Math.sqrt(variance);
   
+  // 95% Confidence Interval for the Mean
+  const stdError = sd / Math.sqrt(n);
+  const tValue = getTValue(n - 1, 0.975); // 95% CI uses 0.975 quantile
+  const ciLower = mean - tValue * stdError;
+  const ciUpper = mean + tValue * stdError;
+  
   const min = sorted[0];
   const max = sorted[n - 1];
   const range = max - min;
   
-  const q1 = sorted[Math.floor(n * 0.25)];
-  const q2 = sorted[Math.floor(n * 0.5)];
-  const q3 = sorted[Math.floor(n * 0.75)];
+  // Accurate quartiles and percentiles using the correct method
+  const q1 = calculateQuantile(sorted, 0.25, n);
+  const q2 = calculateQuantile(sorted, 0.50, n);  // Median
+  const q3 = calculateQuantile(sorted, 0.75, n);
   const iqr = q3 - q1;
   
   const percentiles = [5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 95];
   const percentileValues = {};
   percentiles.forEach(p => {
-    const idx = (p / 100) * (n - 1);
-    const lower = Math.floor(idx);
-    const upper = Math.ceil(idx);
-    if (lower === upper) {
-      percentileValues[p] = sorted[lower];
-    } else {
-      const weight = idx - lower;
-      percentileValues[p] = sorted[lower] * (1 - weight) + sorted[upper] * weight;
-    }
+    percentileValues[p] = calculateQuantile(sorted, p / 100, n);
   });
   
   const cubedDiffs = values.map(v => Math.pow(v - mean, 3));
@@ -4229,9 +4245,63 @@ function calculateNumericStats(values) {
   return {
     n, mean, median: q2, sd, variance,
     min, max, range, q1, q3, iqr,
+    ciLower, ciUpper, stdError,
     percentiles: percentileValues,
     skewness, kurtosis, missing, values, sorted
   };
+}
+
+// Helper function to get t-value for confidence intervals
+function getTValue(df, p) {
+  // Approximate t-value using normal approximation for large df, or stored values for small df
+  if (df > 30) {
+    // For large degrees of freedom, use normal approximation (z-score)
+    const z = getZScore(p);
+    return z;
+  }
+  
+  // Precomputed t-values for common degrees of freedom at 95% CI (p=0.975)
+  const tTable = {
+    1: 12.7062, 2: 4.3027, 3: 3.1824, 4: 2.7764, 5: 2.5706,
+    6: 2.4469, 7: 2.3646, 8: 2.3060, 9: 2.2622, 10: 2.2281,
+    11: 2.2010, 12: 2.1788, 13: 2.1604, 14: 2.1448, 15: 2.1315,
+    16: 2.1199, 17: 2.1098, 18: 2.1009, 19: 2.0930, 20: 2.0860,
+    21: 2.0796, 22: 2.0739, 23: 2.0687, 24: 2.0639, 25: 2.0595,
+    26: 2.0555, 27: 2.0518, 28: 2.0484, 29: 2.0452, 30: 2.0423
+  };
+  
+  if (df <= 30 && tTable[df]) {
+    return tTable[df];
+  }
+  
+  // Fallback to normal approximation
+  return getZScore(p);
+}
+
+function getZScore(p) {
+  // Inverse CDF for standard normal (two-tailed)
+  const a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
+  const a4 = 138.357751867269, a5 = -30.6647980661472, a6 = 2.50662827745924;
+  const b1 = -54.4760987982241, b2 = 161.585836858041, b3 = -155.698979859887;
+  const b4 = 66.8013118877197, b5 = -13.2806815528857, c1 = -7.78489400243029e-3;
+  const c2 = -0.322396458041136, c3 = -2.40075827716184, c4 = -2.54973253934373;
+  const c5 = 4.37466414146497, c6 = 2.93816398269878, d1 = 7.78469570904146e-3;
+  const d2 = 0.32246712907004, d3 = 2.445134137143, d4 = 3.75440866190742;
+  
+  let q = p - 0.5;
+  let r;
+  if (Math.abs(q) <= 0.425) {
+    r = 0.180625 - q * q;
+    return q * (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) /
+                (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+  } else {
+    if (q < 0) r = p;
+    else r = 1 - p;
+    r = Math.sqrt(-Math.log(r));
+    let t = (((((c1 * r + c2) * r + c3) * r + c4) * r + c5) * r + c6) /
+            ((((d1 * r + d2) * r + d3) * r + d4) * r + 1);
+    return (q < 0) ? -t : t;
+  }
 }
 
 function calculateFreqTable(values) {
@@ -4299,7 +4369,7 @@ function createNumericResultsHTML(varName, stats, values) {
   container.style.borderBottom = '2px solid var(--border)';
   container.style.paddingBottom = '20px';
   
-  // ✅ TOTAL OBSERVATIONS (N) - prominently displayed at the top
+  // TOTAL OBSERVATIONS (N) - prominently displayed at the top
   const totalObsHTML = `
     <div style="display: inline-block; background: var(--accent-glow); border-radius: 30px; padding: 6px 16px; margin-bottom: 16px; font-size: 14px; font-weight: 600;">
       Total Observations (N) = <span style="color: var(--accent2); font-size: 18px;">${stats.n}</span>
@@ -4311,6 +4381,7 @@ function createNumericResultsHTML(varName, stats, values) {
       <div class="desc-options-title">📈 Select Statistics to Display for "${escapeHtml(varName)}"</div>
       <div class="desc-checkbox-group">
         <label><input type="checkbox" class="stat-checkbox" data-stat="mean" checked> Mean</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="ci" checked> 95% CI for Mean</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="sd" checked> Std Dev</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="var"> Variance</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="min" checked> Min</label>
@@ -4413,6 +4484,7 @@ function updateStatsDisplay(container, varName, stats) {
   
   const statMap = {
     mean: { label: 'Mean', value: stats.mean.toFixed(4) },
+    ci: { label: '95% CI for Mean', value: `(${stats.ciLower.toFixed(4)}, ${stats.ciUpper.toFixed(4)})` },
     sd: { label: 'Std. Deviation', value: stats.sd.toFixed(4) },
     var: { label: 'Variance', value: stats.variance.toFixed(4) },
     min: { label: 'Minimum', value: stats.min.toFixed(4) },
@@ -4467,12 +4539,12 @@ function showGraphModal(varName, varType) {
     chartType: isNumeric ? 'histogram' : 'bar',
     colors: categoryColors,
     histColor: '#5b52f0',
-    showLabels: 'counts',         // Changed default to 'counts' (instead of 'both')
+    showLabels: 'counts',
     width: 800,
     height: 500,
     title: `${varName} - Distribution`,
     xLabel: isNumeric ? 'Value' : 'Category',
-    yLabel: isNumeric ? 'Count' : 'Count',   // Changed from 'Frequency' to 'Count'
+    yLabel: isNumeric ? 'Count' : 'Count',
     fontSize: 14,
     rotation: 0
   };
@@ -4792,9 +4864,10 @@ function drawHighQualityNumericGraph(canvas) {
     
   } else if (chartType === 'boxplot') {
     const sorted = [...values].sort((a, b) => a - b);
-    const q1 = sorted[Math.floor(sorted.length * 0.25)];
-    const median = sorted[Math.floor(sorted.length * 0.5)];
-    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    const n = sorted.length;
+    const q1 = calculateQuantile(sorted, 0.25, n);
+    const median = calculateQuantile(sorted, 0.50, n);
+    const q3 = calculateQuantile(sorted, 0.75, n);
     const iqr = q3 - q1;
     const lowerWhisker = Math.max(Math.min(...values), q1 - 1.5 * iqr);
     const upperWhisker = Math.min(Math.max(...values), q3 + 1.5 * iqr);
@@ -5078,7 +5151,7 @@ function createCategoricalResultsHTML(varName, freqTable, totalCount) {
     tableHtml += `<tr><td style="text-align:center;">${escapeHtml(row.category)}</td><td style="text-align:center;">${row.count}</td><td style="text-align:center;">${row.percent}%</td><td style="text-align:center;">${row.cumFreq}</td><td style="text-align:center;">${row.cumPercent}%</td></tr>`;
   });
   
-  tableHtml += `</tbody></td><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
+  tableHtml += `</tbody></table><div style="margin-top:10px;"><strong>Total Observations:</strong> ${totalCount} &nbsp;|&nbsp;<strong>Missing:</strong> ${descriptiveData.length - totalCount}</div>`;
   
   const graphOptions = `
     <div class="desc-options-group" style="margin-top:20px;">
@@ -5121,16 +5194,16 @@ function exportDescriptivesToExcel() {
   loadSheetJS(() => {
     const wb = XLSX.utils.book_new();
     
-    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', 'SD', 'Min', 'Max', 'Missing']];
+    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', '95% CI Lower', '95% CI Upper', 'SD', 'Min', 'Max', 'Missing']];
     for (let col of descriptiveSelectedVars) {
       const isNumeric = descriptiveVarTypes[col] === 'numeric';
       const values = descriptiveData.map(row => row[col]).filter(v => v !== '');
       if (isNumeric) {
         const numValues = values.map(v => parseFloat(v)).filter(v => !isNaN(v));
         const stats = calculateNumericStats(numValues);
-        summaryData.push([col, 'Numeric', stats.n, stats.mean.toFixed(4), stats.sd.toFixed(4), stats.min, stats.max, stats.missing]);
+        summaryData.push([col, 'Numeric', stats.n, stats.mean.toFixed(4), stats.ciLower.toFixed(4), stats.ciUpper.toFixed(4), stats.sd.toFixed(4), stats.min, stats.max, stats.missing]);
       } else {
-        summaryData.push([col, 'Categorical', values.length, 'N/A', 'N/A', 'N/A', 'N/A', descriptiveData.length - values.length]);
+        summaryData.push([col, 'Categorical', values.length, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', descriptiveData.length - values.length]);
       }
     }
     
@@ -5168,6 +5241,7 @@ function exportFullAnalysisToWord() {
         <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
           <tr><th style="border:1px solid #000; padding:8px;">Statistic</th><th style="border:1px solid #000; padding:8px;">Value</th></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Mean</td><td style="border:1px solid #000; padding:8px;">${stats.mean.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">95% CI for Mean</td><td style="border:1px solid #000; padding:8px;">(${stats.ciLower.toFixed(4)}, ${stats.ciUpper.toFixed(4)})</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Standard Deviation</td><td style="border:1px solid #000; padding:8px;">${stats.sd.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Minimum</td><td style="border:1px solid #000; padding:8px;">${stats.min}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Maximum</td><td style="border:1px solid #000; padding:8px;">${stats.max}</td></tr>
