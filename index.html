@@ -4466,7 +4466,7 @@ function createNumericResultsHTML(varName, stats, values) {
         <label><input type="checkbox" class="stat-checkbox" data-stat="range"> Range</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="iqr"> IQR</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="skewness"> Skewness</label>
-        <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis (Excess)</label>
+        <label><input type="checkbox" class="stat-checkbox" data-stat="kurtosis"> Kurtosis</label>
         <label><input type="checkbox" class="stat-checkbox" data-stat="missing"> Missing Count</label>
       </div>
     </div>
@@ -4569,7 +4569,7 @@ function updateStatsDisplay(container, varName, stats) {
     range: { label: 'Range', value: stats.range.toFixed(4) },
     iqr: { label: 'Interquartile Range (IQR)', value: stats.iqr.toFixed(4) },
     skewness: { label: 'Skewness', value: isNaN(stats.skewness) ? 'N/A' : stats.skewness.toFixed(4) },
-    kurtosis: { label: 'Kurtosis (Excess)', value: isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4) },
+    kurtosis: { label: 'Kurtosis', value: isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4) },
     missing: { label: 'Missing Values', value: stats.missing }
   };
   
@@ -5344,7 +5344,7 @@ function exportDescriptivesToExcel() {
   loadSheetJS(() => {
     const wb = XLSX.utils.book_new();
     
-    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', '95% CI Lower', '95% CI Upper', 'SD', 'Min', 'Max', 'Skewness', 'Kurtosis (Excess)', 'Missing']];
+    const summaryData = [['Variable', 'Type', 'N (Total Obs)', 'Mean', '95% CI Lower', '95% CI Upper', 'SD', 'Min', 'Max', 'Skewness', 'Kurtosis', 'Missing']];
     for (let col of descriptiveSelectedVars) {
       const isNumeric = descriptiveVarTypes[col] === 'numeric';
       const values = descriptiveData.map(row => row[col]).filter(v => v !== '');
@@ -5405,7 +5405,7 @@ function exportFullAnalysisToWord() {
           <tr><td style="border:1px solid #000; padding:8px;">Median (Q2)</td><td style="border:1px solid #000; padding:8px;">${stats.median.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">IQR</td><td style="border:1px solid #000; padding:8px;">${stats.iqr.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Skewness</td><td style="border:1px solid #000; padding:8px;">${isNaN(stats.skewness) ? 'N/A' : stats.skewness.toFixed(4)}</td></tr>
-          <tr><td style="border:1px solid #000; padding:8px;">Kurtosis (Excess)</td><td style="border:1px solid #000; padding:8px;">${isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4)}</td></tr>
+          <tr><td style="border:1px solid #000; padding:8px;">Kurtosis </td><td style="border:1px solid #000; padding:8px;">${isNaN(stats.kurtosis) ? 'N/A' : stats.kurtosis.toFixed(4)}</td></tr>
           <tr><td style="border:1px solid #000; padding:8px;">Missing Values</td><td style="border:1px solid #000; padding:8px;">${stats.missing}</td></tr>
         </table>`;
     } else {
