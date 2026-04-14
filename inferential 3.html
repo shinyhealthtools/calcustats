@@ -7590,73 +7590,148 @@ function logGamma(z) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TWO-WAY ANOVA
+// TWO-WAY ANOVA — Type III SS (matches SPSS/SAS for unbalanced designs)
 // ═══════════════════════════════════════════════════════════════
+
 function runTwoWayANOVA() {
   const dep = document.getElementById('adv_2way_dep').value;
   const f1  = document.getElementById('adv_2way_f1').value;
   const f2  = document.getElementById('adv_2way_f2').value;
 
-  const rows = advData.filter(r => !isNaN(parseFloat(r[dep])) && r[f1] && r[f2]);
+  const rows = advData.filter(r =>
+    !isNaN(parseFloat(r[dep])) && r[f1] !== undefined && r[f2] !== undefined
+  );
+
+  const Y = rows.map(r => parseFloat(r[dep]));
+  const N = rows.length;
+
   const aLevels = [...new Set(rows.map(r => r[f1]))].sort();
   const bLevels = [...new Set(rows.map(r => r[f2]))].sort();
   const a = aLevels.length, b = bLevels.length;
-  const totalN = rows.length;
-  const allY = rows.map(r => parseFloat(r[dep]));
-  const grandMean = mean(allY);
 
-  // Cell means
-  const cellData = {};
-  for (const al of aLevels) for (const bl of bLevels) {
-    const vals = rows.filter(r => r[f1] === al && r[f2] === bl).map(r => parseFloat(r[dep]));
-    cellData[`${al}|${bl}`] = vals;
+  // ── Build design matrix X for full model: intercept + A dummies + B dummies + AB dummies
+  // Uses last-category reference (effect coding omitted for simplicity; dummy gives same SS)
+  function buildX(includeA, includeB, includeAB) {
+    return rows.map(r => {
+      const row = [1]; // intercept
+      if (includeA)  aLevels.slice(0,-1).forEach(al => row.push(r[f1] === al ? 1 : 0));
+      if (includeB)  bLevels.slice(0,-1).forEach(bl => row.push(r[f2] === bl ? 1 : 0));
+      if (includeAB) {
+        aLevels.slice(0,-1).forEach(al =>
+          bLevels.slice(0,-1).forEach(bl =>
+            row.push(r[f1] === al && r[f2] === bl ? 1 : 0)
+          )
+        );
+      }
+      return row;
+    });
   }
 
-  // Marginal means
-  const aMeans = {}, aNs = {};
-  for (const al of aLevels) {
-    const vals = rows.filter(r => r[f1] === al).map(r => parseFloat(r[dep]));
-    aMeans[al] = mean(vals); aNs[al] = vals.length;
-  }
-  const bMeans = {}, bNs = {};
-  for (const bl of bLevels) {
-    const vals = rows.filter(r => r[f2] === bl).map(r => parseFloat(r[dep]));
-    bMeans[bl] = mean(vals); bNs[bl] = vals.length;
-  }
-
-  // Sums of squares
-  let SS_A = 0, SS_B = 0, SS_AB = 0, SS_W = 0;
-  for (const al of aLevels) SS_A += aNs[al] * (aMeans[al] - grandMean) ** 2;
-  for (const bl of bLevels) SS_B += bNs[bl] * (bMeans[bl] - grandMean) ** 2;
-  for (const al of aLevels) for (const bl of bLevels) {
-    const key = `${al}|${bl}`;
-    const vals = cellData[key];
-    if (!vals || vals.length === 0) continue;
-    const cm = mean(vals);
-    const expected = grandMean + (aMeans[al] - grandMean) + (bMeans[bl] - grandMean);
-    SS_AB += vals.length * (cm - expected) ** 2;
-    SS_W  += vals.reduce((s, v) => s + (v - cm) ** 2, 0);
+  // ── OLS: returns SS_residual = Y'Y - Y'X(X'X)^{-1}X'Y
+  function ssResidual(X) {
+    const Xt  = transpose(X);
+    const XtX = matMul(Xt, X);
+    const XtY = matVec(Xt, Y);
+    const inv = matInv(XtX);
+    if (!inv) return NaN;
+    const beta = matVec(inv, XtY);
+    const fitted = matVec(X, beta);
+    return Y.reduce((s, yi, i) => s + (yi - fitted[i]) ** 2, 0);
   }
 
-  const df_A = a - 1, df_B = b - 1, df_AB = df_A * df_B, df_W = totalN - a * b;
-  const MS_A = SS_A / df_A, MS_B = SS_B / df_B;
-  const MS_AB = SS_AB / Math.max(1, df_AB), MS_W = SS_W / Math.max(1, df_W);
-  const F_A = MS_A / MS_W, F_B = MS_B / MS_W, F_AB = MS_AB / MS_W;
-  const p_A = fpvalue(F_A, df_A, df_W), p_B = fpvalue(F_B, df_B, df_W);
+  // ── Type III SS: SS_effect = RSS(model without effect) - RSS(full model)
+  const X_full   = buildX(true,  true,  true);
+  const X_noA    = buildX(false, true,  true);
+  const X_noB    = buildX(true,  false, true);
+  const X_noAB   = buildX(true,  true,  false);
+
+  const RSS_full = ssResidual(X_full);
+  const SS_A     = ssResidual(X_noA)  - RSS_full;
+  const SS_B     = ssResidual(X_noB)  - RSS_full;
+  const SS_AB    = ssResidual(X_noAB) - RSS_full;
+  const SS_W     = RSS_full;
+  const SS_total = Y.reduce((s, yi) => s + (yi - mean(Y)) ** 2, 0);
+
+  const df_A  = a - 1;
+  const df_B  = b - 1;
+  const df_AB = df_A * df_B;
+  const df_W  = N - a * b;
+
+  const MS_A  = SS_A  / df_A;
+  const MS_B  = SS_B  / df_B;
+  const MS_AB = SS_AB / df_AB;
+  const MS_W  = SS_W  / df_W;
+
+  const F_A  = MS_A  / MS_W;
+  const F_B  = MS_B  / MS_W;
+  const F_AB = MS_AB / MS_W;
+
+  const p_A  = fpvalue(F_A,  df_A,  df_W);
+  const p_B  = fpvalue(F_B,  df_B,  df_W);
   const p_AB = fpvalue(F_AB, df_AB, df_W);
 
-  let html = `<h3>Two-Way Analysis of Variance (ANOVA)</h3>
-  <p><strong>Tests of Between-Subjects Effects — Dependent: ${escapeHtml(dep)}</strong></p>
+  // Partial η² = SS_effect / (SS_effect + SS_error)
+  const eta2_A  = SS_A  / (SS_A  + SS_W);
+  const eta2_B  = SS_B  / (SS_B  + SS_W);
+  const eta2_AB = SS_AB / (SS_AB + SS_W);
+
+  const sig = p => p < .001 ? '< .001 ***' : p < .01 ? p.toFixed(6)+' **' : p < .05 ? p.toFixed(6)+' *' : p.toFixed(6);
+
+  let html = `
+  <h3>Two-Way Analysis of Variance (ANOVA)</h3>
+  <p><strong>Tests of Between-Subjects Effects (Type III Sum of Squares) — Dependent: ${escapeHtml(dep)}</strong></p>
   <table class="desc-table">
-    <tr><th>Source</th><th>Type III SS</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th><th>η²</th></tr>
-    <tr><td>${escapeHtml(f1)}</td><td>${SS_A.toFixed(4)}</td><td>${df_A}</td><td>${MS_A.toFixed(4)}</td><td>${F_A.toFixed(4)}</td><td>${p_A.toFixed(6)}</td><td>${(SS_A/(SS_A+SS_B+SS_AB+SS_W)).toFixed(4)}</td></tr>
-    <tr><td>${escapeHtml(f2)}</td><td>${SS_B.toFixed(4)}</td><td>${df_B}</td><td>${MS_B.toFixed(4)}</td><td>${F_B.toFixed(4)}</td><td>${p_B.toFixed(6)}</td><td>${(SS_B/(SS_A+SS_B+SS_AB+SS_W)).toFixed(4)}</td></tr>
-    <tr><td>${escapeHtml(f1)} × ${escapeHtml(f2)}</td><td>${SS_AB.toFixed(4)}</td><td>${df_AB}</td><td>${MS_AB.toFixed(4)}</td><td>${F_AB.toFixed(4)}</td><td>${p_AB.toFixed(6)}</td><td>${(SS_AB/(SS_A+SS_B+SS_AB+SS_W)).toFixed(4)}</td></tr>
+    <tr><th>Source</th><th>Type III SS</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th><th>Partial η²</th></tr>
+    <tr><td>${escapeHtml(f1)}</td><td>${SS_A.toFixed(4)}</td><td>${df_A}</td><td>${MS_A.toFixed(4)}</td><td>${F_A.toFixed(4)}</td><td>${sig(p_A)}</td><td>${eta2_A.toFixed(4)}</td></tr>
+    <tr><td>${escapeHtml(f2)}</td><td>${SS_B.toFixed(4)}</td><td>${df_B}</td><td>${MS_B.toFixed(4)}</td><td>${F_B.toFixed(4)}</td><td>${sig(p_B)}</td><td>${eta2_B.toFixed(4)}</td></tr>
+    <tr><td>${escapeHtml(f1)} × ${escapeHtml(f2)}</td><td>${SS_AB.toFixed(4)}</td><td>${df_AB}</td><td>${MS_AB.toFixed(4)}</td><td>${F_AB.toFixed(4)}</td><td>${sig(p_AB)}</td><td>${eta2_AB.toFixed(4)}</td></tr>
     <tr><td>Error</td><td>${SS_W.toFixed(4)}</td><td>${df_W}</td><td>${MS_W.toFixed(4)}</td><td></td><td></td><td></td></tr>
-    <tr><td>Total</td><td>${(SS_A+SS_B+SS_AB+SS_W).toFixed(4)}</td><td>${totalN-1}</td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Total</td><td>${SS_total.toFixed(4)}</td><td>${N - 1}</td><td></td><td></td><td></td><td></td></tr>
   </table>`;
 
   displayResults(html);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// MATRIX HELPERS  (add these once globally if not already present)
+// ═══════════════════════════════════════════════════════════════
+
+function transpose(M) {
+  return M[0].map((_, j) => M.map(row => row[j]));
+}
+
+function matMul(A, B) {
+  const rows = A.length, cols = B[0].length, inner = B.length;
+  return Array.from({length: rows}, (_, i) =>
+    Array.from({length: cols}, (_, j) =>
+      Array.from({length: inner}, (_, k) => A[i][k] * B[k][j]).reduce((s,v) => s+v, 0)
+    )
+  );
+}
+
+function matVec(M, v) {
+  return M.map(row => row.reduce((s, x, j) => s + x * v[j], 0));
+}
+
+function matInv(M) {
+  // Gauss-Jordan elimination
+  const n = M.length;
+  const A = M.map((row, i) => [...row, ...Array.from({length: n}, (_, j) => i === j ? 1 : 0)]);
+  for (let col = 0; col < n; col++) {
+    let pivot = -1, best = 0;
+    for (let row = col; row < n; row++) if (Math.abs(A[row][col]) > best) { best = Math.abs(A[row][col]); pivot = row; }
+    if (pivot === -1 || best < 1e-12) return null; // singular
+    [A[col], A[pivot]] = [A[pivot], A[col]];
+    const scale = A[col][col];
+    A[col] = A[col].map(v => v / scale);
+    for (let row = 0; row < n; row++) {
+      if (row === col) continue;
+      const f = A[row][col];
+      A[row] = A[row].map((v, k) => v - f * A[col][k]);
+    }
+  }
+  return A.map(row => row.slice(n));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -7845,99 +7920,363 @@ function runANCOVA() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CHI-SQUARE TEST OF INDEPENDENCE
+// CHI-SQUARE TEST OF INDEPENDENCE - WITH ENHANCED CROSSTAB
 // ═══════════════════════════════════════════════════════════════
 function runChiSquare() {
   const rowVar = document.getElementById('adv_chi_row').value;
   const colVar = document.getElementById('adv_chi_col').value;
-  const statsOption = document.getElementById('adv_chi_stats').value;
+  const statsOption = document.getElementById('adv_chi_stats')?.value || 'all';
 
-  const rowLevels = [...new Set(advData.map(r => r[rowVar]))].filter(v => v !== '').sort();
-  const colLevels = [...new Set(advData.map(r => r[colVar]))].filter(v => v !== '').sort();
-  const R = rowLevels.length, C = colLevels.length;
+  if (!rowVar || !colVar) {
+    toast('Error', 'Please select both row and column variables', 'warn');
+    return;
+  }
 
+  // Get unique levels, excluding empty strings
+  const rowLevels = [...new Set(advData.map(r => r[rowVar]))].filter(v => v !== '' && v !== undefined && v !== null);
+  const colLevels = [...new Set(advData.map(r => r[colVar]))].filter(v => v !== '' && v !== undefined && v !== null);
+  
+  if (rowLevels.length < 2 || colLevels.length < 2) {
+    toast('Error', 'Need at least 2 categories in both row and column variables', 'warn');
+    return;
+  }
+  
+  const R = rowLevels.length;
+  const C = colLevels.length;
+
+  // Build observed frequency table
   const obs = Array.from({length: R}, () => Array(C).fill(0));
   let total = 0;
-  advData.forEach(row => {
-    const ri = rowLevels.indexOf(row[rowVar]), ci = colLevels.indexOf(row[colVar]);
-    if (ri !== -1 && ci !== -1) { obs[ri][ci]++; total++; }
-  });
+  
+  for (const row of advData) {
+    const rowVal = row[rowVar];
+    const colVal = row[colVar];
+    const ri = rowLevels.indexOf(rowVal);
+    const ci = colLevels.indexOf(colVal);
+    if (ri !== -1 && ci !== -1) {
+      obs[ri][ci]++;
+      total++;
+    }
+  }
 
+  if (total === 0) {
+    toast('Error', 'No valid data for analysis', 'warn');
+    return;
+  }
+
+  // Calculate row and column totals
   const rowTotals = obs.map(row => row.reduce((a, b) => a + b, 0));
-  const colTotals = colLevels.map((_, j) => obs.reduce((s, row) => s + row[j], 0));
+  const colTotals = Array(C).fill(0);
+  for (let j = 0; j < C; j++) {
+    for (let i = 0; i < R; i++) {
+      colTotals[j] += obs[i][j];
+    }
+  }
 
+  // Calculate expected frequencies
   const exp = obs.map((row, i) => row.map((_, j) => (rowTotals[i] * colTotals[j]) / total));
 
   // Pearson chi-square
   let chi2 = 0;
   let lowExpected = false;
-  for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
-    if (exp[i][j] < 5) lowExpected = true;
-    if (exp[i][j] > 0) chi2 += (obs[i][j] - exp[i][j]) ** 2 / exp[i][j];
+  let minExpected = Infinity;
+  
+  for (let i = 0; i < R; i++) {
+    for (let j = 0; j < C; j++) {
+      if (exp[i][j] < 5) lowExpected = true;
+      if (exp[i][j] < minExpected) minExpected = exp[i][j];
+      if (exp[i][j] > 0) {
+        chi2 += Math.pow(obs[i][j] - exp[i][j], 2) / exp[i][j];
+      }
+    }
   }
 
   // Likelihood ratio G²
   let G2 = 0;
-  for (let i = 0; i < R; i++) for (let j = 0; j < C; j++)
-    if (obs[i][j] > 0 && exp[i][j] > 0) G2 += 2 * obs[i][j] * Math.log(obs[i][j] / exp[i][j]);
+  for (let i = 0; i < R; i++) {
+    for (let j = 0; j < C; j++) {
+      if (obs[i][j] > 0 && exp[i][j] > 0) {
+        G2 += 2 * obs[i][j] * Math.log(obs[i][j] / exp[i][j]);
+      }
+    }
+  }
+
+  // ==============================================================
+  // LINEAR-BY-LINEAR ASSOCIATION (Mantel-Haenszel) - ADDED
+  // ==============================================================
+  let linearByLinearChi2 = null;
+  let linearByLinearP = null;
+  let linearByLinearDf = 1;
+  
+  if (R > 1 && C > 1) {
+    // Assign row scores (1, 2, 3, ...)
+    const rowScores = rowLevels.map((_, idx) => idx + 1);
+    // Assign column scores (1, 2, 3, ...)
+    const colScores = colLevels.map((_, idx) => idx + 1);
+    
+    // Calculate sum of products
+    let sumProducts = 0;
+    for (let i = 0; i < R; i++) {
+      for (let j = 0; j < C; j++) {
+        sumProducts += obs[i][j] * rowScores[i] * colScores[j];
+      }
+    }
+    
+    // Calculate sums for each variable
+    let sumRowScores = 0;
+    for (let i = 0; i < R; i++) {
+      sumRowScores += rowTotals[i] * rowScores[i];
+    }
+    
+    let sumColScores = 0;
+    for (let j = 0; j < C; j++) {
+      sumColScores += colTotals[j] * colScores[j];
+    }
+    
+    let sumRowScoresSq = 0;
+    for (let i = 0; i < R; i++) {
+      sumRowScoresSq += rowTotals[i] * Math.pow(rowScores[i], 2);
+    }
+    
+    let sumColScoresSq = 0;
+    for (let j = 0; j < C; j++) {
+      sumColScoresSq += colTotals[j] * Math.pow(colScores[j], 2);
+    }
+    
+    // Calculate correlation between row and column scores
+    const numerator = sumProducts - (sumRowScores * sumColScores) / total;
+    const denominator = Math.sqrt((sumRowScoresSq - Math.pow(sumRowScores, 2) / total) * 
+                                   (sumColScoresSq - Math.pow(sumColScores, 2) / total));
+    
+    let r = 0;
+    if (denominator > 0) {
+      r = numerator / denominator;
+    }
+    
+    // Linear-by-linear chi-square = (N - 1) * r²
+    linearByLinearChi2 = (total - 1) * Math.pow(r, 2);
+    linearByLinearP = chipvalue(linearByLinearChi2, 1);
+  }
 
   // Yates' continuity correction (2x2 only)
   let chi2Yates = null;
+  let p_yates = null;
   if (R === 2 && C === 2) {
     chi2Yates = 0;
-    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++)
-      if (exp[i][j] > 0) chi2Yates += (Math.max(0, Math.abs(obs[i][j] - exp[i][j]) - 0.5)) ** 2 / exp[i][j];
+    for (let i = 0; i < R; i++) {
+      for (let j = 0; j < C; j++) {
+        const diff = Math.abs(obs[i][j] - exp[i][j]);
+        if (exp[i][j] > 0) {
+          chi2Yates += Math.pow(Math.max(0, diff - 0.5), 2) / exp[i][j];
+        }
+      }
+    }
+    p_yates = chipvalue(chi2Yates, 1);
   }
 
   const df = (R - 1) * (C - 1);
   const p_pearson = chipvalue(chi2, df);
-  const p_G2      = chipvalue(G2, df);
-  const p_yates   = chi2Yates !== null ? chipvalue(chi2Yates, df) : null;
+  const p_G2 = chipvalue(G2, df);
 
   // Effect sizes
-  const phi       = Math.sqrt(chi2 / total);
-  const cramersV  = Math.sqrt(chi2 / (total * Math.min(R - 1, C - 1)));
+  const phi = Math.sqrt(chi2 / total);
+  const cramersV = Math.sqrt(chi2 / (total * Math.min(R - 1, C - 1)));
   const contCoeff = Math.sqrt(chi2 / (chi2 + total));
 
+  // Build enhanced crosstab table with counts, row%, col%, total%
   let html = `<h3>Chi-Square Test of Independence</h3>
-  <p><strong>Crosstabulation: ${escapeHtml(rowVar)} × ${escapeHtml(colVar)}</strong></p>
-  <table class="desc-table">
-    <tr><th>${escapeHtml(rowVar)} \\ ${escapeHtml(colVar)}</th>
-    ${colLevels.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Row Total</th></tr>`;
+  <p><strong>Variables:</strong> ${escapeHtml(rowVar)} (rows) × ${escapeHtml(colVar)} (columns)</p>
+  
+  <p><strong>Crosstabulation</strong></p>
+  <div style="overflow-x: auto;">
+    <table class="desc-table" style="font-size: 12px; min-width: 400px;">
+      <thead>
+        <tr style="background: var(--bg3);">
+          <th rowspan="2" style="border: 1px solid var(--border); text-align: center; vertical-align: middle;">&nbsp;</th>
+          ${colLevels.map(c => `<th colspan="3" style="border: 1px solid var(--border); text-align: center;">${escapeHtml(c)}</th>`).join('')}
+          <th rowspan="2" style="border: 1px solid var(--border); text-align: center; vertical-align: middle;">Total</th>
+        </tr>
+        <tr style="background: var(--bg3);">
+          ${colLevels.map(() => `
+            <th style="border: 1px solid var(--border); text-align: center;">Count</th>
+            <th style="border: 1px solid var(--border); text-align: center;">Row %</th>
+            <th style="border: 1px solid var(--border); text-align: center;">Col %</th>
+          `).join('')}
+        </tr>
+      </thead>
+      <tbody>`;
 
   for (let i = 0; i < R; i++) {
-    html += `<tr><th>${escapeHtml(rowLevels[i])}</th>`;
-    for (let j = 0; j < C; j++)
-      html += `<td>${obs[i][j]}<br><span style="font-size:10px;color:var(--text2)">(${exp[i][j].toFixed(2)})</span></td>`;
-    html += `<td><strong>${rowTotals[i]}</strong></td></tr>`;
+    html += `<tr>
+      <td style="border: 1px solid var(--border); font-weight: bold; background: var(--bg3);">${escapeHtml(rowLevels[i])}</td>`;
+    
+    for (let j = 0; j < C; j++) {
+      const count = obs[i][j];
+      const rowPct = rowTotals[i] > 0 ? (count / rowTotals[i] * 100) : 0;
+      const colPct = colTotals[j] > 0 ? (count / colTotals[j] * 100) : 0;
+      
+      html += `
+        <td style="border: 1px solid var(--border); text-align: center;">${count}</td>
+        <td style="border: 1px solid var(--border); text-align: center;">${rowPct.toFixed(1)}%</td>
+        <td style="border: 1px solid var(--border); text-align: center;">${colPct.toFixed(1)}%</td>`;
+    }
+    
+    html += `<td style="border: 1px solid var(--border); text-align: center; font-weight: bold; background: var(--bg3);">${rowTotals[i]} (${(rowTotals[i]/total*100).toFixed(1)}%)</td>
+    </tr>`;
   }
-  html += `<tr><th>Col Total</th>${colTotals.map(c => `<td><strong>${c}</strong></td>`).join('')}<td><strong>${total}</strong></td></tr>
-  </table>
-  <p style="font-size:12px;color:var(--text2)">Expected counts shown in parentheses.</p>
-  ${lowExpected ? '<p style="color:var(--yellow)">⚠ Some expected counts &lt; 5 — consider Fisher\'s exact test.</p>' : ''}
 
-  <p><strong>Chi-Square Tests</strong></p>
+  // Add column totals row with percentages
+  html += `<tr style="background: var(--bg3);">
+    <td style="border: 1px solid var(--border); font-weight: bold;">Total</td>`;
+  
+  for (let j = 0; j < C; j++) {
+    const colTotal = colTotals[j];
+    const colPctOfTotal = (colTotal / total * 100);
+    html += `
+      <td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${colTotal}</td>
+      <td style="border: 1px solid var(--border); text-align: center;">-</td>
+      <td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${colPctOfTotal.toFixed(1)}%</td>`;
+  }
+  
+  html += `<td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${total} (100%)</td>
+  </tr>
+  </tbody>
+  </table>
+  </div>
+  
+  <p style="font-size: 12px; color: var(--text3); margin-top: 10px;">
+    <strong>Note:</strong> Row % = percentage within row category | Col % = percentage within column category
+  </p>`;
+
+  // Expected frequencies table
+  html += `<p><strong>Expected Frequencies</strong></p>
+  <div style="overflow-x: auto;">
+    <table class="desc-table" style="font-size: 12px;">
+      <thead>
+        <tr>
+          <th style="border: 1px solid var(--border);">${escapeHtml(rowVar)} \\ ${escapeHtml(colVar)}</th>
+          ${colLevels.map(c => `<th style="border: 1px solid var(--border);">${escapeHtml(c)}</th>`).join('')}
+          <th style="border: 1px solid var(--border);">Total</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  
+  for (let i = 0; i < R; i++) {
+    html += `<tr>
+      <td style="border: 1px solid var(--border); font-weight: bold;">${escapeHtml(rowLevels[i])}</td>`;
+    for (let j = 0; j < C; j++) {
+      html += `<td style="border: 1px solid var(--border); text-align: center;">${exp[i][j].toFixed(2)}</td>`;
+    }
+    html += `<td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${rowTotals[i]}</td>
+    </tr>`;
+  }
+  
+  html += `<tr style="background: var(--bg3);">
+    <td style="border: 1px solid var(--border); font-weight: bold;">Total</td>`;
+  for (let j = 0; j < C; j++) {
+    html += `<td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${colTotals[j]}</td>`;
+  }
+  html += `<td style="border: 1px solid var(--border); text-align: center; font-weight: bold;">${total}</td>
+  </tr>
+  </tbody>
+  </table>
+  </div>`;
+
+  // Warning for low expected frequencies
+  if (lowExpected) {
+    html += `<p style="color: var(--coral); margin-top: 10px;">
+      ⚠️ <strong>Warning:</strong> ${minExpected.toFixed(2)}% of cells have expected count less than 5. 
+      ${R === 2 && C === 2 ? 'Consider using Fisher\'s Exact Test for more accurate results.' : 'Consider combining categories or using Fisher\'s Exact Test.'}
+    </p>`;
+  }
+
+  // Chi-square tests table
+  html += `<p><strong>Chi-Square Tests</strong></p>
   <table class="desc-table">
-    <tr><th>Test</th><th>Value</th><th>df</th><th>Asymptotic Sig. (2-sided)</th></tr>
-    <tr><td>Pearson Chi-Square</td><td>${chi2.toFixed(4)}</td><td>${df}</td><td>${p_pearson.toFixed(6)}</td></tr>
-    <tr><td>Likelihood Ratio (G²)</td><td>${G2.toFixed(4)}</td><td>${df}</td><td>${p_G2.toFixed(6)}</td></tr>
-    ${chi2Yates !== null ? `<tr><td>Continuity Correction (Yates)</td><td>${chi2Yates.toFixed(4)}</td><td>1</td><td>${p_yates.toFixed(6)}</td></tr>` : ''}
-    <tr><td>N of Valid Cases</td><td>${total}</td><td></td><td></td></tr>
+    <thead>
+      <tr>
+        <th style="border: 1px solid var(--border);">Test</th>
+        <th style="border: 1px solid var(--border);">Value</th>
+        <th style="border: 1px solid var(--border);">df</th>
+        <th style="border: 1px solid var(--border);">Asymptotic Sig. (2-sided)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border: 1px solid var(--border);">Pearson Chi-Square</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${chi2.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${df}</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${p_pearson.toFixed(6)}${p_pearson < 0.05 ? ' *' : ''}</span></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid var(--border);">Likelihood Ratio (G²)</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${G2.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${df}</span></td>
+        <td style="border: 1px solid var(--border); text-align: center;">${p_G2.toFixed(6)}${p_G2 < 0.05 ? ' *' : ''}</span></td>
+      </tr>`;
+  
+  if (chi2Yates !== null) {
+    html += `<tr>
+      <td style="border: 1px solid var(--border);">Continuity Correction (Yates)</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">${chi2Yates.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">1</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">${p_yates.toFixed(6)}${p_yates < 0.05 ? ' *' : ''}</span></td>
+    </tr>`;
+  }
+  
+  // Linear-by-Linear Association - ADDED ROW
+  if (linearByLinearChi2 !== null) {
+    html += `<tr>
+      <td style="border: 1px solid var(--border);">Linear-by-Linear Association</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">${linearByLinearChi2.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">${linearByLinearDf}</span></td>
+      <td style="border: 1px solid var(--border); text-align: center;">${linearByLinearP.toFixed(6)}${linearByLinearP < 0.05 ? ' *' : ''}</span></td>
+    <tr>`;
+  }
+  
+  html += `<tr>
+    <td style="border: 1px solid var(--border);">N of Valid Cases</span></td>
+    <td style="border: 1px solid var(--border); text-align: center;" colspan="3">${total}</span></td>
+  </tr>
+  </tbody>
   </table>`;
 
+  // Symmetric measures (if requested)
   if (statsOption === 'all') {
     html += `<p><strong>Symmetric Measures</strong></p>
     <table class="desc-table">
-      <tr><th>Measure</th><th>Value</th><th>Approx. Sig.</th></tr>
-      <tr><td>Phi</td><td>${phi.toFixed(4)}</td><td>${p_pearson.toFixed(6)}</td></tr>
-      <tr><td>Cramer's V</td><td>${cramersV.toFixed(4)}</td><td>${p_pearson.toFixed(6)}</td></tr>
-      <tr><td>Contingency Coefficient</td><td>${contCoeff.toFixed(4)}</td><td>${p_pearson.toFixed(6)}</td></tr>
+      <thead>
+        <tr>
+          <th style="border: 1px solid var(--border);">Measure</th>
+          <th style="border: 1px solid var(--border);">Value</th>
+          <th style="border: 1px solid var(--border);">Approx. Sig.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border: 1px solid var(--border);">Phi Coefficient</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${phi.toFixed(4)}</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${p_pearson.toFixed(6)}</span></td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid var(--border);">Cramer's V</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${cramersV.toFixed(4)}</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${p_pearson.toFixed(6)}</span></td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid var(--border);">Contingency Coefficient</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${contCoeff.toFixed(4)}</span></td>
+          <td style="border: 1px solid var(--border); text-align: center;">${p_pearson.toFixed(6)}</span></td>
+        </tr>
+      </tbody>
     </table>
-    <p><em>Interpretation of Cramer's V: ${cramersV < 0.1 ? 'Negligible' : cramersV < 0.2 ? 'Weak' : cramersV < 0.4 ? 'Moderate' : 'Strong'} association</em></p>`;
+    <p><strong>Interpretation of Cramer's V:</strong> ${cramersV < 0.1 ? 'Negligible association' : cramersV < 0.2 ? 'Weak association' : cramersV < 0.4 ? 'Moderate association' : 'Strong association'}</p>`;
   }
 
-  html += `<p class="step-val">${p_pearson < 0.05 ? '✓ Variables are significantly associated' : '✗ No significant association detected'}</p>`;
+  html += `<p class="step-val">${p_pearson < 0.05 ? '✓ Variables are significantly associated (p < 0.05)' : '✗ No significant association detected (p ≥ 0.05)'}</p>`;
+  
   displayResults(html);
+  toast("Chi-Square Test Complete", `χ²(${df}) = ${chi2.toFixed(4)}, p = ${p_pearson.toFixed(6)}`, "success");
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -7992,16 +8331,47 @@ function runFisherExact() {
   <p><strong>Exact Test Results</strong></p>
   <table class="desc-table">
     <tr><th>Test</th><th>Exact Sig. (2-sided)</th></tr>
-    <tr><td>Fisher's Exact Test</td><td><strong>${pExact.toFixed(6)}</strong></td></tr>
+    <tr><td style="text-align: center;">Fisher's Exact Test</span></td>
+      <td style="text-align: center;">${pExact.toFixed(6)}${pExact < 0.05 ? ' *' : ''}</span></td>
+    </tr>
   </table>
+  <p><em>* p &lt; 0.05 indicates statistical significance</em></p>
+  
   <p><strong>Risk Estimates</strong></p>
   <table class="desc-table">
     <tr><th>Measure</th><th>Value</th><th>95% CI Lower</th><th>95% CI Upper</th></tr>
-    <tr><td>Odds Ratio</td><td>${isFinite(OR) ? OR.toFixed(4) : 'Undefined'}</td><td>${isNaN(ciLower) ? '—' : ciLower.toFixed(4)}</td><td>${isNaN(ciUpper) ? '—' : ciUpper.toFixed(4)}</td></tr>
-    ${!isNaN(rr) ? `<tr><td>Relative Risk</td><td>${rr.toFixed(4)}</td><td>—</td><td>—</td></tr>` : ''}
-    <tr><td>Phi Coefficient</td><td>${phi.toFixed(4)}</td><td>—</td><td>—</td></tr>
+    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(rowLevels[0])} vs ${escapeHtml(rowLevels[1])})</span></td>
+      <td style="text-align: center;">${isFinite(OR) ? OR.toFixed(4) : 'Undefined'}</span></td>
+      <td style="text-align: center;">${isNaN(ciLower) ? '—' : ciLower.toFixed(4)}</span></td>
+      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : ciUpper.toFixed(4)}</span></td>
+    </tr>
+    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(rowLevels[1])} vs ${escapeHtml(rowLevels[0])})</span></td>
+      <td style="text-align: center;">${isFinite(OR) && OR !== 0 ? (1/OR).toFixed(4) : (OR === 0 ? 'Infinity' : 'Undefined')}</span></td>
+      <td style="text-align: center;">${isNaN(ciLower) ? '—' : (1/ciUpper).toFixed(4)}</span></td>
+      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : (1/ciLower).toFixed(4)}</span></td>
+    </tr>
+    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(colLevels[0])} vs ${escapeHtml(colLevels[1])})</span></td>
+      <td style="text-align: center;">${isFinite(OR) ? OR.toFixed(4) : 'Undefined'}</span></td>
+      <td style="text-align: center;">${isNaN(ciLower) ? '—' : ciLower.toFixed(4)}</span></td>
+      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : ciUpper.toFixed(4)}</span></td>
+    </tr>
+    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(colLevels[1])} vs ${escapeHtml(colLevels[0])})</span></td>
+      <td style="text-align: center;">${isFinite(OR) && OR !== 0 ? (1/OR).toFixed(4) : (OR === 0 ? 'Infinity' : 'Undefined')}</span></td>
+      <td style="text-align: center;">${isNaN(ciLower) ? '—' : (1/ciUpper).toFixed(4)}</span></td>
+      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : (1/ciLower).toFixed(4)}</span></td>
+    </tr>
+    <tr><td style="text-align: left;">Relative Risk</span></td>
+      <td style="text-align: center;">${!isNaN(rr) ? rr.toFixed(4) : 'Undefined'}</span></td>
+      <td style="text-align: center;">—</span></td>
+      <td style="text-align: center;">—</span></td>
+    </tr>
+    <tr><td style="text-align: left;">Phi Coefficient</span></td>
+      <td style="text-align: center;">${phi.toFixed(4)}</span></td>
+      <td style="text-align: center;">—</span></td>
+      <td style="text-align: center;">—</span></td>
+    </tr>
   </table>
-  <p class="step-val">${pExact < 0.05 ? '✓ Significant association detected' : '✗ No significant association'}</p>`;
+  <p class="step-val">${pExact < 0.05 ? '✓ Significant association detected (p < 0.05)' : '✗ No significant association detected (p ≥ 0.05)'}</p>`;
 
   displayResults(html);
 }
