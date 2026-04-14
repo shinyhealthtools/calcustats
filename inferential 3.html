@@ -7087,42 +7087,83 @@ function runOneWayANOVA() {
     </table>`;
     
     console.log("Post-hoc check - pValue:", pValue, "groups:", groupNames.length);
-    // Post-hoc tests if significant
-    if (pValue < 0.05 && groupNames.length > 2) {
-           html += `<p><strong>Post-Hoc Tests (Tukey HSD)</strong></p>
-        <p><em>Note: Mean Difference = Mean(Group I) - Mean(Group J)</em></p>
-        <table class="desc-table">
-            <thead>
-                <tr>
-                    <th>Group (I)</th>
-                    <th>Group (J)</th>
-                    <th>Mean Difference (I-J)</th>
-                    <th>Std. Error</th>
-                    <th>Sig.</th>
-                    <th>95% CI Lower</th>
-                    <th>95% CI Upper</th>
-                </tr>
-            </thead>
-            <tbody>`;
+    // Post-hoc tests based on user selection
+    const posthocType = document.getElementById('adv_posthoc')?.value || 'none';
+    
+    if (pValue < 0.05 && groupNames.length > 2 && posthocType !== 'none') {
         
-        // Calculate Tukey HSD with correct sign
-        const hsd = calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin);
-        for (let i = 0; i < hsd.length; i++) {
-            html += `<tr>
-                <td><strong>${escapeHtml(hsd[i].group1)}</strong></td>
-                <td><strong>${escapeHtml(hsd[i].group2)}</strong></td>
-                <td>${hsd[i].meanDiff > 0 ? '+' : ''}${hsd[i].meanDiff.toFixed(4)}</span></td>
-                <td>${hsd[i].stdError.toFixed(4)}</span></td>
-                <td>${hsd[i].pValue < 0.0001 ? '< 0.0001' : hsd[i].pValue.toFixed(6)}${hsd[i].pValue < 0.05 ? ' *' : ''}</span></td>
-                <td>${hsd[i].ciLower.toFixed(4)}</span></td>
-                <td>${hsd[i].ciUpper.toFixed(4)}</span></td>
-            </tr>`;
+        if (posthocType === 'tukey') {
+            html += `<p><strong>Post-Hoc Tests (Tukey HSD)</strong></p>
+            <p><em>Note: Mean Difference = Mean(Group I) - Mean(Group J)</em></p>
+            <table class="desc-table">
+                <thead>
+                    <tr>
+                        <th>Group (I)</th>
+                        <th>Group (J)</th>
+                        <th>Mean Difference (I-J)</th>
+                        <th>Std. Error</th>
+                        <th>Sig.</th>
+                        <th>95% CI Lower</th>
+                        <th>95% CI Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            const hsd = calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin);
+            for (let i = 0; i < hsd.length; i++) {
+                html += `<tr>
+                    <td><strong>${escapeHtml(hsd[i].group1)}</strong></td>
+                    <td><strong>${escapeHtml(hsd[i].group2)}</strong></td>
+                    <td>${hsd[i].meanDiff > 0 ? '+' : ''}${hsd[i].meanDiff.toFixed(4)}</span></td>
+                    <td>${hsd[i].stdError.toFixed(4)}</span></td>
+                    <td>${hsd[i].pValue < 0.0001 ? '< 0.0001' : hsd[i].pValue.toFixed(6)}${hsd[i].pValue < 0.05 ? ' *' : ''}</span></td>
+                    <td>${hsd[i].ciLower.toFixed(4)}</span></td>
+                    <td>${hsd[i].ciUpper.toFixed(4)}</span></td>
+                </tr>`;
+            }
+            
+            html += `</tbody>
+            </table>
+            <p>* p &lt; 0.05 (Tukey HSD adjusted for multiple comparisons)</p>`;
+            
+        } else if (posthocType === 'bonferroni') {
+            html += `<p><strong>Post-Hoc Tests (Bonferroni Correction)</strong></p>
+            <p><em>Note: Mean Difference = Mean(Group I) - Mean(Group J)</em></p>
+            <p><em>Bonferroni adjusted significance level: α = 0.05 / ${groupNames.length * (groupNames.length - 1) / 2} = ${(0.05 / (groupNames.length * (groupNames.length - 1) / 2)).toFixed(5)}</em></p>
+            <table class="desc-table">
+                <thead>
+                    <tr>
+                        <th>Group (I)</th>
+                        <th>Group (J)</th>
+                        <th>Mean Difference (I-J)</th>
+                        <th>Std. Error</th>
+                        <th>Raw Sig.</th>
+                        <th>Bonferroni Sig.</th>
+                        <th>95% CI Lower</th>
+                        <th>95% CI Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            const bonf = calculateBonferroni(groupStats, MSwithin, dfWithin, 0.05);
+            for (let i = 0; i < bonf.length; i++) {
+                html += `<tr>
+                    <td><strong>${escapeHtml(bonf[i].group1)}</strong></td>
+                    <td><strong>${escapeHtml(bonf[i].group2)}</strong></td>
+                    <td>${bonf[i].meanDiff > 0 ? '+' : ''}${bonf[i].meanDiff.toFixed(4)}</span></td>
+                    <td>${bonf[i].stdError.toFixed(4)}</span></td>
+                    <td>${bonf[i].rawPValue < 0.0001 ? '< 0.0001' : bonf[i].rawPValue.toFixed(6)}</span></td>
+                    <td>${bonf[i].pValue < 0.0001 ? '< 0.0001' : bonf[i].pValue.toFixed(6)}${bonf[i].significant ? ' *' : ''}</span></td>
+                    <td>${bonf[i].ciLower.toFixed(4)}</span></td>
+                    <td>${bonf[i].ciUpper.toFixed(4)}</span></td>
+                </tr>`;
+            }
+            
+            html += `</tbody>
+            <tr>
+            <p>* p &lt; 0.05 (Bonferroni corrected for ${groupNames.length * (groupNames.length - 1) / 2} comparisons)</p>`;
         }
-        
-        html += `</tbody>
-        </table>
-        <p>* p &lt; 0.05 (Tukey HSD adjusted for multiple comparisons)</p>`;
-        }
+    }
     
     html += `<p class="step-val">${pValue < 0.05 ? '✓ There is a statistically significant difference between groups at α = 0.05' : '✗ There is no statistically significant difference between groups at α = 0.05'}</p>`;
     
@@ -7237,6 +7278,77 @@ function calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin) {
     
     return results;
 }
+
+// Bonferroni post-hoc test
+function calculateBonferroni(groupStats, MSwithin, dfWithin, alpha = 0.05) {
+    const results = [];
+    const nGroups = groupStats.length;
+    const totalComparisons = nGroups * (nGroups - 1) / 2;
+    const adjustedAlpha = alpha / totalComparisons;
+    
+    // Sort groups by mean for consistent ordering (highest first)
+    const sortedStats = [...groupStats].sort((a, b) => b.mean - a.mean);
+    
+    // Compare all pairs
+    for (let i = 0; i < nGroups; i++) {
+        for (let j = i + 1; j < nGroups; j++) {
+            const groupI = sortedStats[i];
+            const groupJ = sortedStats[j];
+            
+            // Mean difference (higher - lower, always positive)
+            const meanDiff = groupI.mean - groupJ.mean;
+            const stdError = Math.sqrt(MSwithin * (1/groupI.n + 1/groupJ.n));
+            const tStat = meanDiff / stdError;
+            
+            // Calculate unadjusted p-value using t-distribution
+            let rawPValue = 0;
+            try {
+                const x = dfWithin / (dfWithin + tStat * tStat);
+                rawPValue = 1 - betainc(x, dfWithin / 2, 0.5);
+            } catch(e) {
+                rawPValue = Math.exp(-0.5 * tStat) * Math.pow(tStat, 1);
+            }
+            rawPValue = Math.min(1, Math.max(0, rawPValue * 2)); // two-tailed
+            
+            // Bonferroni adjustment
+            const adjustedPValue = Math.min(1, rawPValue * totalComparisons);
+            
+            // Bonferroni critical t-value
+            const bonferroniAlpha = alpha / totalComparisons;
+            let tCritical = 0;
+            try {
+                tCritical = tinv(1 - bonferroniAlpha / 2, dfWithin);
+            } catch(e) {
+                tCritical = 2.0;
+            }
+            
+            // Confidence interval using Bonferroni correction
+            const marginError = tCritical * stdError;
+            const ciLower = meanDiff - marginError;
+            const ciUpper = meanDiff + marginError;
+            
+            results.push({
+                group1: groupI.name,
+                group2: groupJ.name,
+                meanDiff: meanDiff,
+                stdError: stdError,
+                rawPValue: rawPValue,
+                pValue: adjustedPValue,
+                ciLower: ciLower,
+                ciUpper: ciUpper,
+                significant: adjustedPValue < alpha,
+                tStat: tStat,
+                tCritical: tCritical
+            });
+        }
+    }
+    
+    // Sort by p-value (most significant first)
+    results.sort((a, b) => a.pValue - b.pValue);
+    
+    return results;
+}
+
 function calculateTukeyPValue(q, k, df) {
     // Approximate p-value for studentized range distribution
     if (q <= 0) return 1;
