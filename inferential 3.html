@@ -7089,7 +7089,8 @@ function runOneWayANOVA() {
     console.log("Post-hoc check - pValue:", pValue, "groups:", groupNames.length);
     // Post-hoc tests if significant
     if (pValue < 0.05 && groupNames.length > 2) {
-        html += `<p><strong>Post-Hoc Tests (Tukey HSD)</strong></p>
+           html += `<p><strong>Post-Hoc Tests (Tukey HSD)</strong></p>
+        <p><em>Note: Mean Difference = Mean(Group I) - Mean(Group J)</em></p>
         <table class="desc-table">
             <thead>
                 <tr>
@@ -7104,23 +7105,24 @@ function runOneWayANOVA() {
             </thead>
             <tbody>`;
         
-        // Calculate Tukey HSD
-        const hsd = calculateTukeyHSD(groups, groupStats, MSwithin, dfWithin);
+        // Calculate Tukey HSD with correct sign
+        const hsd = calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin);
         for (let i = 0; i < hsd.length; i++) {
             html += `<tr>
-                <td>${escapeHtml(hsd[i].group1)}</td>
-                <td>${escapeHtml(hsd[i].group2)}</td>
-                <td>${hsd[i].meanDiff.toFixed(4)}</td>
-                <td>${hsd[i].stdError.toFixed(4)}</td>
-                <td>${hsd[i].pValue.toFixed(6)}${hsd[i].pValue < 0.05 ? ' *' : ''}</td>
-                <td>${hsd[i].ciLower.toFixed(4)}</td>
-                <td>${hsd[i].ciUpper.toFixed(4)}</td>
+                <td><strong>${escapeHtml(hsd[i].group1)}</strong></td>
+                <td><strong>${escapeHtml(hsd[i].group2)}</strong></td>
+                <td>${hsd[i].meanDiff > 0 ? '+' : ''}${hsd[i].meanDiff.toFixed(4)}</span></td>
+                <td>${hsd[i].stdError.toFixed(4)}</span></td>
+                <td>${hsd[i].pValue < 0.0001 ? '< 0.0001' : hsd[i].pValue.toFixed(6)}${hsd[i].pValue < 0.05 ? ' *' : ''}</span></td>
+                <td>${hsd[i].ciLower.toFixed(4)}</span></td>
+                <td>${hsd[i].ciUpper.toFixed(4)}</span></td>
             </tr>`;
         }
         
         html += `</tbody>
-        </table>`;
-    }
+        </table>
+        <p>* p &lt; 0.05 (Tukey HSD adjusted for multiple comparisons)</p>`;
+        }
     
     html += `<p class="step-val">${pValue < 0.05 ? '✓ There is a statistically significant difference between groups at α = 0.05' : '✗ There is no statistically significant difference between groups at α = 0.05'}</p>`;
     
@@ -7186,7 +7188,7 @@ function calculateMedian(arr) {
 
 // ADD THESE 3 NEW FUNCTIONS
 
-function calculateTukeyHSD(groups, groupStats, MSwithin, dfWithin) {
+function calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin) {
     const results = [];
     const nGroups = groupStats.length;
     const alpha = 0.05;
@@ -7194,10 +7196,19 @@ function calculateTukeyHSD(groups, groupStats, MSwithin, dfWithin) {
     // Get critical Q value from studentized range distribution
     const qCritical = getTukeyQCritical(nGroups, dfWithin, alpha);
     
+    // Sort groups by mean to ensure consistent ordering (highest mean first)
+    const sortedStats = [...groupStats].sort((a, b) => b.mean - a.mean);
+    
+    // Compare all pairs
     for (let i = 0; i < nGroups; i++) {
         for (let j = i + 1; j < nGroups; j++) {
-            const meanDiff = Math.abs(groupStats[i].mean - groupStats[j].mean);
-            const stdError = Math.sqrt(MSwithin * (1/groupStats[i].n + 1/groupStats[j].n));
+            // Group with higher mean goes first (Group I)
+            const groupI = sortedStats[i];
+            const groupJ = sortedStats[j];
+            
+            // Mean difference is always positive (higher mean - lower mean)
+            const meanDiff = groupI.mean - groupJ.mean;
+            const stdError = Math.sqrt(MSwithin * (1/groupI.n + 1/groupJ.n));
             const qStat = meanDiff / stdError;
             
             // Calculate p-value using the studentized range distribution
@@ -7209,9 +7220,9 @@ function calculateTukeyHSD(groups, groupStats, MSwithin, dfWithin) {
             const ciUpper = meanDiff + hsdValue;
             
             results.push({
-                group1: groupStats[i].name,
-                group2: groupStats[j].name,
-                meanDiff: meanDiff,
+                group1: groupI.name,      // Higher mean group
+                group2: groupJ.name,      // Lower mean group
+                meanDiff: meanDiff,       // Always positive
                 stdError: stdError,
                 pValue: pValue,
                 ciLower: ciLower,
@@ -7226,7 +7237,6 @@ function calculateTukeyHSD(groups, groupStats, MSwithin, dfWithin) {
     
     return results;
 }
-
 function calculateTukeyPValue(q, k, df) {
     // Approximate p-value for studentized range distribution
     if (q <= 0) return 1;
