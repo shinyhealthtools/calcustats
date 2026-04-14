@@ -7279,12 +7279,93 @@ function calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin) {
     return results;
 }
 
-// Bonferroni post-hoc test
+// Bonferroni post-hoc test with manual t-critical from table
 function calculateBonferroni(groupStats, MSwithin, dfWithin, alpha = 0.05) {
     const results = [];
     const nGroups = groupStats.length;
     const totalComparisons = nGroups * (nGroups - 1) / 2;
     const adjustedAlpha = alpha / totalComparisons;
+    
+    // Get t-critical from table using the same method as t-tests
+    function getTCriticalFromTable(df, alphaTwoTailed) {
+        const tTable = [
+            [1, 3.078, 6.314, 12.706, 31.821, 63.657, 636.619],
+            [2, 1.886, 2.920, 4.303, 6.965, 9.925, 31.599],
+            [3, 1.638, 2.353, 3.182, 4.541, 5.841, 12.924],
+            [4, 1.533, 2.132, 2.776, 3.747, 4.604, 8.610],
+            [5, 1.476, 2.015, 2.571, 3.365, 4.032, 6.869],
+            [6, 1.440, 1.943, 2.447, 3.143, 3.707, 5.959],
+            [7, 1.415, 1.895, 2.365, 2.998, 3.499, 5.408],
+            [8, 1.397, 1.860, 2.306, 2.896, 3.355, 5.041],
+            [9, 1.383, 1.833, 2.262, 2.821, 3.250, 4.781],
+            [10, 1.372, 1.812, 2.228, 2.764, 3.169, 4.587],
+            [11, 1.363, 1.796, 2.201, 2.718, 3.106, 4.437],
+            [12, 1.356, 1.782, 2.179, 2.681, 3.055, 4.318],
+            [13, 1.350, 1.771, 2.160, 2.650, 3.012, 4.221],
+            [14, 1.345, 1.761, 2.145, 2.624, 2.977, 4.140],
+            [15, 1.341, 1.753, 2.131, 2.602, 2.947, 4.073],
+            [16, 1.337, 1.746, 2.120, 2.583, 2.921, 4.015],
+            [17, 1.333, 1.740, 2.110, 2.567, 2.898, 3.965],
+            [18, 1.330, 1.734, 2.101, 2.552, 2.878, 3.922],
+            [19, 1.328, 1.729, 2.093, 2.539, 2.861, 3.883],
+            [20, 1.325, 1.725, 2.086, 2.528, 2.845, 3.850],
+            [21, 1.323, 1.721, 2.080, 2.518, 2.831, 3.819],
+            [22, 1.321, 1.717, 2.074, 2.508, 2.819, 3.792],
+            [23, 1.319, 1.714, 2.069, 2.500, 2.807, 3.768],
+            [24, 1.318, 1.711, 2.064, 2.492, 2.797, 3.745],
+            [25, 1.316, 1.708, 2.060, 2.485, 2.787, 3.725],
+            [26, 1.315, 1.706, 2.056, 2.479, 2.779, 3.707],
+            [27, 1.314, 1.703, 2.052, 2.473, 2.771, 3.690],
+            [28, 1.313, 1.701, 2.048, 2.467, 2.763, 3.674],
+            [29, 1.311, 1.699, 2.045, 2.462, 2.756, 3.659],
+            [30, 1.310, 1.697, 2.042, 2.457, 2.750, 3.646],
+            [40, 1.303, 1.684, 2.021, 2.423, 2.704, 3.551],
+            [50, 1.299, 1.676, 2.009, 2.403, 2.678, 3.496],
+            [60, 1.296, 1.671, 2.000, 2.390, 2.660, 3.460],
+            [80, 1.292, 1.664, 1.990, 2.374, 2.639, 3.416],
+            [100, 1.290, 1.660, 1.984, 2.364, 2.626, 3.390],
+            [120, 1.289, 1.658, 1.980, 2.358, 2.617, 3.373],
+            [1000, 1.282, 1.646, 1.962, 2.330, 2.581, 3.300]
+        ];
+        
+        let colIdx;
+        if (alphaTwoTailed === 0.20) colIdx = 1;
+        else if (alphaTwoTailed === 0.10) colIdx = 2;
+        else if (alphaTwoTailed === 0.05) colIdx = 3;
+        else if (alphaTwoTailed === 0.02) colIdx = 4;
+        else if (alphaTwoTailed === 0.01) colIdx = 5;
+        else if (alphaTwoTailed === 0.001) colIdx = 6;
+        else {
+            const alphas = [0.20, 0.10, 0.05, 0.02, 0.01, 0.001];
+            let minDiff = Math.abs(alphas[0] - alphaTwoTailed);
+            colIdx = 1;
+            for (let i = 1; i < alphas.length; i++) {
+                const diff = Math.abs(alphas[i] - alphaTwoTailed);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    colIdx = i + 1;
+                }
+            }
+        }
+        
+        if (df <= 1) return tTable[0][colIdx];
+        if (df >= 1000) return tTable[tTable.length - 1][colIdx];
+        
+        let lowerRow = null, upperRow = null;
+        for (let i = 0; i < tTable.length; i++) {
+            if (tTable[i][0] <= df) lowerRow = tTable[i];
+            if (tTable[i][0] >= df && upperRow === null) upperRow = tTable[i];
+            if (lowerRow && upperRow) break;
+        }
+        
+        if (!lowerRow) return upperRow[colIdx];
+        if (!upperRow) return lowerRow[colIdx];
+        if (lowerRow[0] === upperRow[0]) return lowerRow[colIdx];
+        
+        const df1 = lowerRow[0], df2 = upperRow[0];
+        const t1 = lowerRow[colIdx], t2 = upperRow[colIdx];
+        return t1 + (t2 - t1) * (df - df1) / (df2 - df1);
+    }
     
     // Sort groups by mean for consistent ordering (highest first)
     const sortedStats = [...groupStats].sort((a, b) => b.mean - a.mean);
@@ -7313,16 +7394,11 @@ function calculateBonferroni(groupStats, MSwithin, dfWithin, alpha = 0.05) {
             // Bonferroni adjustment
             const adjustedPValue = Math.min(1, rawPValue * totalComparisons);
             
-            // Bonferroni critical t-value
+            // Bonferroni critical t-value - USING MANUAL TABLE METHOD
             const bonferroniAlpha = alpha / totalComparisons;
-            let tCritical = 0;
-            try {
-                tCritical = tinv(1 - bonferroniAlpha / 2, dfWithin);
-            } catch(e) {
-                tCritical = 2.0;
-            }
+            const tCritical = getTCriticalFromTable(dfWithin, bonferroniAlpha);
             
-            // Confidence interval using Bonferroni correction
+            // Confidence interval using Bonferroni correction with manual t-critical
             const marginError = tCritical * stdError;
             const ciLower = meanDiff - marginError;
             const ciUpper = meanDiff + marginError;
@@ -7348,7 +7424,6 @@ function calculateBonferroni(groupStats, MSwithin, dfWithin, alpha = 0.05) {
     
     return results;
 }
-
 function calculateTukeyPValue(q, k, df) {
     // Approximate p-value for studentized range distribution
     if (q <= 0) return 1;
