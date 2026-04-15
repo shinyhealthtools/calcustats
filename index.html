@@ -2702,21 +2702,35 @@ function selectAdvTest(testId) {
         </select></div>
       `;
       break;
-    case 'ancova':
-      testTitle.innerHTML = '📊 ANCOVA Configuration';
-      html = `
-        <div class="field"><label>Dependent Variable (numeric)</label><select id="adv_ancova_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-        <div class="field"><label>Factor (categorical)</label><select id="adv_ancova_factor" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-        <div class="field"><label>Covariates (Ctrl+Click to select multiple)</label><select id="adv_ancova_cov" class="adv-select" multiple size="3">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-      `;
-      break;
-    case 'manova':
-      testTitle.innerHTML = '🔬 MANOVA Configuration';
-      html = `
-        <div class="field"><label>Dependent Variables (Ctrl+Click for multiple)</label><select id="adv_manova_deps" class="adv-select" multiple size="3">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+ case 'ancova':
+  testTitle.innerHTML = '📊 ANCOVA Configuration';
+  html = `
+    <div class="field"><label>Dependent Variable (numeric)</label><select id="adv_ancova_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    <div class="field"><label>Factor (categorical)</label><select id="adv_ancova_factor" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    <div class="field"><label>Covariates (Ctrl+Click to select multiple)</label><select id="adv_ancova_cov" class="adv-select" multiple size="3">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    <div id="ancova-ref-container" style="margin-top: 15px;"></div>
+  `;
+  // Store reference to config content so UI can be updated after rendering
+  setTimeout(() => {
+    updateAncovaRefUI();
+    // Add event listeners for factor and covariate changes to re-run UI
+    const factorSelect = document.getElementById('adv_ancova_factor');
+    if (factorSelect) {
+      factorSelect.addEventListener('change', () => {
+        ancovaRefLevels = {};
+        updateAncovaRefUI();
+      });
+    }
+  }, 50);
+  break;
+case 'manova':
+    testTitle.innerHTML = '🔬 MANOVA Configuration';
+    html = `
+        <div class="field"><label>Dependent Variables (Ctrl+Click for multiple)</label><select id="adv_manova_deps" class="adv-select" multiple size="4">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
         <div class="field"><label>Factor (categorical)</label><select id="adv_manova_factor" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-      `;
-      break;
+        <div class="field-hint">📊 MANOVA tests for differences across groups on multiple dependent variables simultaneously.</div>
+    `;
+    break;
     case 'multinomial':
       testTitle.innerHTML = '📊 Multinomial Logistic Regression';
       html = `
@@ -11584,9 +11598,94 @@ function runKruskalWallis() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ANCOVA - Analysis of Covariance (COMPLETE WORKING)
+// ANCOVA - Analysis of Covariance (CalcuStats unique output)
 // ═══════════════════════════════════════════════════════════════
 
+// Global store for ANCOVA reference levels
+let ancovaRefLevels = {};
+
+// Function to detect categorical variables for ANCOVA
+function isCategoricalAncova(varName) {
+    if (!advData || advData.length === 0) return false;
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    if (values.length === 0) return false;
+    
+    const allNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+    if (!allNumeric) return true;
+    
+    const uniqueValues = [...new Set(values)];
+    return uniqueValues.length <= 10;
+}
+
+// Get unique values for a variable
+function getUniqueValuesAncova(varName) {
+    if (!advData || advData.length === 0) return [];
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    return [...new Set(values)].sort();
+}
+
+// Update factor reference UI for ANCOVA
+function updateAncovaRefUI() {
+    const factorSelect = document.getElementById('adv_ancova_factor');
+    if (!factorSelect) return;
+    
+    const factorVar = factorSelect.value;
+    let refContainer = document.getElementById('ancova-ref-container');
+    
+    if (!refContainer) {
+        console.log('ancova-ref-container not found');
+        return;
+    }
+    
+    if (!factorVar || !advData || advData.length === 0 || !isCategoricalAncova(factorVar)) {
+        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ Factor is numeric or no data loaded. No reference category needed.</p>`;
+        refContainer.style.display = 'block';
+        return;
+    }
+    
+    const levels = getUniqueValuesAncova(factorVar);
+    if (levels.length === 0) {
+        refContainer.innerHTML = `<p style="color: var(--coral); font-size: 12px;">⚠️ No valid levels found for this factor.</p>`;
+        return;
+    }
+    
+    const currentRef = ancovaRefLevels[factorVar] || levels[0];
+    
+    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0 0 0;">
+        <h4 style="margin: 0 0 8px 0;">🏷️ Factor Reference Category</h4>
+        <p style="font-size: 12px; margin-bottom: 10px;">Select Reference Category for <strong>${escapeHtml(factorVar)}</strong> (other levels compared against this):</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">`;
+    
+    levels.forEach(level => {
+        html += `
+            <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg2); border-radius: 6px; cursor: pointer; border: 2px solid ${currentRef === level ? 'var(--accent)' : 'var(--border)'};">
+                <input type="radio" name="ancova_ref" value="${escapeHtml(level)}" 
+                       ${currentRef === level ? 'checked' : ''} 
+                       onchange="setAncovaRef('${escapeHtml(factorVar)}', '${escapeHtml(level)}')">
+                <strong>${escapeHtml(String(level))}</strong>
+                ${currentRef === level ? '<span style="color: var(--accent);">📌 Reference</span>' : '<span style="color: var(--teal);">→ Comparison</span>'}
+            </label>
+        `;
+    });
+    
+    html += `</div>
+        <p style="font-size: 10px; color: var(--text3); margin-top: 8px;">
+            Coefficient shows the difference for each level compared to <strong>${escapeHtml(String(currentRef))}</strong>
+        </p>
+        <button class="btn-secondary" style="margin-top: 10px; padding: 6px 14px; font-size: 12px;" onclick="runANCOVA()">⟳ Rerun with Selected Reference</button>
+    </div>`;
+    
+    refContainer.innerHTML = html;
+    refContainer.style.display = 'block';
+}
+
+function setAncovaRef(varName, refValue) {
+    ancovaRefLevels[varName] = refValue;
+    updateAncovaRefUI();
+    showToast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+}
+
+// Main ANCOVA function
 function runANCOVA() {
     const dep = document.getElementById('adv_ancova_dep').value;
     const factor = document.getElementById('adv_ancova_factor').value;
@@ -11604,13 +11703,35 @@ function runANCOVA() {
     }
     
     // Get factor levels
-    const factorLevels = [...new Set(advData.map(r => r[factor]).filter(v => v !== '' && v !== null && v !== undefined))].sort();
+    let factorLevels = [...new Set(advData.map(r => r[factor]).filter(v => v !== '' && v !== null && v !== undefined))];
+    factorLevels.sort();
+    
+    // Apply user-selected reference category if factor is categorical
+    const isCategorical = isCategoricalAncova(factor);
+    let referenceLevel = null;
+    let reorderedLevels = [...factorLevels];
+    
+    if (isCategorical && ancovaRefLevels[factor]) {
+        referenceLevel = ancovaRefLevels[factor];
+        // Move reference level to first position
+        const refIndex = reorderedLevels.indexOf(referenceLevel);
+        if (refIndex > 0) {
+            reorderedLevels.splice(refIndex, 1);
+            reorderedLevels.unshift(referenceLevel);
+        }
+        factorLevels = reorderedLevels;
+    }
+    
     const k = factorLevels.length;
     
     if (k < 2) {
         showToast('Error', 'Factor must have at least 2 levels', 'warn');
         return;
     }
+    
+    // Collect data for each factor level
+    const factorData = {};
+    factorLevels.forEach(level => { factorData[level] = []; });
     
     // Build design matrix
     const validRows = [];
@@ -11639,8 +11760,9 @@ function runANCOVA() {
         
         validRows.push(i);
         Y.push(depVal);
+        factorData[factorVal].push(depVal);
         
-        // Design row: intercept, covariates, factor dummies (first level as reference)
+        // Design row: intercept, covariates, factor dummies (first level = reference)
         const designRow = [1];
         for (const cv of covVals) designRow.push(cv);
         for (let j = 1; j < k; j++) designRow.push(factorIdx === j ? 1 : 0);
@@ -11649,153 +11771,309 @@ function runANCOVA() {
     
     const n = Y.length;
     const p = X[0].length;
+    const numCovariates = covs.length;
     
     if (n < p + 1) {
         showToast('Error', `Not enough observations (${n}) for ${p} predictors`, 'warn');
         return;
     }
     
-    // OLS estimation
-    const betas = olsSolve(X, Y);
-    const predicted = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
-    const residuals = Y.map((y, i) => y - predicted[i]);
-    const yMean = mean(Y);
+    // Full model
+    const betas_full = olsSolve(X, Y);
+    const predicted_full = X.map(row => row.reduce((s, v, i) => s + v * betas_full[i], 0));
+    const residuals_full = Y.map((y, i) => y - predicted_full[i]);
+    const SS_res_full = residuals_full.reduce((s, r) => s + r * r, 0);
+    const df_res_full = n - p;
+    const MS_res_full = SS_res_full / df_res_full;
     
-    const SS_res = residuals.reduce((s, r) => s + r * r, 0);
-    const SS_tot = Y.reduce((s, y) => s + (y - yMean) ** 2, 0);
-    const SS_reg = SS_tot - SS_res;
+    // Model without factor
+    const X_noFactor = X.map(row => row.slice(0, 1 + numCovariates));
+    const betas_noFactor = olsSolve(X_noFactor, Y);
+    const predicted_noFactor = X_noFactor.map(row => row.reduce((s, v, i) => s + v * betas_noFactor[i], 0));
+    const residuals_noFactor = Y.map((y, i) => y - predicted_noFactor[i]);
+    const SS_res_noFactor = residuals_noFactor.reduce((s, r) => s + r * r, 0);
     
-    const df_reg = p - 1;
-    const df_res = n - p;
-    const MS_reg = SS_reg / df_reg;
-    const MS_res = SS_res / df_res;
-    const F_model = MS_reg / MS_res;
-    const p_model = fpvalue(F_model, df_reg, df_res);
-    const Rsq = SS_reg / SS_tot;
-    const RsqAdj = 1 - (1 - Rsq) * (n - 1) / df_res;
+    // Model without covariates
+    const X_noCovariates = X.map(row => [1, ...row.slice(1 + numCovariates)]);
+    const betas_noCovariates = olsSolve(X_noCovariates, Y);
+    const predicted_noCovariates = X_noCovariates.map(row => row.reduce((s, v, i) => s + v * betas_noCovariates[i], 0));
+    const residuals_noCovariates = Y.map((y, i) => y - predicted_noCovariates[i]);
+    const SS_res_noCovariates = residuals_noCovariates.reduce((s, r) => s + r * r, 0);
+    
+    // Null model (intercept only)
+    const X_interceptOnly = X.map(() => [1]);
+    const betas_intercept = olsSolve(X_interceptOnly, Y);
+    const predicted_intercept = X_interceptOnly.map(row => row[0] * betas_intercept[0]);
+    const residuals_intercept = Y.map((y, i) => y - predicted_intercept[i]);
+    const SS_res_intercept = residuals_intercept.reduce((s, r) => s + r * r, 0);
+    
+    // Sum of Squares (Type III)
+    const SS_factor = SS_res_noFactor - SS_res_full;
+    const SS_covariates = SS_res_noCovariates - SS_res_full;
+    const SS_model = SS_res_intercept - SS_res_full;
+    const SS_total = Y.reduce((s, y) => s + (y - mean(Y)) ** 2, 0);
+    
+    // Degrees of freedom
+    const df_factor = k - 1;
+    const df_covariates = numCovariates;
+    const df_model = p - 1;
+    const df_total = n - 1;
+    
+    // Mean Squares
+    const MS_factor = SS_factor / df_factor;
+    const MS_covariates = SS_covariates / df_covariates;
+    const MS_model = SS_model / df_model;
+    
+    // F statistics
+    const F_factor = MS_factor / MS_res_full;
+    const F_covariates = MS_covariates / MS_res_full;
+    const F_model = MS_model / MS_res_full;
+    
+    // P-values
+    const p_factor = fpvalue(F_factor, df_factor, df_res_full);
+    const p_covariates = fpvalue(F_covariates, df_covariates, df_res_full);
+    const p_model = fpvalue(F_model, df_model, df_res_full);
+    
+    // R-squared
+    const Rsq = SS_model / SS_total;
+    const RsqAdj = 1 - (1 - Rsq) * (n - 1) / df_res_full;
     
     // Standard errors
     const Xt = transposeMatrix(X);
     const XtX = multiplyMatrices(Xt, X);
     const XtXinv = invertMatrix(XtX);
-    const se_b = XtXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]) * MS_res));
-    const t_b = betas.map((b, i) => b / Math.max(1e-15, se_b[i]));
-    const p_b = t_b.map(t => tpvalue(Math.abs(t), df_res));
-    const tCrit = tinv(0.975, df_res);
+    const se_b = XtXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]) * MS_res_full));
+    const t_b = betas_full.map((b, i) => b / Math.max(1e-15, se_b[i]));
+    const p_b = t_b.map(t => tpvalue(Math.abs(t), df_res_full));
+    const tCrit = tinv(0.975, df_res_full);
     
     // Build column names
-    const colNames = ['(Intercept)', ...covs, ...factorLevels.slice(1).map(l => `${factor}: ${l} vs ${factorLevels[0]}`)];
+    const paramNames = ['(Intercept)'];
+    for (const c of covs) paramNames.push(c);
+    const refDisplay = referenceLevel ? ` (vs ${referenceLevel})` : '';
+    for (let j = 1; j < k; j++) paramNames.push(`${factor}: ${factorLevels[j]}${refDisplay}`);
     
-    let html = `<h3>📊 Analysis of Covariance (ANCOVA)</h3>
+    // Build HTML output - UNIQUE CalcuStats format
+    let html = `<h3>📊 Covariance Analysis (ANCOVA)</h3>
     
     <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-        <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)}</p>
-        <p><strong>Factor:</strong> ${escapeHtml(factor)} (${k} levels)</p>
+        <p><strong>Response Variable:</strong> ${escapeHtml(dep)}</p>
+        <p><strong>Grouping Factor:</strong> ${escapeHtml(factor)} (${k} levels)</p>
         <p><strong>Covariates:</strong> ${covs.length ? covs.join(', ') : 'None'}</p>
         <p><strong>Sample Size (n):</strong> ${n}</p>
-        <p><strong>Reference Category:</strong> ${escapeHtml(factorLevels[0])}</p>
-    </div>
+        ${referenceLevel ? `<p><strong>Reference Category:</strong> ${escapeHtml(referenceLevel)}</p>` : ''}
+    </div>`;
     
-    <p><strong>Model Summary</strong></p>
-    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
-        <thead><tr style="background: var(--bg3);">
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">R²</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Adjusted R²</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df1</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df2</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
-        </tr></thead>
-        <tbody><tr style="border: 1px solid var(--border);">
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${Rsq.toFixed(4)}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${RsqAdj.toFixed(4)}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_model.toFixed(4)}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_reg}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_res}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_model.toFixed(6)}${p_model < 0.05 ? ' *' : ''}</span></td>
-        </tr></tbody>
-    </table>
-    
-    <p><strong>ANOVA Table</strong></p>
-    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
-        <thead><tr style="background: var(--bg3);">
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Source</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sum of Squares</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean Square</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
-        </tr></thead>
-        <tbody>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Regression</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_reg.toFixed(4)}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_reg}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_reg.toFixed(4)}</span></td>
-                <td rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">${F_model.toFixed(4)}</span></td>
-                <td rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">${p_model.toFixed(6)}</span></td>
+    // Factor Summary Table
+    html += `<p><strong>📋 Factor Level Summary</strong></p>
+    <table style="border-collapse: collapse; width: auto; min-width: 300px; margin: 10px 0; border: 1px solid var(--border);">
+        <thead>
+            <tr style="background: var(--bg3);">
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Count (N)</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean (Raw)</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Deviation</th>
             </tr>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Residual</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_res.toFixed(4)}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_res}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_res.toFixed(4)}</span></td>
-            </tr>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Total</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_tot.toFixed(4)}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${n-1}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <p><strong>Parameter Estimates</strong></p>
-    <p><em>t-critical (${df_res} df, 95% CI) = ${tCrit.toFixed(4)}</em></p>
-    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border); font-size: 12px;">
-        <thead><tr style="background: var(--bg3);">
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Variable</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">B</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
-        </tr></thead>
+        </thead>
         <tbody>`;
     
-    for (let i = 0; i < betas.length; i++) {
+    for (let i = 0; i < factorLevels.length; i++) {
+        const level = factorLevels[i];
+        const values = factorData[level];
+        const count = values.length;
+        const meanVal = count > 0 ? mean(values).toFixed(4) : 'N/A';
+        const sdVal = count > 1 ? sd(values).toFixed(4) : 'N/A';
+        const isRef = referenceLevel && level === referenceLevel;
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(level)}</strong>${isRef ? ' <span style="color: var(--accent);">(Reference)</span>' : ''}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${count}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${meanVal}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${sdVal}</span></td>
+        </tr>`;
+    }
+    
+    html += `</tbody>
+    </table>`;
+    
+    // Model Effects Table
+    html += `<p><strong>📊 Model Effects (Type III Sum of Squares)</strong></p>
+    <p><em>Response: ${escapeHtml(dep)}</em></p>
+    <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border); font-size: 13px;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Source</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sum of Squares</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean Square</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border: 1px solid var(--border);">
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Full Model</span></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_model.toFixed(3)}</span></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_model}</span></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_model.toFixed(3)}</span></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_model.toFixed(3)}</span></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_model.toFixed(4)}</span></td>
+                </tr>`;
+    
+    // Intercept row (if covariates present)
+    if (numCovariates > 0) {
+        const X_noIntercept = X.map(row => row.slice(1));
+        const betas_noIntercept = olsSolve(X_noIntercept, Y);
+        const predicted_noIntercept = X_noIntercept.map(row => row.reduce((s, v, i) => s + v * betas_noIntercept[i], 0));
+        const residuals_noIntercept = Y.map((y, i) => y - predicted_noIntercept[i]);
+        const SS_res_noIntercept = residuals_noIntercept.reduce((s, r) => s + r * r, 0);
+        const SS_intercept = SS_res_noIntercept - SS_res_full;
+        const MS_intercept = SS_intercept / 1;
+        const F_intercept = MS_intercept / MS_res_full;
+        const p_intercept = fpvalue(F_intercept, 1, df_res_full);
+        
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Intercept</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_intercept.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">1</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_intercept.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_intercept.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_intercept.toFixed(4)}</span></td>
+        </tr>`;
+    }
+    
+    // Covariates rows
+    for (let i = 0; i < covs.length; i++) {
+        const covIndex = 1 + i;
+        const X_withoutCov = X.map(row => [...row.slice(0, covIndex), ...row.slice(covIndex + 1)]);
+        const betas_withoutCov = olsSolve(X_withoutCov, Y);
+        const predicted_withoutCov = X_withoutCov.map(row => row.reduce((s, v, idx) => s + v * betas_withoutCov[idx], 0));
+        const residuals_withoutCov = Y.map((y, idx) => y - predicted_withoutCov[idx]);
+        const SS_res_withoutCov = residuals_withoutCov.reduce((s, r) => s + r * r, 0);
+        const SS_cov = SS_res_withoutCov - SS_res_full;
+        const MS_cov = SS_cov / 1;
+        const F_cov = MS_cov / MS_res_full;
+        const p_cov = fpvalue(F_cov, 1, df_res_full);
+        
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">${escapeHtml(covs[i])}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_cov.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">1</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_cov.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_cov.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_cov.toFixed(4)}</span></td>
+        </tr>`;
+    }
+    
+    // Factor row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">${escapeHtml(factor)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_factor.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_factor}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_factor.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_factor.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_factor.toFixed(4)}</span>${p_factor < 0.05 ? ' *' : ''}</span></td>
+    </tr>`;
+    
+    // Error row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Residual (Error)</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_res_full.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_res_full}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_res_full.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+    </tr>`;
+    
+    // Total row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Total (Corrected)</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_total.toFixed(3)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_total}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+    </tr>`;
+    
+    html += `</tbody>
+    </table>
+    </div>
+    
+    <p><em>📈 R² = ${Rsq.toFixed(3)} &nbsp;|&nbsp; Adjusted R² = ${RsqAdj.toFixed(3)} &nbsp;|&nbsp; Residual df = ${df_res_full}</em></p>
+    
+    <p><strong>📐 Coefficient Estimates</strong></p>
+    <p><em>t-critical (${df_res_full} df, 95% CI) = ${tCrit.toFixed(4)}</em></p>
+    <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border); font-size: 12px;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Predictor</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate (B)</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    for (let i = 0; i < betas_full.length; i++) {
         const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
         html += `<tr style="border: 1px solid var(--border);">
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(colNames[i])}</strong></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${betas[i].toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(paramNames[i])}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${betas_full[i].toFixed(4)}</span></td>
             <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${se_b[i].toFixed(4)}</span></td>
             <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${t_b[i].toFixed(4)}</span></td>
             <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_b[i].toFixed(6)} ${stars}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(betas[i] - tCrit * se_b[i]).toFixed(4)}</span></td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(betas[i] + tCrit * se_b[i]).toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(betas_full[i] - tCrit * se_b[i]).toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(betas_full[i] + tCrit * se_b[i]).toFixed(4)}</span></td>
         </tr>`;
     }
     
     html += `</tbody>
     </table>
+    </div>
     <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>
-    <p class="step-val">${p_model < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
+    <p class="step-val">${p_factor < 0.05 ? '✓ Factor has a statistically significant effect on the response variable (p < 0.05)' : '✗ Factor does not have a statistically significant effect (p ≥ 0.05)'}</p>`;
     
     displayResults(html);
 }
 
+// Initialize event listeners for ANCOVA
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const factorSelect = document.getElementById('adv_ancova_factor');
+        if (factorSelect) {
+            factorSelect.addEventListener('change', () => {
+                ancovaRefLevels = {};
+                updateAncovaRefUI();
+            });
+        }
+        updateAncovaRefUI();
+    }, 500);
+});
 
 // ═══════════════════════════════════════════════════════════════
-// MANOVA - Multivariate Analysis of Variance (COMPLETE WORKING)
+// MANOVA - Multivariate Analysis of Variance (Complete)
+// Includes Multivariate Tests + Tests of Between-Subjects Effects
 // ═══════════════════════════════════════════════════════════════
 
 function runMANOVA() {
+    console.log("MANOVA function started");
+    
     const depsSelect = document.getElementById('adv_manova_deps');
-    const deps = Array.from(depsSelect.selectedOptions).map(o => o.value);
     const factor = document.getElementById('adv_manova_factor').value;
+    
+    if (!depsSelect) {
+        console.error("depsSelect not found");
+        showToast('Error', 'Dependent variables selector not found', 'warn');
+        return;
+    }
+    
+    const deps = Array.from(depsSelect.selectedOptions).map(o => o.value);
+    
+    console.log("Deps:", deps, "Factor:", factor);
     
     if (deps.length < 2) {
         showToast('Error', 'Please select at least 2 dependent variables', 'warn');
@@ -11817,8 +12095,11 @@ function runMANOVA() {
     advData.forEach(row => {
         const f = row[factor];
         if (!f || f === '') return;
-        const vec = deps.map(d => parseFloat(row[d]));
-        if (vec.some(v => isNaN(v))) return;
+        const vec = deps.map(d => {
+            const val = parseFloat(row[d]);
+            return isNaN(val) ? null : val;
+        });
+        if (vec.some(v => v === null)) return;
         if (!groups[f]) groups[f] = [];
         groups[f].push(vec);
     });
@@ -11827,26 +12108,47 @@ function runMANOVA() {
     const k = groupNames.length;
     const p = deps.length;
     
+    console.log("Groups found:", groupNames, "k=", k, "p=", p);
+    
     if (k < 2) {
         showToast('Error', 'Factor must have at least 2 levels', 'warn');
         return;
     }
     
     // Calculate means
-    const allVecs = Object.values(groups).flat();
-    const grandMean = deps.map((_, i) => mean(allVecs.map(v => v[i])));
+    const allVecs = [];
+    for (const g of groupNames) {
+        allVecs.push(...groups[g]);
+    }
+    const totalN = allVecs.length;
+    
+    console.log("Total N:", totalN);
+    
+    const grandMean = Array(p).fill(0);
+    for (let i = 0; i < p; i++) {
+        let sum = 0;
+        for (const vec of allVecs) {
+            sum += vec[i];
+        }
+        grandMean[i] = sum / totalN;
+    }
     
     const groupMeans = {};
     const groupSizes = {};
     for (const g of groupNames) {
-        groupMeans[g] = deps.map((_, i) => mean(groups[g].map(v => v[i])));
+        groupMeans[g] = Array(p).fill(0);
         groupSizes[g] = groups[g].length;
+        for (let i = 0; i < p; i++) {
+            let sum = 0;
+            for (const vec of groups[g]) {
+                sum += vec[i];
+            }
+            groupMeans[g][i] = sum / groups[g].length;
+        }
     }
     
-    // Calculate H and E matrices
+    // Calculate Hypothesis SSCP matrix (H) - between groups
     const H = Array(p).fill().map(() => Array(p).fill(0));
-    const E = Array(p).fill().map(() => Array(p).fill(0));
-    
     for (const g of groupNames) {
         const ng = groupSizes[g];
         const gMean = groupMeans[g];
@@ -11855,6 +12157,12 @@ function runMANOVA() {
                 H[i][j] += ng * (gMean[i] - grandMean[i]) * (gMean[j] - grandMean[j]);
             }
         }
+    }
+    
+    // Calculate Error SSCP matrix (E) - within groups
+    const E = Array(p).fill().map(() => Array(p).fill(0));
+    for (const g of groupNames) {
+        const gMean = groupMeans[g];
         for (const vec of groups[g]) {
             for (let i = 0; i < p; i++) {
                 for (let j = 0; j < p; j++) {
@@ -11864,33 +12172,184 @@ function runMANOVA() {
         }
     }
     
-    // Calculate eigenvalues of H * E^{-1}
-    const Einv = invertMatrix(E);
-    if (!Einv) {
-        showToast('Error', 'Cannot compute MANOVA (singular matrix)', 'warn');
-        return;
-    }
-    const HEinv = multiplyMatrices(H, Einv);
-    const eigs = computeEigenvalues(HEinv);
+    // Degrees of freedom
+    const df_hypothesis = k - 1;
+    const df_error = totalN - k;
+    const df_total = totalN - 1;
     
-    const s = Math.min(p, k - 1);
-    const totalN = allVecs.length;
+    // ==============================================================
+    // TESTS OF BETWEEN-SUBJECTS EFFECTS (Univariate ANOVA for each DV)
+    // ==============================================================
+    const univariateResults = [];
+    
+    for (let idx = 0; idx < p; idx++) {
+        const depName = deps[idx];
+        
+        // Extract data for this dependent variable
+        const allValues = allVecs.map(v => v[idx]);
+        const grandMeanDep = grandMean[idx];
+        
+        // Calculate Sum of Squares
+        let SS_between = 0;
+        let SS_within = 0;
+        let SS_total = 0;
+        
+        // Between-groups SS
+        for (const g of groupNames) {
+            const ng = groupSizes[g];
+            const gMean = groupMeans[g][idx];
+            SS_between += ng * Math.pow(gMean - grandMeanDep, 2);
+        }
+        
+        // Within-groups SS (Error)
+        for (const g of groupNames) {
+            const gMean = groupMeans[g][idx];
+            for (const vec of groups[g]) {
+                SS_within += Math.pow(vec[idx] - gMean, 2);
+            }
+        }
+        
+        // Total SS
+        for (const val of allValues) {
+            SS_total += Math.pow(val - grandMeanDep, 2);
+        }
+        
+        // Mean Squares
+        const MS_between = SS_between / df_hypothesis;
+        const MS_within = SS_within / df_error;
+        
+        // F statistic and p-value
+        const F_value = MS_between / MS_within;
+        const p_value = pfvalue(F_value, df_hypothesis, df_error);
+        
+        // R-squared
+        const R_sq = SS_between / SS_total;
+        const R_sq_adj = 1 - (1 - R_sq) * (totalN - 1) / df_error;
+        
+        univariateResults.push({
+            dep: depName,
+            SS_between: SS_between,
+            SS_within: SS_within,
+            SS_total: SS_total,
+            df_between: df_hypothesis,
+            df_within: df_error,
+            df_total: df_total,
+            MS_between: MS_between,
+            MS_within: MS_within,
+            F: F_value,
+            p: p_value,
+            R_sq: R_sq,
+            R_sq_adj: R_sq_adj
+        });
+    }
+    
+    // ==============================================================
+    // MULTIVARIATE TESTS
+    // ==============================================================
+    
+    // Calculate eigenvalues of H * E^{-1}
+    const Einv = invertMatrixSafely(E);
+    let eigenvalues = [];
+    let pillai = 0, wilks = 1, hotelling = 0, roy = 0;
+    
+    if (Einv) {
+        const HEinv = multiplyMatrices(H, Einv);
+        eigenvalues = computeEigenvaluesSafely(HEinv, p);
+        const positiveEigs = eigenvalues.filter(e => e > 1e-10);
+        
+        for (const eig of positiveEigs) {
+            pillai += eig / (1 + eig);
+            wilks *= 1 / (1 + eig);
+            hotelling += eig;
+            if (roy < eig) roy = eig;
+        }
+    } else {
+        console.warn("Could not invert E matrix");
+    }
+    
+    const s = Math.min(p, df_hypothesis);
+    const m = (Math.abs(p - df_hypothesis) - 1) / 2;
+    const n = (df_error - p - 1) / 2;
     
     // Pillai's Trace
-    const pillai = eigs.reduce((sum, eig) => sum + eig / (1 + eig), 0);
-    const pillaiF = ((2 * (totalN - k - p + s) + s + 1) * pillai) / ((2 * s + 1) * (s - pillai));
-    const pillaiDf1 = s * (2 * s + 1);
-    const pillaiDf2 = s * (2 * (totalN - k - p + s) + s + 1);
-    const pillaiP = fpvalue(pillaiF, pillaiDf1, pillaiDf2);
+    let pillaiF = null, pillaiDf1 = null, pillaiDf2 = null, pillaiP = null;
+    if (pillai > 0 && pillai < s && n > 0 && s > 0 && (2 * n + s + 1) > 0 && (s - pillai) > 0) {
+        pillaiDf1 = s * (2 * m + s + 1);
+        pillaiDf2 = s * (2 * n + s + 1);
+        pillaiF = ((2 * n + s + 1) * pillai) / ((2 * m + s + 1) * (s - pillai));
+        pillaiP = pfvalue(pillaiF, pillaiDf1, pillaiDf2);
+    }
     
     // Wilks' Lambda
-    const wilks = eigs.reduce((prod, eig) => prod * (1 / (1 + eig)), 1);
+    let wilksF = null, wilksDf1 = null, wilksDf2 = null, wilksP = null;
+    if (wilks > 0 && wilks < 1 && df_error > 0) {
+        wilksDf1 = p * df_hypothesis;
+        let r = df_error - (p - df_hypothesis + 1) / 2;
+        let df2 = r * df_hypothesis - (p * df_hypothesis - 2) / 2;
+        if (df2 < 1) df2 = df_error;
+        const ratio = (1 - Math.pow(wilks, 1 / s)) / Math.pow(wilks, 1 / s);
+        wilksF = ratio * (df2 / wilksDf1);
+        wilksDf2 = df2;
+        wilksP = pfvalue(wilksF, wilksDf1, wilksDf2);
+    }
     
-    // Hotelling's Trace
-    const hotelling = eigs.reduce((sum, eig) => sum + eig, 0);
+    // Hotelling-Lawley Trace
+    let hotellingF = null, hotellingDf1 = null, hotellingDf2 = null, hotellingP = null;
+    if (hotelling > 0 && s > 0 && n > 0 && hotelling > 0) {
+        hotellingDf1 = p * df_hypothesis;
+        // Use simpler approximation that works
+        hotellingDf2 = df_error - p + s;
+        if (hotellingDf2 <= 0) hotellingDf2 = df_error;
+        hotellingF = hotelling * (hotellingDf2 / hotellingDf1);
+        hotellingP = pfvalue(hotellingF, hotellingDf1, hotellingDf2);
+    }
     
     // Roy's Largest Root
-    const roy = eigs[0] || 0;
+    let royF = null, royDf1 = null, royDf2 = null, royP = null;
+    if (roy > 0 && s > 0) {
+        royDf1 = s;
+        royDf2 = df_error - p + s;
+        if (royDf2 > 0) {
+            royF = roy * (royDf2 / royDf1);
+            royP = pfvalue(royF, royDf1, royDf2);
+        }
+    }
+    
+    // ==============================================================
+    // INTERCEPT TEST (Multivariate)
+    // ==============================================================
+    let interceptF = null, interceptNumDF = null, interceptDenDF = null, interceptP = null, interceptValue = null;
+    if (df_error > 0 && totalN > 0 && Einv) {
+        const H_intercept = Array(p).fill().map(() => Array(p).fill(0));
+        for (let i = 0; i < p; i++) {
+            for (let j = 0; j < p; j++) {
+                H_intercept[i][j] = totalN * grandMean[i] * grandMean[j];
+            }
+        }
+        
+        const HEinv_intercept = multiplyMatrices(H_intercept, Einv);
+        const interceptEigs = computeEigenvaluesSafely(HEinv_intercept, p);
+        let interceptPillai = 0;
+        for (const eig of interceptEigs) {
+            if (eig > 0) interceptPillai += eig / (1 + eig);
+        }
+        
+        const s_int = 1;
+        const m_int = (Math.abs(p - 1) - 1) / 2;
+        const n_int = (df_error - p - 1) / 2;
+        
+        if (n_int > 0 && interceptPillai > 0 && interceptPillai < s_int) {
+            interceptValue = interceptPillai;
+            interceptNumDF = s_int * (2 * m_int + s_int + 1);
+            interceptDenDF = s_int * (2 * n_int + s_int + 1);
+            interceptF = ((2 * n_int + s_int + 1) * interceptPillai) / ((2 * m_int + s_int + 1) * (s_int - interceptPillai));
+            interceptP = pfvalue(interceptF, interceptNumDF, interceptDenDF);
+        }
+    }
+    
+    // ==============================================================
+    // BUILD HTML OUTPUT
+    // ==============================================================
     
     let html = `<h3>📊 Multivariate Analysis of Variance (MANOVA)</h3>
     
@@ -11898,101 +12357,374 @@ function runMANOVA() {
         <p><strong>Dependent Variables:</strong> ${deps.join(', ')}</p>
         <p><strong>Factor:</strong> ${escapeHtml(factor)} (${k} levels)</p>
         <p><strong>Total Sample Size (N):</strong> ${totalN}</p>
-    </div>
+    </div>`;
     
-    <p><strong>Group Means</strong></p>
-    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
-        <thead><tr style="background: var(--bg3);">
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Group</th>
-            ${deps.map(d => `<th style="border: 1px solid var(--border); padding: 8px; text-align: center;">${escapeHtml(d)}</th>`).join('')}
-        </tr></thead>
-        <tbody>`;
+    // Group Means Table
+    html += `<p><strong>Group Means</strong></p>
+    <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Group</th>
+                    ${deps.map(d => `<th style="border: 1px solid var(--border); padding: 8px; text-align: center;">${escapeHtml(d)}</th>`).join('')}
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">N</th>
+                </tr>
+            </thead>
+            <tbody>`;
     
     for (const g of groupNames) {
         html += `<tr style="border: 1px solid var(--border);">
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(g)}</strong> (n=${groupSizes[g]})</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(g)}</strong></td>
             ${groupMeans[g].map(m => `<td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${m.toFixed(4)}</span></td>`).join('')}
-        <tr>`;
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${groupSizes[g]}</span></td>
+        </tr>`;
     }
     
     html += `<tr style="border: 1px solid var(--border); background: var(--bg3);">
         <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Grand Mean</strong></td>
         ${grandMean.map(m => `<td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${m.toFixed(4)}</span></td>`).join('')}
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${totalN}</span></td>
     </tr></tbody>
     </table>
+    </div>`;
     
-    <p><strong>Multivariate Tests</strong></p>
-    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
-        <thead><tr style="background: var(--bg3);">
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Test</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Value</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Hypothesis df</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Error df</th>
-            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
-        </tr></thead>
-        <tbody>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Pillai's Trace</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillai.toFixed(4)}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiF.toFixed(4)}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiDf1}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiDf2}</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiP.toFixed(6)}${pillaiP < 0.05 ? ' *' : ''}</span></td>
-            </tr>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Wilks' Lambda</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;" colspan="5">${wilks.toFixed(4)}</span></td>
-            </tr>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Hotelling's Trace</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;" colspan="5">${hotelling.toFixed(4)}</span></td>
-            </tr>
-            <tr style="border: 1px solid var(--border);">
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Roy's Largest Root</span></td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;" colspan="5">${roy.toFixed(4)}</span></td>
-            </tr>
-        </tbody>
+    // ==============================================================
+    // TESTS OF BETWEEN-SUBJECTS EFFECTS TABLE
+    // ==============================================================
+    html += `<p><strong>Tests of Between-Subjects Effects</strong></p>
+    <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border); font-size: 12px;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: left;">Source</th>
+                    ${deps.map(d => `<th colspan="5" style="border: 1px solid var(--border); padding: 8px; text-align: center;">${escapeHtml(d)}</th>`).join('')}
+                </tr>
+                <tr style="background: var(--bg3);">
+                    ${deps.map(() => `
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">Type III SS</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">df</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">Mean Square</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">F</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">Sig.</th>
+                    `).join('')}
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    // Corrected Model row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Corrected Model</strong></td>`;
+    for (const res of univariateResults) {
+        const SS_model = res.SS_between;
+        const df_model = res.df_between;
+        const MS_model = res.MS_between;
+        const F_model = res.F;
+        const p_model = res.p;
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${SS_model.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${df_model}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${MS_model.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${F_model.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${p_model.toFixed(3)}</span>${p_model < 0.05 ? ' *' : ''}</span></td>`;
+    }
+    html += `</tr>`;
+    
+    // Intercept row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Intercept</strong></td>`;
+    for (let idx = 0; idx < univariateResults.length; idx++) {
+        const res = univariateResults[idx];
+        const intercept_SS = totalN * Math.pow(grandMean[idx], 2);
+        const intercept_MS = intercept_SS / 1;
+        const intercept_F = intercept_MS / res.MS_within;
+        const intercept_p = pfvalue(intercept_F, 1, res.df_within);
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${intercept_SS.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">1</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${intercept_MS.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${intercept_F.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${intercept_p.toFixed(3)}</span>${intercept_p < 0.05 ? ' *' : ''}</span></td>`;
+    }
+    html += `</tr>`;
+    
+    // Group (Factor) row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(factor)}</strong></td>`;
+    for (const res of univariateResults) {
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.SS_between.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.df_between}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.MS_between.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.F.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.p.toFixed(3)}</span>${res.p < 0.05 ? ' *' : ''}</span></td>`;
+    }
+    html += `</tr>`;
+    
+    // Error row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Error</strong></td>`;
+    for (const res of univariateResults) {
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.SS_within.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.df_within}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.MS_within.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>`;
+    }
+    html += `</tr>`;
+    
+    // Total row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Total</strong></td>`;
+    for (const res of univariateResults) {
+        const total_SS = res.SS_between + res.SS_within;
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${total_SS.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.df_between + res.df_within}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>`;
+    }
+    html += `<tr>`;
+    
+    // Corrected Total row
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Corrected Total</strong></td>`;
+    for (const res of univariateResults) {
+        html += `
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.SS_total.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">${res.df_total}</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>
+            <td style="border: 1px solid var(--border); padding: 6px; text-align: center;">&nbsp;</span></td>`;
+    }
+    html += `</tr>`;
+    
+    html += `</tbody>
+    </table>`;
+    
+    // R-squared footnotes
+    for (let idx = 0; idx < univariateResults.length; idx++) {
+        const res = univariateResults[idx];
+        const letter = String.fromCharCode(97 + idx);
+        html += `<p><em>${letter}. R Squared = ${res.R_sq.toFixed(3)} (Adjusted R Squared = ${res.R_sq_adj.toFixed(3)})</em></p>`;
+    }
+    
+    // ==============================================================
+    // MULTIVARIATE TESTS TABLE
+    // ==============================================================
+    html += `<p><strong>Multivariate Tests</strong></p>
+    <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Effect</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Test</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Value</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Hypothesis df</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Error df</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    // Intercept row (multivariate)
+    if (interceptF !== null && interceptF > 0 && isFinite(interceptF)) {
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>Intercept</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Pillai's Trace</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${interceptValue.toFixed(8)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${interceptF.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${interceptNumDF}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${interceptDenDF}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${interceptP < 0.0001 ? '<.0001' : interceptP.toFixed(4)}</span>${interceptP < 0.05 ? ' *' : ''}</span></td>
+        </tr>`;
+    }
+    
+    // Group rows
+    if (wilksF !== null && isFinite(wilksF)) {
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(factor)}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Wilks' Lambda</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wilks.toFixed(7)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wilksF.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wilksDf1}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wilksDf2.toFixed(0)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wilksP < 0.0001 ? '<.0001' : wilksP.toFixed(4)}</span>${wilksP < 0.05 ? ' *' : ''}</span></td>
+        </tr>`;
+        
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(factor)}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Pillai's Trace</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillai.toFixed(7)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiF.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiDf1}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiDf2}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pillaiP < 0.0001 ? '<.0001' : pillaiP.toFixed(4)}</span>${pillaiP < 0.05 ? ' *' : ''}</span></td>
+        </tr>`;
+        
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(factor)}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Hotelling-Lawley Trace</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${hotelling.toFixed(7)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${hotellingF.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${hotellingDf1}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${hotellingDf2.toFixed(3)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${hotellingP < 0.0001 ? '<.0001' : hotellingP.toFixed(4)}</span>${hotellingP < 0.05 ? ' *' : ''}</span></td>
+        </tr>`;
+        
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(factor)}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Roy's Largest Root</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${roy.toFixed(7)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${royF.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${royDf1}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${royDf2}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${royP < 0.0001 ? '<.0001' : royP.toFixed(4)}</span>${royP < 0.05 ? ' *' : ''}</span></td>
+        </tr>`;
+    }
+    
+    html += `</tbody>
     </table>
+    </div>`;
     
-    <p class="step-val">${pillaiP < 0.05 ? '✓ Significant multivariate effect detected (p < 0.05)' : '✗ No significant multivariate effect detected (p ≥ 0.05)'}</p>`;
+    const anySignificantMultivariate = (wilksP !== null && wilksP < 0.05) || (pillaiP !== null && pillaiP < 0.05) || 
+                                       (hotellingP !== null && hotellingP < 0.05) || (royP !== null && royP < 0.05);
+    
+    html += `<p class="step-val">${anySignificantMultivariate ? '✓ Significant multivariate effect detected (p < 0.05)' : '✗ No significant multivariate effect detected (p ≥ 0.05)'}</p>`;
     
     displayResults(html);
+    console.log("MANOVA completed successfully");
 }
 
-function computeEigenvalues(M) {
-    const n = M.length;
-    const eigs = [];
-    let A = M.map(r => [...r]);
+// Helper function for safe matrix inversion
+function invertMatrixSafely(matrix) {
+    if (!matrix || matrix.length === 0) return null;
+    const n = matrix.length;
+    const A = matrix.map(row => [...row]);
+    const identity = Array(n).fill().map((_, i) => Array(n).fill().map((_, j) => i === j ? 1 : 0));
     
-    for (let iter = 0; iter < n; iter++) {
-        let v = Array(n).fill(1).map(() => Math.random());
+    // Augment matrix with identity
+    for (let i = 0; i < n; i++) {
+        A[i] = [...A[i], ...identity[i]];
+    }
+    
+    // Gaussian elimination
+    for (let i = 0; i < n; i++) {
+        // Find pivot
+        let maxRow = i;
+        for (let j = i + 1; j < n; j++) {
+            if (Math.abs(A[j][i]) > Math.abs(A[maxRow][i])) maxRow = j;
+        }
+        
+        if (Math.abs(A[maxRow][i]) < 1e-12) return null;
+        
+        // Swap rows
+        [A[i], A[maxRow]] = [A[maxRow], A[i]];
+        
+        // Normalize row i
+        const pivot = A[i][i];
+        for (let j = 0; j < 2 * n; j++) {
+            A[i][j] /= pivot;
+        }
+        
+        // Eliminate column i
+        for (let j = 0; j < n; j++) {
+            if (j !== i) {
+                const factor = A[j][i];
+                for (let k = 0; k < 2 * n; k++) {
+                    A[j][k] -= factor * A[i][k];
+                }
+            }
+        }
+    }
+    
+    // Extract inverse
+    const inverse = Array(n).fill().map((_, i) => Array(n).fill().map((_, j) => A[i][n + j]));
+    return inverse;
+}
+
+// Helper function for safe eigenvalue computation
+function computeEigenvaluesSafely(matrix, n) {
+    const eigenvalues = [];
+    let A = matrix.map(row => [...row]);
+    
+    // Use power iteration to find largest eigenvalues
+    const maxIter = 100;
+    const tol = 1e-10;
+    
+    for (let iter = 0; iter < Math.min(n, 5); iter++) {
+        let v = Array(n).fill().map(() => Math.random() - 0.5);
         let lambda = 0;
-        for (let powerIter = 0; powerIter < 100; powerIter++) {
-            const Av = A.map(row => row.reduce((s, val, j) => s + val * v[j], 0));
-            const norm = Math.sqrt(Av.reduce((s, x) => s + x * x, 0));
-            if (norm < 1e-10) break;
+        
+        for (let powerIter = 0; powerIter < maxIter; powerIter++) {
+            // Multiply A * v
+            const Av = Array(n).fill(0);
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    Av[i] += A[i][j] * v[j];
+                }
+            }
+            
+            // Compute norm
+            let norm = 0;
+            for (let i = 0; i < n; i++) {
+                norm += Av[i] * Av[i];
+            }
+            norm = Math.sqrt(norm);
+            
+            if (norm < 1e-12) break;
+            
+            // Normalize
             const newV = Av.map(x => x / norm);
-            const newLambda = Av.reduce((s, x, i) => s + x * v[i], 0);
-            if (Math.abs(newLambda - lambda) < 1e-8) {
+            
+            // Compute Rayleigh quotient
+            let newLambda = 0;
+            for (let i = 0; i < n; i++) {
+                newLambda += newV[i] * Av[i];
+            }
+            
+            if (Math.abs(newLambda - lambda) < tol) {
                 lambda = newLambda;
                 v = newV;
                 break;
             }
+            
             lambda = newLambda;
             v = newV;
         }
-        eigs.push(Math.abs(lambda));
-        // Deflate
+        
+        eigenvalues.push(Math.abs(lambda));
+        
+        // Deflate the matrix
         for (let i = 0; i < n; i++) {
             for (let j = 0; j < n; j++) {
                 A[i][j] -= lambda * v[i] * v[j];
             }
         }
     }
-    return eigs.sort((a, b) => b - a);
+    
+    // Sort in descending order
+    return eigenvalues.sort((a, b) => b - a);
 }
 
+// Helper function for F-distribution p-value
+function pfvalue(F, df1, df2) {
+    if (F <= 0) return 1;
+    if (isNaN(F) || !isFinite(F)) return 1;
+    if (df1 <= 0 || df2 <= 0) return 1;
+    
+    try {
+        const x = df1 * F / (df1 * F + df2);
+        const p = betainc(x, df1 / 2, df2 / 2);
+        return 1 - Math.min(1, Math.max(0, p));
+    } catch(e) {
+        // Fallback approximation
+        const logp = -0.5 * F + (df1 / 2) * Math.log(F) - Math.log(df2) * (df2 / 2);
+        return Math.min(1, Math.exp(Math.max(-30, logp)));
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // MULTINOMIAL LOGISTIC REGRESSION (COMPLETE WORKING)
