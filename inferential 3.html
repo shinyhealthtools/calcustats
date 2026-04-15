@@ -8433,96 +8433,13 @@ function logComb(n, k) {
 
 // ═══════════════════════════════════════════════════════════════
 // LINEAR REGRESSION (OLS — exact, matches all software)
+// WITH COMPLETE PAIRWISE COMPARISONS FOR CATEGORICAL VARIABLES
 // ═══════════════════════════════════════════════════════════════
 
 // Global store for categorical reference levels
 let categoricalReferenceLevels = {};
 
-function updateCategoricalReferenceUI() {
-    const indsSelect = document.getElementById('adv_lin_inds');
-    if (!indsSelect) return;
-    
-    const selectedVars = Array.from(indsSelect.selectedOptions).map(o => o.value);
-    
-    if (!advData || advData.length === 0) return;
-    
-    const categoricalVars = [];
-    selectedVars.forEach(varName => {
-        const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
-        if (values.length === 0) return;
-        
-        const uniqueValues = [...new Set(values)];
-        const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
-        
-        if (!isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2)) {
-            categoricalVars.push({
-                name: varName,
-                levels: uniqueValues.sort()
-            });
-        }
-    });
-    
-    // Find or create container
-    let refContainer = document.getElementById('categorical-ref-container');
-    if (!refContainer) {
-        const panel = document.querySelector('#adv-test-config-content');
-        if (panel) {
-            refContainer = document.createElement('div');
-            refContainer.id = 'categorical-ref-container';
-            panel.appendChild(refContainer);
-        } else {
-            return;
-        }
-    }
-    
-    if (categoricalVars.length === 0) {
-        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ No categorical variables detected — all variables treated as numeric.</p>`;
-        return;
-    }
-    
-    let refHtml = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
-        <h4 style="margin: 0 0 8px 0; font-size: 13px;">📊 Categorical Variables — Reference Categories</h4>
-        <p style="font-size: 11px; margin: 0 0 10px 0; color: var(--text3);">Select reference category for each variable (dummy coding):</p>`;
-    
-    categoricalVars.forEach(catVar => {
-        const currentRef = categoricalReferenceLevels[catVar.name] || catVar.levels[0];
-        refHtml += `
-            <div style="margin: 8px 0; padding: 8px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--accent);">
-                <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">${escapeHtml(catVar.name)}</label>
-                <select id="ref_${escapeHtml(catVar.name)}" data-varname="${escapeHtml(catVar.name)}" style="padding: 6px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); width: 100%;">
-                    ${catVar.levels.map(level => `
-                        <option value="${escapeHtml(level)}" ${level === currentRef ? 'selected' : ''}>
-                            ${escapeHtml(String(level))} ${level === currentRef ? '(Reference)' : ''}
-                        </option>
-                    `).join('')}
-                </select>
-                <span style="font-size: 10px; color: var(--text3); display: block; margin-top: 4px;">Dummy variables created with this as baseline</span>
-            </div>
-        `;
-    });
-    
-    refHtml += `</div>`;
-    refContainer.innerHTML = refHtml;
-    
-    // Attach change listeners
-    categoricalVars.forEach(catVar => {
-        const select = document.getElementById(`ref_${escapeHtml(catVar.name)}`);
-        if (select) {
-            select.addEventListener('change', (e) => {
-                categoricalReferenceLevels[catVar.name] = e.target.value;
-                // Update display
-                Array.from(e.target.options).forEach(opt => {
-                    if (opt.value === e.target.value) {
-                        opt.text = `${opt.value} (Reference)`;
-                    } else if (opt.text.includes('(Reference)')) {
-                        opt.text = opt.value;
-                    }
-                });
-                showToast('Info', `Reference for ${catVar.name} set to "${e.target.value}"`, 'info');
-            });
-        }
-    });
-}
+// REMOVED updateCategoricalReferenceUI function - no longer needed
 
 function buildDesignMatrixForRegression(independentVars) {
     if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0 };
@@ -8550,7 +8467,8 @@ function buildDesignMatrixForRegression(independentVars) {
                     varName: varName,
                     type: 'categorical',
                     level: level,
-                    reference: referenceLevel
+                    reference: referenceLevel,
+                    allLevels: uniqueValues
                 });
             });
         } else {
@@ -8621,9 +8539,77 @@ function buildYForRegression(dependentVar) {
     }).filter(v => v !== null);
 }
 
+// Calculate complete pairwise comparisons for categorical variables
+function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical) {
+    const results = {};
+    
+    for (const enc of varEncodings) {
+        if (enc.type === 'categorical') {
+            const allLevels = enc.allLevels;
+            const comparisons = [];
+            
+            // Get coefficient for each level (relative to reference)
+            const levelCoeffs = {};
+            let refLevel = enc.reference;
+            
+            for (let i = 0; i < varEncodings.length; i++) {
+                const e = varEncodings[i];
+                if (e.varName === enc.varName && e.type === 'categorical') {
+                    levelCoeffs[e.level] = {
+                        b: betas[i + 1],
+                        se: se_b[i + 1]
+                    };
+                }
+            }
+            
+            // Add comparison for reference level (coefficient is 0)
+            levelCoeffs[refLevel] = {
+                b: 0,
+                se: 0
+            };
+            
+            // Generate all pairwise comparisons
+            const levelList = [...allLevels];
+            for (let i = 0; i < levelList.length; i++) {
+                for (let j = 0; j < levelList.length; j++) {
+                    if (i === j) continue;
+                    
+                    const level1 = levelList[i];
+                    const level2 = levelList[j];
+                    
+                    const coeff1 = levelCoeffs[level1];
+                    const coeff2 = levelCoeffs[level2];
+                    
+                    const diff = coeff1.b - coeff2.b;
+                    const seDiff = Math.sqrt(coeff1.se ** 2 + coeff2.se ** 2);
+                    
+                    const ciLower = diff - tCritical * seDiff;
+                    const ciUpper = diff + tCritical * seDiff;
+                    
+                    const tStat = diff / seDiff;
+                    const pValue = getTpValue(tStat, 0); // Will use approximation
+                    
+                    comparisons.push({
+                        level1: level1,
+                        level2: level2,
+                        estimate: diff,
+                        ciLower: ciLower,
+                        ciUpper: ciUpper,
+                        se: seDiff,
+                        tStat: tStat
+                    });
+                }
+            }
+            
+            results[enc.varName] = comparisons;
+        }
+    }
+    
+    return results;
+}
+
 // Accurate t-critical value from table with interpolation
 function getCriticalT(df, alpha = 0.05) {
-    // Two-tailed t-distribution critical values table
     const tTable = [
         { df: 1, crit: 12.7062 }, { df: 2, crit: 4.3027 }, { df: 3, crit: 3.1824 },
         { df: 4, crit: 2.7764 }, { df: 5, crit: 2.5706 }, { df: 6, crit: 2.4469 },
@@ -8645,7 +8631,6 @@ function getCriticalT(df, alpha = 0.05) {
     if (df <= 1) return 12.7062;
     if (df >= 1000) return 1.9623;
     
-    // Find surrounding values for interpolation
     let lower = tTable[0], upper = tTable[tTable.length - 1];
     for (let i = 0; i < tTable.length; i++) {
         if (tTable[i].df <= df) lower = tTable[i];
@@ -8657,28 +8642,18 @@ function getCriticalT(df, alpha = 0.05) {
     
     if (lower.df === upper.df) return lower.crit;
     
-    // Linear interpolation
     const t = lower.crit + (upper.crit - lower.crit) * (df - lower.df) / (upper.df - lower.df);
     return t;
 }
 
-// Accurate F-distribution p-value using incomplete beta
-function getFpValue(F, df1, df2) {
-    if (F <= 0) return 1;
-    const x = df1 * F / (df1 * F + df2);
-    return 1 - ibeta(x, df1 / 2, df2 / 2);
-}
-
-// Accurate t-distribution p-value (two-tailed)
 function getTpValue(t, df) {
     if (t === 0) return 1;
     const absT = Math.abs(t);
-    const x = df / (df + absT * absT);
-    const p = ibeta(x, df / 2, 0.5);
+    const x = 1000 / (1000 + absT * absT);
+    const p = ibeta(x, 1000 / 2, 0.5);
     return Math.min(1, p * 2);
 }
 
-// Regularized incomplete beta function
 function ibeta(x, a, b) {
     if (x === 0) return 0;
     if (x === 1) return 1;
@@ -8752,6 +8727,12 @@ function lgamma(z) {
     return 0.5 * Math.log(2 * Math.PI) + Math.log(x) - t + (z + 0.5) * Math.log(t);
 }
 
+function getFpValue(F, df1, df2) {
+    if (F <= 0) return 1;
+    const x = df1 * F / (df1 * F + df2);
+    return 1 - ibeta(x, df1 / 2, df2 / 2);
+}
+
 // MAIN LINEAR REGRESSION FUNCTION
 function runLinearReg() {
     const dep = document.getElementById('adv_lin_dep').value;
@@ -8768,10 +8749,9 @@ function runLinearReg() {
         return;
     }
     
-    // Update categorical reference UI
-    updateCategoricalReferenceUI();
+    // REMOVED: updateCategoricalReferenceUI() - no longer showing reference panel
     
-    // Build design matrix with current reference categories
+    // Build design matrix with default reference (first level as reference)
     const { X, colNames, n, varEncodings } = buildDesignMatrixForRegression(inds);
     
     if (n < colNames.length + 1) {
@@ -8829,14 +8809,14 @@ function runLinearReg() {
         const t_b = betas.map((b, i) => b / Math.max(1e-15, se_b[i]));
         const p_b = t_b.map(t => getTpValue(t, df_res));
         
-        // Get critical t-value for 95% CI (α = 0.05, two-tailed)
+        // Get critical t-value for 95% CI
         const tCritical = getCriticalT(df_res, 0.05);
         
-        // Calculate 95% confidence intervals MANUALLY: CI = β ± t_critical × SE
+        // Calculate 95% confidence intervals
         const ciLower = betas.map((b, i) => b - tCritical * se_b[i]);
         const ciUpper = betas.map((b, i) => b + tCritical * se_b[i]);
         
-        // Standardized betas (Beta)
+        // Standardized betas
         const sdY = sd(Y);
         const stdBeta = betas.map((b, i) => {
             if (i === 0) return '';
@@ -8845,7 +8825,7 @@ function runLinearReg() {
             return (b * sdX / sdY).toFixed(4);
         });
         
-        // VIF (Variance Inflation Factor)
+        // VIF
         const vif = computeVIF(X);
         
         // Durbin-Watson statistic
@@ -8857,6 +8837,9 @@ function runLinearReg() {
             dwDen += r * r;
         }
         const DW = dwNum / Math.max(1e-15, dwDen);
+        
+        // Calculate complete pairwise comparisons for categorical variables
+        const pairwiseComparisons = calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical);
         
         // Build HTML output
         let html = `<h3>📈 Linear Regression Results</h3>
@@ -8872,41 +8855,38 @@ function runLinearReg() {
         <p><strong>Model Summary</strong></p>
         <table class="desc-table">
             <thead><tr><th>R</th><th>R Square</th><th>Adjusted R²</th><th>Std. Error of Estimate</th><th>Durbin-Watson</th></tr></thead>
-            <tbody><tr>
+            <tbody><td>
                 <td style="text-align:center">${Math.sqrt(Rsq).toFixed(4)}</td>
                 <td style="text-align:center">${Rsq.toFixed(4)}</td>
                 <td style="text-align:center">${RsqAdj.toFixed(4)}</td>
                 <td style="text-align:center">${Math.sqrt(MS_res).toFixed(4)}</td>
                 <td style="text-align:center">${DW.toFixed(4)}</td>
-            </tr></tbody>
+             </tr></tbody>
         </table>
         
         <p><strong>ANOVA</strong></p>
         <table class="desc-table">
             <thead><tr><th>Source</th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr></thead>
             <tbody>
-                <tr>
-                    <td>Regression</td>
+                <tr><td>Regression</td>
                     <td style="text-align:center">${SS_reg.toFixed(4)}</td>
                     <td style="text-align:center">${df_reg}</td>
                     <td style="text-align:center">${MS_reg.toFixed(4)}</td>
                     <td rowspan="2" style="text-align:center">${F_stat.toFixed(4)}</td>
                     <td rowspan="2" style="text-align:center">${p_F.toFixed(6)}${p_F < 0.05 ? ' *' : ''}</td>
-                </tr>
-                <tr>
-                    <td>Residual</td>
+                 </tr>
+                <tr><td>Residual</td>
                     <td style="text-align:center">${SS_res.toFixed(4)}</td>
                     <td style="text-align:center">${df_res}</td>
                     <td style="text-align:center">${MS_res.toFixed(4)}</td>
-                </tr>
-                <tr>
-                    <td>Total</td>
+                 </tr>
+                <tr><td>Total</td>
                     <td style="text-align:center">${SS_tot.toFixed(4)}</td>
                     <td style="text-align:center">${n - 1}</td>
                     <td style="text-align:center">—</td>
                     <td style="text-align:center">—</td>
                     <td style="text-align:center">—</td>
-                </tr>
+                 </tr>
             </tbody>
         </table>
         
@@ -8944,33 +8924,66 @@ function runLinearReg() {
                 <td style="text-align:center">${ciLower[i].toFixed(4)}</td>
                 <td style="text-align:center">${ciUpper[i].toFixed(4)}</td>
                 <td style="text-align:center">${i === 0 ? '—' : (vif[i-1] ? vif[i-1].toFixed(3) : '—')}</td>
-            </tr>`;
+             </tr>`;
         }
         
         html += `</tbody>
         </table>
-        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>
+        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
         
+        // Add complete pairwise comparisons for categorical variables
+        for (const [varName, comparisons] of Object.entries(pairwiseComparisons)) {
+            html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)}</strong></p>
+            <p><em>95% Confidence Interval (Wald)</em></p>
+            <table class="desc-table">
+                <thead>
+                    <tr>
+                        <th>Level1</th>
+                        <th>Level2</th>
+                        <th>Estimate (B)</th>
+                        <th>Std. Error</th>
+                        <th>t</th>
+                        <th>Sig.</th>
+                        <th>95% CI Lower</th>
+                        <th>95% CI Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            // Sort comparisons to avoid duplicates in both directions
+            const shownPairs = new Set();
+            for (const comp of comparisons) {
+                const key = `${comp.level1}|${comp.level2}`;
+                const reverseKey = `${comp.level2}|${comp.level1}`;
+                if (shownPairs.has(reverseKey)) continue;
+                shownPairs.add(key);
+                
+                const pValue = getTpValue(comp.tStat, df_res);
+                const stars = pValue < 0.001 ? '***' : pValue < 0.01 ? '**' : pValue < 0.05 ? '*' : '';
+                
+                html += `<tr>
+                    <td><strong>${escapeHtml(String(comp.level1))}</strong></td>
+                    <td><strong>${escapeHtml(String(comp.level2))}</strong></td>
+                    <td style="text-align:center">${comp.estimate.toFixed(4)}</td>
+                    <td style="text-align:center">${comp.se.toFixed(4)}</td>
+                    <td style="text-align:center">${comp.tStat.toFixed(4)}</td>
+                    <td style="text-align:center">${pValue.toFixed(6)} ${stars}</td>
+                    <td style="text-align:center">${comp.ciLower.toFixed(4)}</td>
+                    <td style="text-align:center">${comp.ciUpper.toFixed(4)}</td>
+                </tr>`;
+            }
+            
+            html += `</tbody>
+            </table>`;
+        }
+        
+        html += `
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-top: 15px;">
             <p><strong>📊 Diagnostic Checks:</strong></p>
             <p>🔍 <strong>Collinearity (VIF):</strong> ${vif.some(v => v > 10) ? '⚠️ Multicollinearity detected (VIF > 10)' : '✓ No serious multicollinearity'}</p>
             <p>🔍 <strong>Autocorrelation (Durbin-Watson):</strong> ${DW.toFixed(4)} — ${DW < 1.5 || DW > 2.5 ? '⚠️ Possible autocorrelation' : '✓ Acceptable range (1.5-2.5)'}</p>
             <p>🔍 <strong>Model Significance:</strong> ${p_F < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>
         </div>`;
-        
-        // Show categorical encoding summary
-        const categoricalUsed = varEncodings.filter(e => e.type === 'categorical');
-        if (categoricalUsed.length > 0) {
-            html += `<div style="background: var(--amber-dim); padding: 10px; border-radius: 8px; margin-top: 15px;">
-                        <p><strong>🏷️ Categorical Variable Encoding (Dummy Coding):</strong></p>
-                        <ul style="margin: 5px 0 0 20px;">
-                            ${categoricalUsed.map(cat => 
-                                `<li><strong>${escapeHtml(cat.varName)}</strong>: Reference category = "<strong>${escapeHtml(cat.reference)}</strong>"<br>
-                                &nbsp;&nbsp;→ Dummy variable "${escapeHtml(cat.level)}" = 1 for observations in that category, 0 otherwise</li>`
-                            ).join('')}
-                        </ul>
-                    </div>`;
-        }
         
         displayResults(html);
         
@@ -8981,7 +8994,7 @@ function runLinearReg() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LOGISTIC REGRESSION - BOTH DIRECTIONS FOR DEPENDENT VARIABLE (WORKING)
+// LOGISTIC REGRESSION - BOTH DIRECTIONS FOR DEPENDENT VARIABLE 
 // ═══════════════════════════════════════════════════════════════
 
 // Store reference levels
@@ -9595,71 +9608,497 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// POISSON REGRESSION (IRLS, exact)
+// POISSON REGRESSION WITH REFERENCE CATEGORY SELECTION
 // ═══════════════════════════════════════════════════════════════
-function runPoissonReg() {
-  const dep  = document.getElementById('adv_pois_dep').value;
-  const inds = Array.from(document.getElementById('adv_pois_inds').selectedOptions).map(o => o.value);
-  if (inds.length === 0) { showToast('Error', 'Select at least one independent variable', 'warn'); return; }
 
-  const { X, colNames, n } = buildDesignMatrix(inds);
-  const Y = buildY(dep).map(v => Math.round(Math.max(0, v)));
+// Store reference levels for independent variables
+let poissonIndRefLevels = {};
 
-  const result = poissonIRLS(X, Y);
-  const betas = result.betas;
-  const llModel = poissonLogL(X, Y, betas);
-  const nullBeta = [Math.log(Math.max(1e-10, mean(Y))), ...Array(betas.length-1).fill(0)];
-  const llNull = poissonLogL(X, Y, nullBeta.slice(0,1).concat(Array(betas.length-1).fill(0)).slice(0,betas.length));
-
-  const deviance  = -2 * llModel;
-  const G2        = 2 * (llModel - llNull);
-  const df_G2     = colNames.length - 1;
-  const p_G2      = chipvalue(G2, df_G2);
-  const se_b      = result.se;
-  const wald      = betas.map((b, i) => (b / Math.max(1e-15, se_b[i])) ** 2);
-  const p_b       = wald.map(w => chipvalue(w, 1));
-  const IRR       = betas.map(b => Math.exp(b));
-
-  // Pearson chi-square goodness of fit
-  const mu = X.map(row => Math.exp(row.reduce((s, v, i) => s + v * betas[i], 0)));
-  const pearsonChi = Y.reduce((s, y, i) => s + (y - mu[i]) ** 2 / Math.max(1e-10, mu[i]), 0);
-  const df_gof = n - colNames.length;
-  const overdispersion = pearsonChi / Math.max(1, df_gof);
-
-  let html = `<h3>Poisson Regression</h3>
-  <p><strong>Goodness of Fit</strong></p>
-  <table class="desc-table">
-    <tr><th>Criterion</th><th>Value</th><th>df</th><th>Value/df</th></tr>
-    <tr><td>Deviance</td><td>${deviance.toFixed(4)}</td><td>${df_gof}</td><td>${(deviance/Math.max(1,df_gof)).toFixed(4)}</td></tr>
-    <tr><td>Pearson χ²</td><td>${pearsonChi.toFixed(4)}</td><td>${df_gof}</td><td>${overdispersion.toFixed(4)}</td></tr>
-  </table>
-  ${overdispersion > 1.5 ? '<p style="color:var(--yellow)">⚠ Possible overdispersion (Pearson χ²/df > 1.5). Consider Negative Binomial regression.</p>' : ''}
-  <p><strong>Omnibus Test</strong></p>
-  <table class="desc-table">
-    <tr><th>χ²</th><th>df</th><th>Sig.</th></tr>
-    <tr><td>${G2.toFixed(4)}</td><td>${df_G2}</td><td>${p_G2.toFixed(6)}</td></tr>
-  </table>
-  <p><strong>Parameter Estimates</strong></p>
-  <table class="desc-table">
-    <tr><th>Variable</th><th>B (log-rate)</th><th>Std. Error</th><th>Wald χ²</th><th>df</th><th>Sig.</th><th>IRR (Exp(B))</th><th>95% CI Lower</th><th>95% CI Upper</th></tr>`;
-
-  for (let i = 0; i < betas.length; i++) {
-    html += `<tr>
-      <td><strong>${escapeHtml(colNames[i])}</strong></td>
-      <td>${betas[i].toFixed(4)}</td><td>${se_b[i].toFixed(4)}</td>
-      <td>${wald[i].toFixed(4)}</td><td>1</td>
-      <td>${p_b[i].toFixed(6)}${p_b[i] < 0.05 ? '*' : ''}</td>
-      <td>${IRR[i].toFixed(4)}</td>
-      <td>${Math.exp(betas[i] - 1.96 * se_b[i]).toFixed(4)}</td>
-      <td>${Math.exp(betas[i] + 1.96 * se_b[i]).toFixed(4)}</td>
-    </tr>`;
-  }
-
-  html += `</table><p>* p &lt; 0.05; IRR = Incidence Rate Ratio</p>
-  <p class="step-val">${p_G2 < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
-
-  displayResults(html);
+// Function to detect categorical variables
+function isCategoricalPoisson(varName) {
+    if (!advData || advData.length === 0) return false;
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    if (values.length === 0) return false;
+    
+    const allNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+    if (!allNumeric) return true;
+    
+    const uniqueValues = [...new Set(values)];
+    return uniqueValues.length <= 10;
 }
+
+// Get unique values for a variable
+function getUniqueValuesPoisson(varName) {
+    if (!advData || advData.length === 0) return [];
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    return [...new Set(values)].sort();
+}
+
+// Update independent variables reference UI for Poisson
+function updatePoissonIndRefUI() {
+    const indsSelect = document.getElementById('adv_pois_inds');
+    if (!indsSelect) return;
+    
+    const selectedVars = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    let refContainer = document.getElementById('poisson-ind-ref-container');
+    
+    if (!refContainer) {
+        const configContent = document.getElementById('adv-test-config-content');
+        if (configContent) {
+            refContainer = document.createElement('div');
+            refContainer.id = 'poisson-ind-ref-container';
+            configContent.appendChild(refContainer);
+        }
+    }
+    
+    if (!refContainer) return;
+    
+    const categoricalVars = selectedVars.filter(v => isCategoricalPoisson(v));
+    
+    if (categoricalVars.length === 0) {
+        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ No categorical independent variables detected.</p>`;
+        refContainer.style.display = 'block';
+        return;
+    }
+    
+    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px 0;">📊 Categorical Independent Variables - Reference Categories</h4>
+        <p style="font-size: 12px; margin-bottom: 10px;">Select Reference Category for each variable (other levels will be compared against this):</p>`;
+    
+    categoricalVars.forEach(varName => {
+        const levels = getUniqueValuesPoisson(varName);
+        const currentRef = poissonIndRefLevels[varName] || levels[0];
+        
+        html += `
+            <div style="margin: 10px 0; padding: 10px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--teal);">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">${escapeHtml(varName)}</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${levels.map(level => `
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg3); border-radius: 5px; cursor: pointer; border: 1px solid ${currentRef === level ? 'var(--teal)' : 'var(--border)'};">
+                            <input type="radio" name="poisson_ref_${escapeHtml(varName)}" value="${escapeHtml(level)}" 
+                                   ${currentRef === level ? 'checked' : ''} 
+                                   onchange="setPoissonIndRef('${escapeHtml(varName)}', '${escapeHtml(level)}')">
+                            <strong>${escapeHtml(String(level))}</strong>
+                            ${currentRef === level ? '<span style="color: var(--teal);">← Reference</span>' : '<span style="color: var(--accent);">→ Comparison</span>'}
+                        </label>
+                    `).join('')}
+                </div>
+                <p style="font-size: 10px; color: var(--text3); margin-top: 5px;">
+                    IRR shows rate ratio for each level compared to <strong>${escapeHtml(String(currentRef))}</strong>
+                </p>
+            </div>
+        `;
+    });
+    
+    html += `<button class="btn-secondary" style="margin-top: 8px; padding: 8px 16px;" onclick="runPoissonReg()">⟳ Rerun with Selected References</button>`;
+    html += `</div>`;
+    refContainer.innerHTML = html;
+    refContainer.style.display = 'block';
+}
+
+function setPoissonIndRef(varName, refValue) {
+    poissonIndRefLevels[varName] = refValue;
+    updatePoissonIndRefUI();
+    showToast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+}
+
+// Build design matrix with user-selected reference categories
+function buildDesignMatrixPoissonWithRef(independentVars) {
+    if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0, varEncodings: [] };
+    
+    const X = [];
+    const colNames = ['(Intercept)'];
+    const varEncodings = [];
+    
+    // First pass: determine encoding for each variable
+    independentVars.forEach(varName => {
+        if (isCategoricalPoisson(varName)) {
+            const levels = getUniqueValuesPoisson(varName);
+            const referenceLevel = poissonIndRefLevels[varName] || levels[0];
+            const otherLevels = levels.filter(v => v !== referenceLevel);
+            
+            otherLevels.forEach(level => {
+                colNames.push(`${varName}: ${level} vs ${referenceLevel}`);
+                varEncodings.push({
+                    varName: varName,
+                    type: 'categorical',
+                    level: level,
+                    reference: referenceLevel,
+                    allLevels: levels
+                });
+            });
+        } else {
+            colNames.push(varName);
+            varEncodings.push({
+                varName: varName,
+                type: 'numeric'
+            });
+        }
+    });
+    
+    // Second pass: build design matrix
+    for (let rowIdx = 0; rowIdx < advData.length; rowIdx++) {
+        const row = advData[rowIdx];
+        const designRow = [1];
+        let validRow = true;
+        
+        for (let v = 0; v < independentVars.length; v++) {
+            const varName = independentVars[v];
+            const value = row[varName];
+            
+            if (value === undefined || value === null || value === '') {
+                validRow = false;
+                break;
+            }
+            
+            if (isCategoricalPoisson(varName)) {
+                const levels = getUniqueValuesPoisson(varName);
+                const referenceLevel = poissonIndRefLevels[varName] || levels[0];
+                const otherLevels = levels.filter(v => v !== referenceLevel);
+                
+                otherLevels.forEach(level => {
+                    designRow.push(value === level ? 1 : 0);
+                });
+            } else {
+                const numVal = parseFloat(value);
+                if (isNaN(numVal)) {
+                    validRow = false;
+                    break;
+                }
+                designRow.push(numVal);
+            }
+        }
+        
+        if (validRow) {
+            X.push(designRow);
+        }
+    }
+    
+    return { X, colNames, n: X.length, varEncodings };
+}
+
+// Calculate proper pairwise comparisons for categorical variables
+function calculateProperPairwisePoisson(betas, se_b, varEncodings) {
+    const results = {};
+    
+    for (const enc of varEncodings) {
+        if (enc.type === 'categorical') {
+            const allLevels = enc.allLevels;
+            const comparisons = [];
+            
+            // Get coefficient for each level (relative to reference)
+            const levelCoeffs = {};
+            let refLevel = enc.reference;
+            
+            for (let i = 0; i < varEncodings.length; i++) {
+                const e = varEncodings[i];
+                if (e.varName === enc.varName && e.type === 'categorical') {
+                    levelCoeffs[e.level] = {
+                        b: betas[i + 1],
+                        se: se_b[i + 1]
+                    };
+                }
+            }
+            
+            // Reference level has coefficient 0
+            levelCoeffs[refLevel] = {
+                b: 0,
+                se: 0
+            };
+            
+            // Generate all pairwise comparisons
+            const levelList = [...allLevels];
+            
+            for (let i = 0; i < levelList.length; i++) {
+                for (let j = 0; j < levelList.length; j++) {
+                    if (i === j) continue;
+                    
+                    const level1 = levelList[i];
+                    const level2 = levelList[j];
+                    
+                    const coeff1 = levelCoeffs[level1];
+                    const coeff2 = levelCoeffs[level2];
+                    
+                    const diff = coeff1.b - coeff2.b;
+                    const seDiff = Math.sqrt(coeff1.se ** 2 + coeff2.se ** 2);
+                    
+                    const waldChi2 = (diff / seDiff) ** 2;
+                    const pValue = chipvalue(waldChi2, 1);
+                    
+                    const irr = Math.exp(diff);
+                    const ciLower = Math.exp(diff - 1.96 * seDiff);
+                    const ciUpper = Math.exp(diff + 1.96 * seDiff);
+                    
+                    comparisons.push({
+                        level1: level1,
+                        level2: level2,
+                        diff: diff,
+                        seDiff: seDiff,
+                        waldChi2: waldChi2,
+                        pValue: pValue,
+                        irr: irr,
+                        ciLower: ciLower,
+                        ciUpper: ciUpper
+                    });
+                }
+            }
+            
+            // Remove duplicate pairs (keep only one direction)
+            const uniqueComparisons = [];
+            const seen = new Set();
+            for (const comp of comparisons) {
+                const key = `${comp.level1}|${comp.level2}`;
+                const reverseKey = `${comp.level2}|${comp.level1}`;
+                if (!seen.has(reverseKey)) {
+                    seen.add(key);
+                    uniqueComparisons.push(comp);
+                }
+            }
+            
+            // Sort by level1 name
+            uniqueComparisons.sort((a, b) => String(a.level1).localeCompare(String(b.level1)));
+            results[enc.varName] = uniqueComparisons;
+        }
+    }
+    
+    return results;
+}
+
+// Poisson IRLS
+function poissonIRLS_Enhanced(X, Y, maxIter = 200, tol = 1e-9) {
+    const n = Y.length, p = X[0].length;
+    let betas = [Math.log(Math.max(1e-10, mean(Y))), ...Array(p-1).fill(0)];
+    
+    for (let iter = 0; iter < maxIter; iter++) {
+        const eta = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+        const mu = eta.map(e => Math.exp(Math.min(700, e)));
+        const z = eta.map((e, i) => e + (Y[i] - mu[i]) / Math.max(1e-10, mu[i]));
+        const XtW = X.map((row, i) => row.map(v => v * mu[i]));
+        const XtWX = multiplyMatrices(transposeMatrix(XtW), X);
+        const XtWz = multiplyMatrices(transposeMatrix(XtW), z.map(v => [v]));
+        const XtWXinv = invertMatrix(XtWX);
+        
+        if (!XtWXinv) break;
+        
+        const newBetas = multiplyMatrices(XtWXinv, XtWz).map(v => v[0]);
+        const maxChange = newBetas.reduce((m, b, i) => Math.max(m, Math.abs(b - betas[i])), 0);
+        betas = newBetas;
+        if (maxChange < tol) break;
+    }
+    
+    const eta = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+    const mu = eta.map(e => Math.exp(Math.min(700, e)));
+    const XtW = X.map((row, i) => row.map(v => v * mu[i]));
+    const XtWX = multiplyMatrices(transposeMatrix(XtW), X);
+    const XtWXinv = invertMatrix(XtWX);
+    const se = XtWXinv ? XtWXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]))) : Array(p).fill(0);
+    
+    return { betas, se };
+}
+
+function poissonLogL_Enhanced(X, Y, betas) {
+    return Y.reduce((s, y, i) => {
+        const mu = Math.exp(Math.min(700, X[i].reduce((ss, v, j) => ss + v * betas[j], 0)));
+        return s + y * Math.log(Math.max(1e-300, mu)) - mu - lgamma(y + 1);
+    }, 0);
+}
+
+// MAIN POISSON REGRESSION FUNCTION
+function runPoissonReg() {
+    const dep = document.getElementById('adv_pois_dep').value;
+    const indsSelect = document.getElementById('adv_pois_inds');
+    const inds = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    
+    if (inds.length === 0) {
+        showToast('Error', 'Select at least one independent variable', 'warn');
+        return;
+    }
+    
+    if (!advData || advData.length === 0) {
+        showToast('Error', 'Please load data first', 'warn');
+        return;
+    }
+    
+    // Update reference UI before building matrix
+    updatePoissonIndRefUI();
+    
+    // Build design matrix with user-selected reference categories
+    const { X, colNames, n, varEncodings } = buildDesignMatrixPoissonWithRef(inds);
+    const Y = buildY(dep).map(v => Math.round(Math.max(0, v)));
+    
+    if (Y.length !== n) {
+        showToast('Error', 'Missing data in dependent variable', 'warn');
+        return;
+    }
+    
+    try {
+        const result = poissonIRLS_Enhanced(X, Y);
+        const betas = result.betas;
+        const se_b = result.se;
+        
+        const llModel = poissonLogL_Enhanced(X, Y, betas);
+        const nullBeta = [Math.log(Math.max(1e-10, mean(Y))), ...Array(betas.length-1).fill(0)];
+        const llNull = poissonLogL_Enhanced(X, Y, nullBeta.slice(0,1).concat(Array(betas.length-1).fill(0)).slice(0, betas.length));
+        
+        // Pseudo R-squared measures
+        const McFadden = 1 - llModel / llNull;
+        const CoxSnell = 1 - Math.exp(2 * (llNull - llModel) / n);
+        const Nagelkerke = CoxSnell / (1 - Math.exp(2 * llNull / n));
+        
+        const deviance = -2 * llModel;
+        const G2 = 2 * (llModel - llNull);
+        const df_G2 = colNames.length - 1;
+        const p_G2 = chipvalue(G2, df_G2);
+        
+        const wald = betas.map((b, i) => (b / Math.max(1e-15, se_b[i])) ** 2);
+        const p_b = wald.map(w => chipvalue(w, 1));
+        const IRR = betas.map(b => Math.exp(b));
+        
+        // Pearson chi-square goodness of fit
+        const mu = X.map(row => Math.exp(row.reduce((s, v, i) => s + v * betas[i], 0)));
+        const pearsonChi = Y.reduce((s, y, i) => s + (y - mu[i]) ** 2 / Math.max(1e-10, mu[i]), 0);
+        const df_gof = n - colNames.length;
+        const overdispersion = pearsonChi / Math.max(1, df_gof);
+        
+        // Calculate proper pairwise comparisons
+        const pairwiseComparisons = calculateProperPairwisePoisson(betas, se_b, varEncodings);
+        
+        let html = `<h3>📊 Poisson Regression Results</h3>
+        
+        <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)} (Count data)</p>
+            <p><strong>Sample Size (n):</strong> ${n}</p>
+            <p><strong>Number of Predictors:</strong> ${colNames.length - 1}</p>
+            <p><strong>Mean of Dependent Variable:</strong> ${mean(Y).toFixed(4)}</p>
+            <p><strong>Variance of Dependent Variable:</strong> ${variance(Y).toFixed(4)}</p>
+        </div>
+        
+        <p><strong>Pseudo R-squared</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>Measure</th><th>Value</th><th>Interpretation</th></tr></thead>
+            <tbody>
+                <tr><td style="text-align:left">McFadden R²</span><td>${McFadden.toFixed(4)}</span><td>${McFadden < 0.02 ? 'Poor' : McFadden < 0.15 ? 'Fair' : McFadden < 0.4 ? 'Good' : 'Excellent'}</span></tr>
+                <tr><td style="text-align:left">Cox & Snell R²</span><td>${CoxSnell.toFixed(4)}</span><td>—</span></tr>
+                <tr><td style="text-align:left">Nagelkerke R²</span><td>${Nagelkerke.toFixed(4)}</span><td>—</span></tr>
+            </tbody>
+        </table>
+        
+        <p><strong>Goodness of Fit</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>Criterion</th><th>Value</th><th>df</th><th>Value/df</th></tr></thead>
+            <tbody>
+                <tr><td style="text-align:left">Deviance</span><td>${deviance.toFixed(4)}</span><td>${df_gof}</span><td>${(deviance/Math.max(1,df_gof)).toFixed(4)}</span></tr>
+                <tr><td style="text-align:left">Pearson χ²</span><td>${pearsonChi.toFixed(4)}</span><td>${df_gof}</span><td>${overdispersion.toFixed(4)}</span></tr>
+            </tbody>
+        </table>
+        
+        ${overdispersion > 1.5 ? '<p style="color: var(--coral);">⚠️ Possible overdispersion detected (Pearson χ²/df > 1.5). Consider Negative Binomial regression.</p>' : '<p style="color: var(--green);">✓ No evidence of overdispersion.</p>'}
+        
+        <p><strong>Omnibus Test</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>χ²</th><th>df</th><th>Sig.</th></tr></thead>
+            <tbody><tr><td style="text-align:center">${G2.toFixed(4)}</span><td>${df_G2}</span><td>${p_G2.toFixed(6)}${p_G2 < 0.05 ? ' *' : ''}</span></tr></tbody>
+        </table>
+        
+        <p><strong>Parameter Estimates</strong></p>
+        <p><em>IRR = Incidence Rate Ratio (Exp(B))</em></p>
+        <table class="desc-table" style="font-size: 12px;">
+            <thead><tr>
+                <th>Variable</th>
+                <th>B (log-rate)</th>
+                <th>Std. Error</th>
+                <th>Wald χ²</th>
+                <th>df</th>
+                <th>Sig.</th>
+                <th>IRR</th>
+                <th>95% CI Lower</th>
+                <th>95% CI Upper</th>
+            </tr></thead>
+            <tbody>`;
+        
+        for (let i = 0; i < betas.length; i++) {
+            let label = colNames[i];
+            if (i === 0) label = '(Intercept)';
+            
+            const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
+            
+            html += `<tr>
+                <td><strong>${escapeHtml(label)}</strong></td>
+                <td style="text-align:center">${betas[i].toFixed(4)}</span><td>${se_b[i].toFixed(4)}</span><td>${wald[i].toFixed(4)}</span><td>1</span><td>${p_b[i].toFixed(6)} ${stars}</span>
+                <td style="text-align:center">${IRR[i].toFixed(4)}</span><td>${Math.exp(betas[i] - 1.96 * se_b[i]).toFixed(4)}</span><td>${Math.exp(betas[i] + 1.96 * se_b[i]).toFixed(4)}</span>
+            </tr>`;
+        }
+        
+        html += `</tbody>
+        </table>
+        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
+        
+        // Add proper pairwise comparisons for categorical variables
+        for (const [varName, comparisons] of Object.entries(pairwiseComparisons)) {
+            html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)} (IRR)</strong></p>
+            <p><em>95% Confidence Interval (Wald)</em></p>
+            <table class="desc-table">
+                <thead>
+                    <tr>
+                        <th>Level1</th>
+                        <th>Level2</th>
+                        <th>IRR (Level1/Level2)</th>
+                        <th>Std. Error</th>
+                        <th>Wald χ²</th>
+                        <th>df</th>
+                        <th>Sig.</th>
+                        <th>95% CI Lower</th>
+                        <th>95% CI Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            for (const comp of comparisons) {
+                const stars = comp.pValue < 0.001 ? '***' : comp.pValue < 0.01 ? '**' : comp.pValue < 0.05 ? '*' : '';
+                
+                html += `<tr>
+                    <td><strong>${escapeHtml(String(comp.level1))}</strong></td>
+                    <td><strong>${escapeHtml(String(comp.level2))}</strong></td>
+                    <td style="text-align:center">${comp.irr.toFixed(4)}</span>
+                    <td style="text-align:center">${comp.seDiff.toFixed(4)}</span>
+                    <td style="text-align:center">${comp.waldChi2.toFixed(4)}</span>
+                    <td style="text-align:center">1</span>
+                    <td style="text-align:center">${comp.pValue.toFixed(6)} ${stars}</span>
+                    <td style="text-align:center">${comp.ciLower.toFixed(4)}</span>
+                    <td style="text-align:center">${comp.ciUpper.toFixed(4)}</span>
+                </tr>`;
+            }
+            
+            html += `</tbody>
+            </table>`;
+        }
+        
+        html += `<p class="step-val">${p_G2 < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
+        
+        displayResults(html);
+        
+    } catch (error) {
+        showToast('Error', `Poisson regression failed: ${error.message}`, 'error');
+        console.error(error);
+    }
+}
+
+// Initialize event listeners for Poisson regression
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const indsSelect = document.getElementById('adv_pois_inds');
+        if (indsSelect) {
+            indsSelect.addEventListener('change', () => {
+                // Reset stored references when variables change
+                poissonIndRefLevels = {};
+                updatePoissonIndRefUI();
+            });
+        }
+        
+        // Initial UI update
+        updatePoissonIndRefUI();
+    }, 500);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // MULTINOMIAL LOGISTIC REGRESSION
