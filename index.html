@@ -8433,16 +8433,103 @@ function logComb(n, k) {
 
 // ═══════════════════════════════════════════════════════════════
 // LINEAR REGRESSION (OLS — exact, matches all software)
-// WITH COMPLETE PAIRWISE COMPARISONS FOR CATEGORICAL VARIABLES
+// WITH REFERENCE CATEGORY SELECTION FOR CATEGORICAL VARIABLES
 // ═══════════════════════════════════════════════════════════════
 
 // Global store for categorical reference levels
 let categoricalReferenceLevels = {};
 
-// REMOVED updateCategoricalReferenceUI function - no longer needed
+// Function to detect categorical variables
+function isCategoricalLinear(varName) {
+    if (!advData || advData.length === 0) return false;
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    if (values.length === 0) return false;
+    
+    const allNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+    if (!allNumeric) return true;
+    
+    const uniqueValues = [...new Set(values)];
+    return uniqueValues.length <= 10;
+}
 
-function buildDesignMatrixForRegression(independentVars) {
-    if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0 };
+// Get unique values for a variable
+function getUniqueValuesLinear(varName) {
+    if (!advData || advData.length === 0) return [];
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    return [...new Set(values)].sort();
+}
+
+// Update independent variables reference UI for Linear Regression
+function updateLinearIndRefUI() {
+    const indsSelect = document.getElementById('adv_lin_inds');
+    if (!indsSelect) return;
+    
+    const selectedVars = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    let refContainer = document.getElementById('linear-ind-ref-container');
+    
+    if (!refContainer) {
+        const configContent = document.getElementById('adv-test-config-content');
+        if (configContent) {
+            refContainer = document.createElement('div');
+            refContainer.id = 'linear-ind-ref-container';
+            configContent.appendChild(refContainer);
+        }
+    }
+    
+    if (!refContainer) return;
+    
+    const categoricalVars = selectedVars.filter(v => isCategoricalLinear(v));
+    
+    if (categoricalVars.length === 0) {
+        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ No categorical independent variables detected.</p>`;
+        refContainer.style.display = 'block';
+        return;
+    }
+    
+    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px 0;">📊 Categorical Independent Variables - Reference Categories</h4>
+        <p style="font-size: 12px; margin-bottom: 10px;">Select Reference Category for each variable (other levels will be compared against this):</p>`;
+    
+    categoricalVars.forEach(varName => {
+        const levels = getUniqueValuesLinear(varName);
+        const currentRef = categoricalReferenceLevels[varName] || levels[0];
+        
+        html += `
+            <div style="margin: 10px 0; padding: 10px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--accent);">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">${escapeHtml(varName)}</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${levels.map(level => `
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg3); border-radius: 5px; cursor: pointer; border: 1px solid ${currentRef === level ? 'var(--accent)' : 'var(--border)'};">
+                            <input type="radio" name="linear_ref_${escapeHtml(varName)}" value="${escapeHtml(level)}" 
+                                   ${currentRef === level ? 'checked' : ''} 
+                                   onchange="setLinearIndRef('${escapeHtml(varName)}', '${escapeHtml(level)}')">
+                            <strong>${escapeHtml(String(level))}</strong>
+                            ${currentRef === level ? '<span style="color: var(--accent);">← Reference</span>' : '<span style="color: var(--teal);">→ Comparison</span>'}
+                        </label>
+                    `).join('')}
+                </div>
+                <p style="font-size: 10px; color: var(--text3); margin-top: 5px;">
+                    Coefficient shows the difference for each level compared to <strong>${escapeHtml(String(currentRef))}</strong>
+                </p>
+            </div>
+        `;
+    });
+    
+    html += `<button class="btn-secondary" style="margin-top: 8px; padding: 8px 16px;" onclick="runLinearReg()">⟳ Rerun with Selected References</button>`;
+    html += `</div>`;
+    refContainer.innerHTML = html;
+    refContainer.style.display = 'block';
+}
+
+function setLinearIndRef(varName, refValue) {
+    categoricalReferenceLevels[varName] = refValue;
+    updateLinearIndRefUI();
+    showToast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+}
+
+// Build design matrix with user-selected reference categories
+function buildDesignMatrixForRegressionWithRef(independentVars) {
+    if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0, varEncodings: [] };
     
     const X = [];
     const colNames = ['(Intercept)'];
@@ -8450,25 +8537,19 @@ function buildDesignMatrixForRegression(independentVars) {
     
     // First pass: determine encoding for each variable
     independentVars.forEach(varName => {
-        const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
-        if (values.length === 0) return;
-        
-        const uniqueValues = [...new Set(values)];
-        const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
-        const treatAsCategorical = !isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2);
-        
-        if (treatAsCategorical && uniqueValues.length > 1) {
-            const referenceLevel = categoricalReferenceLevels[varName] || uniqueValues[0];
-            const otherLevels = uniqueValues.filter(v => v !== referenceLevel);
+        if (isCategoricalLinear(varName)) {
+            const levels = getUniqueValuesLinear(varName);
+            const referenceLevel = categoricalReferenceLevels[varName] || levels[0];
+            const otherLevels = levels.filter(v => v !== referenceLevel);
             
             otherLevels.forEach(level => {
-                colNames.push(`${varName}_${level}`);
+                colNames.push(`${varName}: ${level} vs ${referenceLevel}`);
                 varEncodings.push({
                     varName: varName,
                     type: 'categorical',
                     level: level,
                     reference: referenceLevel,
-                    allLevels: uniqueValues
+                    allLevels: levels
                 });
             });
         } else {
@@ -8495,19 +8576,10 @@ function buildDesignMatrixForRegression(independentVars) {
                 break;
             }
             
-            const values = advData.map(r => r[varName]).filter(v => v !== null && v !== undefined && v !== '');
-            if (values.length === 0) {
-                validRow = false;
-                break;
-            }
-            
-            const uniqueValues = [...new Set(values)];
-            const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
-            const treatAsCategorical = !isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2);
-            
-            if (treatAsCategorical && uniqueValues.length > 1) {
-                const referenceLevel = categoricalReferenceLevels[varName] || uniqueValues[0];
-                const otherLevels = uniqueValues.filter(v => v !== referenceLevel);
+            if (isCategoricalLinear(varName)) {
+                const levels = getUniqueValuesLinear(varName);
+                const referenceLevel = categoricalReferenceLevels[varName] || levels[0];
+                const otherLevels = levels.filter(v => v !== referenceLevel);
                 
                 otherLevels.forEach(level => {
                     designRow.push(value === level ? 1 : 0);
@@ -8570,12 +8642,19 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
             
             // Generate all pairwise comparisons
             const levelList = [...allLevels];
+            const shownPairs = new Set();
+            
             for (let i = 0; i < levelList.length; i++) {
                 for (let j = 0; j < levelList.length; j++) {
                     if (i === j) continue;
                     
                     const level1 = levelList[i];
                     const level2 = levelList[j];
+                    const key = `${level1}|${level2}`;
+                    const reverseKey = `${level2}|${level1}`;
+                    
+                    if (shownPairs.has(reverseKey)) continue;
+                    shownPairs.add(key);
                     
                     const coeff1 = levelCoeffs[level1];
                     const coeff2 = levelCoeffs[level2];
@@ -8587,7 +8666,7 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
                     const ciUpper = diff + tCritical * seDiff;
                     
                     const tStat = diff / seDiff;
-                    const pValue = getTpValue(tStat, 0); // Will use approximation
+                    const pValue = getTpValue(tStat, 0);
                     
                     comparisons.push({
                         level1: level1,
@@ -8601,6 +8680,8 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
                 }
             }
             
+            // Sort by level1 name
+            comparisons.sort((a, b) => String(a.level1).localeCompare(String(b.level1)));
             results[enc.varName] = comparisons;
         }
     }
@@ -8749,10 +8830,11 @@ function runLinearReg() {
         return;
     }
     
-    // REMOVED: updateCategoricalReferenceUI() - no longer showing reference panel
+    // Update reference UI before building matrix
+    updateLinearIndRefUI();
     
-    // Build design matrix with default reference (first level as reference)
-    const { X, colNames, n, varEncodings } = buildDesignMatrixForRegression(inds);
+    // Build design matrix with user-selected reference categories
+    const { X, colNames, n, varEncodings } = buildDesignMatrixForRegressionWithRef(inds);
     
     if (n < colNames.length + 1) {
         showToast('Error', `Not enough observations (${n}) for ${colNames.length} predictors`, 'warn');
@@ -8841,7 +8923,7 @@ function runLinearReg() {
         // Calculate complete pairwise comparisons for categorical variables
         const pairwiseComparisons = calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical);
         
-        // Build HTML output
+        // Build HTML output - FIXED TABLE FORMATTING
         let html = `<h3>📈 Linear Regression Results</h3>
         
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
@@ -8853,81 +8935,105 @@ function runLinearReg() {
         </div>
         
         <p><strong>Model Summary</strong></p>
-        <table class="desc-table">
-            <thead><tr><th>R</th><th>R Square</th><th>Adjusted R²</th><th>Std. Error of Estimate</th><th>Durbin-Watson</th></tr></thead>
-            <tbody><td>
-                <td style="text-align:center">${Math.sqrt(Rsq).toFixed(4)}</td>
-                <td style="text-align:center">${Rsq.toFixed(4)}</td>
-                <td style="text-align:center">${RsqAdj.toFixed(4)}</td>
-                <td style="text-align:center">${Math.sqrt(MS_res).toFixed(4)}</td>
-                <td style="text-align:center">${DW.toFixed(4)}</td>
-             </tr></tbody>
+        <table class="desc-table" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">R</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">R Square</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Adjusted R²</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error of Estimate</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Durbin-Watson</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${Math.sqrt(Rsq).toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${Rsq.toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${RsqAdj.toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${Math.sqrt(MS_res).toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${DW.toFixed(4)}</td>
+                </tr>
+            </tbody>
         </table>
         
         <p><strong>ANOVA</strong></p>
-        <table class="desc-table">
-            <thead><tr><th>Source</th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr></thead>
+        <table class="desc-table" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Source</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sum of Squares</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean Square</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                </tr>
+            </thead>
             <tbody>
-                <tr><td>Regression</td>
-                    <td style="text-align:center">${SS_reg.toFixed(4)}</td>
-                    <td style="text-align:center">${df_reg}</td>
-                    <td style="text-align:center">${MS_reg.toFixed(4)}</td>
-                    <td rowspan="2" style="text-align:center">${F_stat.toFixed(4)}</td>
-                    <td rowspan="2" style="text-align:center">${p_F.toFixed(6)}${p_F < 0.05 ? ' *' : ''}</td>
-                 </tr>
-                <tr><td>Residual</td>
-                    <td style="text-align:center">${SS_res.toFixed(4)}</td>
-                    <td style="text-align:center">${df_res}</td>
-                    <td style="text-align:center">${MS_res.toFixed(4)}</td>
-                 </tr>
-                <tr><td>Total</td>
-                    <td style="text-align:center">${SS_tot.toFixed(4)}</td>
-                    <td style="text-align:center">${n - 1}</td>
-                    <td style="text-align:center">—</td>
-                    <td style="text-align:center">—</td>
-                    <td style="text-align:center">—</td>
-                 </tr>
+                <tr>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Regression</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_reg.toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_reg}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_reg.toFixed(4)}</td>
+                    <td rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">${F_stat.toFixed(4)}</td>
+                    <td rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">${p_F.toFixed(6)}${p_F < 0.05 ? ' *' : ''}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Residual</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_res.toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_res}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_res.toFixed(4)}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Total</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_tot.toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${n - 1}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</td>
+                </tr>
             </tbody>
         </table>
         
         <p><strong>Coefficients</strong></p>
         <p><em>t-critical (${df_res} df, 95% CI) = ${tCritical.toFixed(4)}</em></p>
-        <table class="desc-table" style="font-size: 12px;">
-            <thead><tr>
-                <th>Variable</th>
-                <th>B (Unstd.)</th>
-                <th>Std. Error</th>
-                <th>Beta (Std.)</th>
-                <th>t</th>
-                <th>Sig.</th>
-                <th>95% CI Lower</th>
-                <th>95% CI Upper</th>
-                <th>VIF</th>
-            </tr></thead>
+        <table class="desc-table" style="border-collapse: collapse; width: 100%; font-size: 12px;">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Variable</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">B (Unstd.)</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Beta (Std.)</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">VIF</th>
+                </tr>
+            </thead>
             <tbody>`;
         
         for (let i = 0; i < betas.length; i++) {
             let label = colNames[i];
-            if (i > 0 && varEncodings[i-1] && varEncodings[i-1].type === 'categorical') {
-                label = `${varEncodings[i-1].varName}: ${varEncodings[i-1].level} vs ${varEncodings[i-1].reference}`;
-            }
+            if (i === 0) label = '(Intercept)';
             
             const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
             
-            html += `<tr>
-                <td><strong>${escapeHtml(label)}</strong></td>
-                <td style="text-align:center">${betas[i].toFixed(4)}</td>
-                <td style="text-align:center">${se_b[i].toFixed(4)}</td>
-                <td style="text-align:center">${stdBeta[i]}</td>
-                <td style="text-align:center">${t_b[i].toFixed(4)}</td>
-                <td style="text-align:center">${p_b[i].toFixed(6)} ${stars}</td>
-                <td style="text-align:center">${ciLower[i].toFixed(4)}</td>
-                <td style="text-align:center">${ciUpper[i].toFixed(4)}</td>
-                <td style="text-align:center">${i === 0 ? '—' : (vif[i-1] ? vif[i-1].toFixed(3) : '—')}</td>
-             </tr>`;
+            html += `
+                <tr>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(label)}</strong></td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${betas[i].toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${se_b[i].toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${stdBeta[i]}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${t_b[i].toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_b[i].toFixed(6)} ${stars}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciLower[i].toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciUpper[i].toFixed(4)}</td>
+                    <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${i === 0 ? '—' : (vif[i-1] ? vif[i-1].toFixed(3) : '—')}</td>
+                </tr>`;
         }
         
-        html += `</tbody>
+        html += `
+            </tbody>
         </table>
         <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
         
@@ -8935,45 +9041,40 @@ function runLinearReg() {
         for (const [varName, comparisons] of Object.entries(pairwiseComparisons)) {
             html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)}</strong></p>
             <p><em>95% Confidence Interval (Wald)</em></p>
-            <table class="desc-table">
+            <table class="desc-table" style="border-collapse: collapse; width: 100%;">
                 <thead>
-                    <tr>
-                        <th>Level1</th>
-                        <th>Level2</th>
-                        <th>Estimate (B)</th>
-                        <th>Std. Error</th>
-                        <th>t</th>
-                        <th>Sig.</th>
-                        <th>95% CI Lower</th>
-                        <th>95% CI Upper</th>
+                    <tr style="background: var(--bg3);">
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level1</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level2</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate (B)</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
                     </tr>
                 </thead>
                 <tbody>`;
             
-            // Sort comparisons to avoid duplicates in both directions
-            const shownPairs = new Set();
             for (const comp of comparisons) {
-                const key = `${comp.level1}|${comp.level2}`;
-                const reverseKey = `${comp.level2}|${comp.level1}`;
-                if (shownPairs.has(reverseKey)) continue;
-                shownPairs.add(key);
-                
                 const pValue = getTpValue(comp.tStat, df_res);
                 const stars = pValue < 0.001 ? '***' : pValue < 0.01 ? '**' : pValue < 0.05 ? '*' : '';
                 
-                html += `<tr>
-                    <td><strong>${escapeHtml(String(comp.level1))}</strong></td>
-                    <td><strong>${escapeHtml(String(comp.level2))}</strong></td>
-                    <td style="text-align:center">${comp.estimate.toFixed(4)}</td>
-                    <td style="text-align:center">${comp.se.toFixed(4)}</td>
-                    <td style="text-align:center">${comp.tStat.toFixed(4)}</td>
-                    <td style="text-align:center">${pValue.toFixed(6)} ${stars}</td>
-                    <td style="text-align:center">${comp.ciLower.toFixed(4)}</td>
-                    <td style="text-align:center">${comp.ciUpper.toFixed(4)}</td>
-                </tr>`;
+                html += `
+                    <tr>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(String(comp.level1))}</strong></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(String(comp.level2))}</strong></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.estimate.toFixed(4)}</span></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.se.toFixed(4)}</span></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.tStat.toFixed(4)}</span></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pValue.toFixed(6)} ${stars}</span></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.ciLower.toFixed(4)}</span></td>
+                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.ciUpper.toFixed(4)}</span></td>
+                    </tr>`;
             }
             
-            html += `</tbody>
+            html += `
+                </tbody>
             </table>`;
         }
         
@@ -8992,6 +9093,23 @@ function runLinearReg() {
         console.error(error);
     }
 }
+
+// Initialize event listeners for Linear Regression
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const indsSelect = document.getElementById('adv_lin_inds');
+        if (indsSelect) {
+            indsSelect.addEventListener('change', () => {
+                // Reset stored references when variables change
+                categoricalReferenceLevels = {};
+                updateLinearIndRefUI();
+            });
+        }
+        
+        // Initial UI update
+        updateLinearIndRefUI();
+    }, 500);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // LOGISTIC REGRESSION - BOTH DIRECTIONS FOR DEPENDENT VARIABLE 
@@ -9608,7 +9726,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// POISSON REGRESSION WITH REFERENCE CATEGORY SELECTION
+// POISSON REGRESSION WITH PROPER PAIRWISE COMPARISONS
 // ═══════════════════════════════════════════════════════════════
 
 // Store reference levels for independent variables
@@ -9683,9 +9801,6 @@ function updatePoissonIndRefUI() {
                         </label>
                     `).join('')}
                 </div>
-                <p style="font-size: 10px; color: var(--text3); margin-top: 5px;">
-                    IRR shows rate ratio for each level compared to <strong>${escapeHtml(String(currentRef))}</strong>
-                </p>
             </div>
         `;
     });
@@ -9710,7 +9825,6 @@ function buildDesignMatrixPoissonWithRef(independentVars) {
     const colNames = ['(Intercept)'];
     const varEncodings = [];
     
-    // First pass: determine encoding for each variable
     independentVars.forEach(varName => {
         if (isCategoricalPoisson(varName)) {
             const levels = getUniqueValuesPoisson(varName);
@@ -9736,7 +9850,6 @@ function buildDesignMatrixPoissonWithRef(independentVars) {
         }
     });
     
-    // Second pass: build design matrix
     for (let rowIdx = 0; rowIdx < advData.length; rowIdx++) {
         const row = advData[rowIdx];
         const designRow = [1];
@@ -9777,8 +9890,8 @@ function buildDesignMatrixPoissonWithRef(independentVars) {
     return { X, colNames, n: X.length, varEncodings };
 }
 
-// Calculate proper pairwise comparisons for categorical variables
-function calculateProperPairwisePoisson(betas, se_b, varEncodings) {
+// Calculate proper pairwise comparisons - ALL combinations (like logistic)
+function calculateAllPairwisePoisson(betas, se_b, varEncodings) {
     const results = {};
     
     for (const enc of varEncodings) {
@@ -9806,7 +9919,7 @@ function calculateProperPairwisePoisson(betas, se_b, varEncodings) {
                 se: 0
             };
             
-            // Generate all pairwise comparisons
+            // Generate ALL pairwise comparisons (both directions)
             const levelList = [...allLevels];
             
             for (let i = 0; i < levelList.length; i++) {
@@ -9832,32 +9945,17 @@ function calculateProperPairwisePoisson(betas, se_b, varEncodings) {
                     comparisons.push({
                         level1: level1,
                         level2: level2,
-                        diff: diff,
+                        irr: irr,
                         seDiff: seDiff,
                         waldChi2: waldChi2,
                         pValue: pValue,
-                        irr: irr,
                         ciLower: ciLower,
                         ciUpper: ciUpper
                     });
                 }
             }
             
-            // Remove duplicate pairs (keep only one direction)
-            const uniqueComparisons = [];
-            const seen = new Set();
-            for (const comp of comparisons) {
-                const key = `${comp.level1}|${comp.level2}`;
-                const reverseKey = `${comp.level2}|${comp.level1}`;
-                if (!seen.has(reverseKey)) {
-                    seen.add(key);
-                    uniqueComparisons.push(comp);
-                }
-            }
-            
-            // Sort by level1 name
-            uniqueComparisons.sort((a, b) => String(a.level1).localeCompare(String(b.level1)));
-            results[enc.varName] = uniqueComparisons;
+            results[enc.varName] = comparisons;
         }
     }
     
@@ -9960,8 +10058,8 @@ function runPoissonReg() {
         const df_gof = n - colNames.length;
         const overdispersion = pearsonChi / Math.max(1, df_gof);
         
-        // Calculate proper pairwise comparisons
-        const pairwiseComparisons = calculateProperPairwisePoisson(betas, se_b, varEncodings);
+        // Calculate ALL pairwise comparisons (both directions)
+        const allPairwise = calculateAllPairwisePoisson(betas, se_b, varEncodings);
         
         let html = `<h3>📊 Poisson Regression Results</h3>
         
@@ -10033,8 +10131,8 @@ function runPoissonReg() {
         </table>
         <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
         
-        // Add proper pairwise comparisons for categorical variables
-        for (const [varName, comparisons] of Object.entries(pairwiseComparisons)) {
+        // Add ALL pairwise comparisons (both directions, like logistic)
+        for (const [varName, comparisons] of Object.entries(allPairwise)) {
             html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)} (IRR)</strong></p>
             <p><em>95% Confidence Interval (Wald)</em></p>
             <table class="desc-table">
@@ -10053,7 +10151,13 @@ function runPoissonReg() {
                 </thead>
                 <tbody>`;
             
-            for (const comp of comparisons) {
+            // Sort for better readability
+            const sortedComps = [...comparisons].sort((a, b) => {
+                if (a.level1 === b.level1) return String(a.level2).localeCompare(String(b.level2));
+                return String(a.level1).localeCompare(String(b.level1));
+            });
+            
+            for (const comp of sortedComps) {
                 const stars = comp.pValue < 0.001 ? '***' : comp.pValue < 0.01 ? '**' : comp.pValue < 0.05 ? '*' : '';
                 
                 html += `<tr>
@@ -10089,13 +10193,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const indsSelect = document.getElementById('adv_pois_inds');
         if (indsSelect) {
             indsSelect.addEventListener('change', () => {
-                // Reset stored references when variables change
                 poissonIndRefLevels = {};
                 updatePoissonIndRefUI();
             });
         }
-        
-        // Initial UI update
         updatePoissonIndRefUI();
     }, 500);
 });
