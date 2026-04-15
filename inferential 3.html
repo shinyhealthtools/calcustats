@@ -1286,6 +1286,349 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Bring tabs closer together and away from theme toggle */
+.nav {
+  gap: 2px !important;  
+  flex: 0 1 auto !important;  
+  margin-right: auto !important; 
+}
+
+.nav-btn {
+  padding: 7px 12px !important;  
+  font-size: 13px !important;    
+}
+
+/* Keep the theme button on the far right */
+.theme-btn {
+  margin-left: 16px !important;  
+  flex-shrink: 0;
+}
+
+/* Adjust the header inner layout */
+.header-inner {
+  justify-content: flex-start !important;  
+  gap: 16px !important;  
+}
+
+/* LIGHT MODE - Black Text */
+body:not(.dark) {
+  --text: #000000 !important;
+  --text2: #000000 !important;
+  --text3: #1a1a1a !important;
+  --bg: #f5f5f5 !important;
+  --bg2: #ffffff !important;
+  --bg3: #f0f0f0 !important;
+}
+
+/* DARK MODE - White Text */
+body.dark {
+  --text: #ffffff !important;
+  --text2: #ffffff !important;
+  --text3: #e0e0e0 !important;
+}
+
+/* Force all text elements to follow theme colors (EXCLUDING footer buttons) */
+body:not(.dark) .hero h1,
+body:not(.dark) .hero-desc,
+body:not(.dark) .calc-card h3,
+body:not(.dark) .calc-card p,
+body:not(.dark) .panel-title,
+body:not(.dark) .result-metric-value,
+body:not(.dark) .result-metric-label,
+body:not(.dark) .field label,
+body:not(.dark) .field input,
+body:not(.dark) .field select,
+body:not(.dark) .formula-desc,
+body:not(.dark) .formula-expr,
+body:not(.dark) .steps-box,
+body:not(.dark) .alloc-name,
+body:not(.dark) .alloc-val,
+body:not(.dark) .alloc-pct,
+body:not(.dark) .stat-num,
+body:not(.dark) .stat-label,
+body:not(.dark) .feedback-text,
+body:not(.dark) .copyright,
+body:not(.dark) .desc-var-name,
+body:not(.dark) .desc-stat-label,
+body:not(.dark) .desc-stat-value,
+body:not(.dark) .desc-options-title,
+body:not(.dark) table,
+body:not(.dark) th,
+body:not(.dark) td,
+body:not(.dark) p,
+body:not(.dark) h1,
+body:not(.dark) h2,
+body:not(.dark) h3,
+body:not(.dark) h4,
+body:not(.dark) span,
+body:not(.dark) li,
+body:not(.dark) label,
+body:not(.dark) .nav-btn,
+body:not(.dark) .logo-text,
+body:not(.dark) .logo-sub {
+  color: #000000 !important;
+}
+
+body.dark .hero h1,
+body.dark .hero-desc,
+body.dark .calc-card h3,
+body.dark .calc-card p,
+body.dark .panel-title,
+body.dark .result-metric-value,
+body.dark .result-metric-label,
+body.dark .field label,
+body.dark .field input,
+body.dark .field select,
+body.dark .formula-desc,
+body.dark .formula-expr,
+body.dark .steps-box,
+body.dark .alloc-name,
+body.dark .alloc-val,
+body.dark .alloc-pct,
+body.dark .stat-num,
+body.dark .stat-label,
+body.dark .feedback-text,
+body.dark .copyright,
+body.dark .desc-var-name,
+body.dark .desc-stat-label,
+body.dark .desc-stat-value,
+body.dark .desc-options-title,
+body.dark table,
+body.dark th,
+body.dark td,
+body.dark p,
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark span,
+body.dark li,
+body.dark label,
+body.dark .nav-btn,
+body.dark .logo-text,
+body.dark .logo-sub {
+  color: #ffffff !important;
+}
+
+/* Input fields specific */
+body:not(.dark) input,
+body:not(.dark) select,
+body:not(.dark) textarea {
+  color: #000000 !important;
+  background: #ffffff !important;
+  border-color: #cccccc !important;
+}
+
+body.dark input,
+body.dark select,
+body.dark textarea {
+  color: #ffffff !important;
+  background: #2a2a2a !important;
+  border-color: #555555 !important;
+}
+
+/* Placeholder text */
+body:not(.dark) input::placeholder,
+body:not(.dark) textarea::placeholder {
+  color: #666666 !important;
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+  color: #aaaaaa !important;
+}
+
+/* Backgrounds */
+body:not(.dark) {
+  background: #f5f5f5 !important;
+}
+
+body.dark {
+  background: #1a1a1a !important;
+}
+
+body:not(.dark) .panel,
+body:not(.dark) .calc-card,
+body:not(.dark) .fc-modal,
+body:not(.dark) .desc-var-card,
+body:not(.dark) .desc-stat-card {
+  background: #ffffff !important;
+  border-color: #e0e0e0 !important;
+}
+
+body.dark .panel,
+body.dark .calc-card,
+body.dark .fc-modal,
+body.dark .desc-var-card,
+body.dark .desc-stat-card {
+  background: #2a2a2a !important;
+  border-color: #444444 !important;
+}
+
+/* Table borders */
+body:not(.dark) .desc-table th,
+body:not(.dark) .desc-table td {
+  border-color: #cccccc !important;
+}
+
+body.dark .desc-table th,
+body.dark .desc-table td {
+  border-color: #555555 !important;
+}
+
+/* Keep accent colors for links but ensure readability */
+body:not(.dark) .card-link,
+body:not(.dark) .nav-btn.active,
+body:not(.dark) .hello-link {
+  color: #5b52f0 !important;
+}
+
+body.dark .card-link,
+body.dark .nav-btn.active,
+body.dark .hello-link {
+  color: #8b85ff !important;
+}
+
+/* Result highlights */
+body:not(.dark) .result-metric-value.highlight {
+  background: linear-gradient(135deg, #5b52f0, #00b896);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.dark .result-metric-value.highlight {
+  background: linear-gradient(135deg, #8b85ff, #00d4aa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================ */
+/* FOOTER BUTTONS - EXCLUDED FROM THEME TOGGLE */
+/* ALWAYS WHITE TEXT - NEVER BLACK */
+/* ============================================ */
+
+.github-btn,
+.github-btn *,
+.linkedin-btn,
+.linkedin-btn *,
+.youtube-btn,
+.youtube-btn * {
+  color: #ffffff !important;
+}
+
+.github-btn span,
+.linkedin-btn span,
+.youtube-btn span {
+  color: #ffffff !important;
+}
+
+.github-btn svg,
+.linkedin-btn svg,
+.youtube-btn svg {
+  fill: #ffffff !important;
+  stroke: none !important;
+}
+
+/* Keep backgrounds intact (no theme override) */
+.github-btn {
+  background: #24292e !important;
+}
+
+.linkedin-btn {
+  background: #0077b5 !important;
+}
+
+.youtube-btn {
+  background: #FF0000 !important;
+}
+
+/* Hover effects - keep white text and slightly darken background */
+.github-btn:hover,
+.linkedin-btn:hover,
+.youtube-btn:hover {
+  color: #ffffff !important;
+}
+
+.github-btn:hover span,
+.linkedin-btn:hover span,
+.youtube-btn:hover span {
+  color: #ffffff !important;
+}
+
+.github-btn:hover {
+  background: #2f363d !important;
+}
+
+.linkedin-btn:hover {
+  background: #005e8c !important;
+}
+
+.youtube-btn:hover {
+  background: #cc0000 !important;
+}
+
+/* ============================================ */
+/* FOOTER BUTTONS - FORCE WHITE TEXT */
+/* MUST COME AFTER ALL THEME STYLES */
+/* ============================================ */
+
+/* Force white text on all footer button elements */
+.footer-right .github-btn,
+.footer-right .github-btn span,
+.footer-right .github-btn svg,
+.footer-right .github-btn *,
+.footer-right .linkedin-btn,
+.footer-right .linkedin-btn span,
+.footer-right .linkedin-btn svg,
+.footer-right .linkedin-btn *,
+.footer-right .youtube-btn,
+.footer-right .youtube-btn span,
+.footer-right .youtube-btn svg,
+.footer-right .youtube-btn * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Force button backgrounds */
+.footer-right .github-btn {
+  background: #24292e !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.footer-right .linkedin-btn {
+  background: #0077b5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.footer-right .youtube-btn {
+  background: #FF0000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Hover states - keep white text */
+.footer-right .github-btn:hover,
+.footer-right .github-btn:hover span,
+.footer-right .linkedin-btn:hover,
+.footer-right .linkedin-btn:hover span,
+.footer-right .youtube-btn:hover,
+.footer-right .youtube-btn:hover span {
+  color: #ffffff !important;
+}
+
+.footer-right .github-btn:hover {
+  background: #2f363d !important;
+}
+
+.footer-right .linkedin-btn:hover {
+  background: #005e8c !important;
+}
+
+.footer-right .youtube-btn:hover {
+  background: #cc0000 !important;
+}
+
 /* ── RESPONSIVE ───────────────────────────────────────────────── */
 @media (max-width:1024px) { .calc-layout { grid-template-columns:1fr; } }
 @media (max-width:900px) {
@@ -1315,6 +1658,8 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   .stratum-row { grid-template-columns:1fr auto; }
   .stratum-row input:first-child { display:none; }
 }
+
+
 
 /* ── DESCRIPTIVES SPECIFIC STYLES ──────────────────────────────── */
 .desc-var-card {
@@ -1455,12 +1800,12 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
     </a>
 <nav class="nav">
   <button class="nav-btn active" data-page="home"><span class="nav-icon">◈</span> Home</button>
-  <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional</button>
+  <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional Allocation</button>
   <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
-  <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran</button>
+  <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran Formula</button>
   <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
 <button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
-<button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Advanced Tests</button>
+<button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Inferential Tests</button>
 </nav>
     <button class="theme-btn" id="themeBtn" title="Toggle theme">☾</button>
     <button class="hamburger" id="hamburger">≡</button>
@@ -1475,7 +1820,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   <button class="mobile-nav-btn" data-page="cochran">◑  &nbsp;Cochran Formula</button>
   <button class="mobile-nav-btn" data-page="other">◇  &nbsp;Other Formulas</button>
 <button class="mobile-nav-btn" data-page="descriptives">▣  &nbsp;Descriptive Statistics</button>
-<button class="mobile-nav-btn" data-page="advstats">⚙  &nbsp;Advanced Statistical Tests</button>
+<button class="mobile-nav-btn" data-page="advstats">⚙  &nbsp;Inferential Tests</button>
 </div>
   
 </div>
@@ -1487,7 +1832,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   <div class="hero">
     <div class="hero-badge"><span></span> Sample Size Calculator + Statistical Analysis</div>
  <h1><em>Calculate</em> sample sizes &<br><em>analyze</em> your data<br>with confidence</h1>
-    <p class="hero-desc">Determine your optimal sample size with a complete suite of validated statistical formulas, then analyze your data using powerful descriptive and inferential statistics — and instantly export everything to Excel, Word, or publication‑ready flowcharts.</p>
+    <p class="hero-desc">Determine your optimal sample size using a complete suite of validated statistical formulas, instantly export everything to Excel, Word, or publication-ready flowcharts, and then analyze your data using powerful descriptive and inferential statistics.</p>
   </div>
 <div class="card-grid">
   <div class="calc-card c-purple" onclick="goTo('proportional')">
@@ -1511,7 +1856,7 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
   <div class="calc-card c-coral" onclick="goTo('other')">
     <div class="card-icon">∫</div>
     <h3>Other Formulas</h3>
-    <p>Proportion, mean estimation, case-control, cohort, correlation, and prevalence studies — all in one place.</p>
+    <p>Single Population Proportion — all in one place.</p>
     <div class="card-link">Open Calculator</div>
   </div>
   <div class="calc-card c-green" onclick="goTo('descriptives')">
@@ -1523,16 +1868,17 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 <div class="calc-card c-adv" onclick="goTo('advstats')">
   <div class="card-icon">⚙</div>
   <h3>Advanced Inferential Tests</h3>
-  <p>t-tests, ANOVA, regression, chi-square, MANOVA, ANCOVA — full inferential statistics with p-values and effect sizes.</p>
+  <p>t-tests, ANOVA, regression, chi-square, and others — full inferential statistics with estimates and p-values.</p>
   <div class="card-link">Run Tests →</div>
 </div>
 </div>
-  <div class="stats-row" id="stats-row">
-    <div class="stat-item"><div class="stat-num" data-target="8" id="stat-0">0</div><div class="stat-label">Formula Types</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-inf">0</div><div class="stat-label">Strata Support</div></div>
-    <div class="stat-item"><div class="stat-num" data-target="0" id="stat-2">0</div><div class="stat-label">Ads / Tracking</div></div>
-    <div class="stat-item"><div class="stat-num" data-target="100" id="stat-3">0</div><div class="stat-label">Free Forever</div></div>
-  </div>
+<div class="stats-row" id="stats-row">
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Sample Size (Formula Types)</div></div>
+    <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">Strata Support (Unlimited)</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Ads / Tracking</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Free Forever</div></div>
+    <div class="stat-item"><div class="stat-num">14</div><div class="stat-label">Inferential Tests</div></div>
+</div>
 </div>
 
 <!-- ══ PROPORTIONAL ═══════════════════════════════════════════════ -->
@@ -1952,12 +2298,11 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 </style>
 
 <script>
-// Dynamic copyright with automatic year
+// Static copyright
 (function() {
   const copyrightSpan = document.getElementById('copyright-full');
   if (copyrightSpan) {
-    const currentYear = new Date().getFullYear();
-    copyrightSpan.textContent = `Copyright © 2025–${currentYear} CalcuStats · Created by Mudasir Mohammed Ibrahim`;
+    copyrightSpan.textContent = `Copyright © 2026-Present CalcuStats · Created by Mudasir Mohammed Ibrahim`;
   }
 })();
 </script>
