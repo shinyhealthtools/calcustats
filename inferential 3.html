@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CalcuStats | Sample Size Calculation & Descriptive Statistics | Proportional, Yamane, Cochran & More</title>
+    <title>CalcuStats | Sample Size & Inferential Stats | Advanced Tests</title>
     
     <!-- SEO Meta Tags -->
     <meta name="title" content="CalcuStats ">
@@ -1054,6 +1054,30 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
   border-color: var(--accent);
 }
 
+/* Advanced Tests Card - matches other cards */
+.c-adv {
+  --adv: #9b59b6;
+}
+.calc-card.c-adv::before {
+  background: linear-gradient(90deg, var(--adv), transparent);
+}
+.c-adv .card-icon {
+  background: rgba(155,89,182,0.12);
+  border-radius: 13px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+}
+.c-adv .card-link {
+  color: var(--adv);
+}
+.calc-card.c-adv:hover {
+  border-color: rgba(155,89,182,0.3);
+}
+
 /* When in fullscreen mode, change the icon */
 .fc-modal.fullscreen .fc-fullscreen-btn::before {
   content: "\f00d";
@@ -1461,9 +1485,9 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
 <!-- ══ HOME ══════════════════════════════════════════════════════ -->
 <div class="page active" id="page-home">
   <div class="hero">
-    <div class="hero-badge"><span></span> Sample Size Calculator + Descriptive Statistics</div>
+    <div class="hero-badge"><span></span> Sample Size Calculator + Statistical Analysis</div>
  <h1><em>Calculate</em> sample sizes &<br><em>analyze</em> your data<br>with confidence</h1>
-    <p class="hero-desc">A complete suite of validated statistical formulas to determine the optimal sample size for your study, plus powerful descriptive statistics for data analysis — with instant export to Excel, Word, and publication-ready flowcharts.</p>
+    <p class="hero-desc">Determine your optimal sample size with a complete suite of validated statistical formulas, then analyze your data using powerful descriptive and inferential statistics — and instantly export everything to Excel, Word, or publication‑ready flowcharts.</p>
   </div>
 <div class="card-grid">
   <div class="calc-card c-purple" onclick="goTo('proportional')">
@@ -1496,6 +1520,12 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
     <p>Mean, median, mode, variance, standard deviation, range, quartiles, and summary statistics for your data.</p>
     <div class="card-link">Open Analyzer</div>
   </div>
+<div class="calc-card c-adv" onclick="goTo('advstats')">
+  <div class="card-icon">⚙</div>
+  <h3>Advanced Inferential Tests</h3>
+  <p>t-tests, ANOVA, regression, chi-square, MANOVA, ANCOVA — full inferential statistics with p-values and effect sizes.</p>
+  <div class="card-link">Run Tests →</div>
+</div>
 </div>
   <div class="stats-row" id="stats-row">
     <div class="stat-item"><div class="stat-num" data-target="8" id="stat-0">0</div><div class="stat-label">Formula Types</div></div>
@@ -1704,11 +1734,11 @@ body.dark .fc-dl-btn.png:hover { color:#0a0a0f; }
         <label>Select Formula Type</label>
         <select id="other-type" onchange="updateOtherFormula()">
           <option value="prop">Single Population Proportion (EPI INFO)</option>
-          <option value="mean">Mean Estimation (Known Variance)</option>
-          <option value="casecontrol">Case-Control Study</option>
-          <option value="cohort">Cohort Study</option>
-          <option value="corr">Correlation Coefficient</option>
-          <option value="prevalence">Prevalence Study</option>
+<!-- <option value="mean">Mean Estimation (Known Variance)</option> -->
+<!-- <option value="casecontrol">Case-Control Study</option> -->
+<!-- <option value="cohort">Cohort Study</option> -->
+<!-- <option value="corr">Correlation Coefficient</option> -->
+<!-- <option value="prevalence">Prevalence Study</option> -->
         </select>
       </div>
       <div class="formula-box" style="border-left-color:var(--coral);" id="other-formula-box">
@@ -8404,171 +8434,1165 @@ function logComb(n, k) {
 // ═══════════════════════════════════════════════════════════════
 // LINEAR REGRESSION (OLS — exact, matches all software)
 // ═══════════════════════════════════════════════════════════════
+
+// Global store for categorical reference levels
+let categoricalReferenceLevels = {};
+
+function updateCategoricalReferenceUI() {
+    const indsSelect = document.getElementById('adv_lin_inds');
+    if (!indsSelect) return;
+    
+    const selectedVars = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    
+    if (!advData || advData.length === 0) return;
+    
+    const categoricalVars = [];
+    selectedVars.forEach(varName => {
+        const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+        if (values.length === 0) return;
+        
+        const uniqueValues = [...new Set(values)];
+        const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+        
+        if (!isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2)) {
+            categoricalVars.push({
+                name: varName,
+                levels: uniqueValues.sort()
+            });
+        }
+    });
+    
+    // Find or create container
+    let refContainer = document.getElementById('categorical-ref-container');
+    if (!refContainer) {
+        const panel = document.querySelector('#adv-test-config-content');
+        if (panel) {
+            refContainer = document.createElement('div');
+            refContainer.id = 'categorical-ref-container';
+            panel.appendChild(refContainer);
+        } else {
+            return;
+        }
+    }
+    
+    if (categoricalVars.length === 0) {
+        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ No categorical variables detected — all variables treated as numeric.</p>`;
+        return;
+    }
+    
+    let refHtml = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px 0; font-size: 13px;">📊 Categorical Variables — Reference Categories</h4>
+        <p style="font-size: 11px; margin: 0 0 10px 0; color: var(--text3);">Select reference category for each variable (dummy coding):</p>`;
+    
+    categoricalVars.forEach(catVar => {
+        const currentRef = categoricalReferenceLevels[catVar.name] || catVar.levels[0];
+        refHtml += `
+            <div style="margin: 8px 0; padding: 8px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--accent);">
+                <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">${escapeHtml(catVar.name)}</label>
+                <select id="ref_${escapeHtml(catVar.name)}" data-varname="${escapeHtml(catVar.name)}" style="padding: 6px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); width: 100%;">
+                    ${catVar.levels.map(level => `
+                        <option value="${escapeHtml(level)}" ${level === currentRef ? 'selected' : ''}>
+                            ${escapeHtml(String(level))} ${level === currentRef ? '(Reference)' : ''}
+                        </option>
+                    `).join('')}
+                </select>
+                <span style="font-size: 10px; color: var(--text3); display: block; margin-top: 4px;">Dummy variables created with this as baseline</span>
+            </div>
+        `;
+    });
+    
+    refHtml += `</div>`;
+    refContainer.innerHTML = refHtml;
+    
+    // Attach change listeners
+    categoricalVars.forEach(catVar => {
+        const select = document.getElementById(`ref_${escapeHtml(catVar.name)}`);
+        if (select) {
+            select.addEventListener('change', (e) => {
+                categoricalReferenceLevels[catVar.name] = e.target.value;
+                // Update display
+                Array.from(e.target.options).forEach(opt => {
+                    if (opt.value === e.target.value) {
+                        opt.text = `${opt.value} (Reference)`;
+                    } else if (opt.text.includes('(Reference)')) {
+                        opt.text = opt.value;
+                    }
+                });
+                showToast('Info', `Reference for ${catVar.name} set to "${e.target.value}"`, 'info');
+            });
+        }
+    });
+}
+
+function buildDesignMatrixForRegression(independentVars) {
+    if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0 };
+    
+    const X = [];
+    const colNames = ['(Intercept)'];
+    const varEncodings = [];
+    
+    // First pass: determine encoding for each variable
+    independentVars.forEach(varName => {
+        const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+        if (values.length === 0) return;
+        
+        const uniqueValues = [...new Set(values)];
+        const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+        const treatAsCategorical = !isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2);
+        
+        if (treatAsCategorical && uniqueValues.length > 1) {
+            const referenceLevel = categoricalReferenceLevels[varName] || uniqueValues[0];
+            const otherLevels = uniqueValues.filter(v => v !== referenceLevel);
+            
+            otherLevels.forEach(level => {
+                colNames.push(`${varName}_${level}`);
+                varEncodings.push({
+                    varName: varName,
+                    type: 'categorical',
+                    level: level,
+                    reference: referenceLevel
+                });
+            });
+        } else {
+            colNames.push(varName);
+            varEncodings.push({
+                varName: varName,
+                type: 'numeric'
+            });
+        }
+    });
+    
+    // Second pass: build design matrix
+    for (let rowIdx = 0; rowIdx < advData.length; rowIdx++) {
+        const row = advData[rowIdx];
+        const designRow = [1];
+        let validRow = true;
+        
+        for (let v = 0; v < independentVars.length; v++) {
+            const varName = independentVars[v];
+            const value = row[varName];
+            
+            if (value === undefined || value === null || value === '') {
+                validRow = false;
+                break;
+            }
+            
+            const values = advData.map(r => r[varName]).filter(v => v !== null && v !== undefined && v !== '');
+            if (values.length === 0) {
+                validRow = false;
+                break;
+            }
+            
+            const uniqueValues = [...new Set(values)];
+            const isNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+            const treatAsCategorical = !isNumeric || (uniqueValues.length < 10 && uniqueValues.length <= values.length / 2);
+            
+            if (treatAsCategorical && uniqueValues.length > 1) {
+                const referenceLevel = categoricalReferenceLevels[varName] || uniqueValues[0];
+                const otherLevels = uniqueValues.filter(v => v !== referenceLevel);
+                
+                otherLevels.forEach(level => {
+                    designRow.push(value === level ? 1 : 0);
+                });
+            } else {
+                const numVal = parseFloat(value);
+                if (isNaN(numVal)) {
+                    validRow = false;
+                    break;
+                }
+                designRow.push(numVal);
+            }
+        }
+        
+        if (validRow) {
+            X.push(designRow);
+        }
+    }
+    
+    return { X, colNames, n: X.length, varEncodings };
+}
+
+function buildYForRegression(dependentVar) {
+    if (!advData || advData.length === 0) return [];
+    
+    return advData.map(row => {
+        const val = parseFloat(row[dependentVar]);
+        return isNaN(val) ? null : val;
+    }).filter(v => v !== null);
+}
+
+// Accurate t-critical value from table with interpolation
+function getCriticalT(df, alpha = 0.05) {
+    // Two-tailed t-distribution critical values table
+    const tTable = [
+        { df: 1, crit: 12.7062 }, { df: 2, crit: 4.3027 }, { df: 3, crit: 3.1824 },
+        { df: 4, crit: 2.7764 }, { df: 5, crit: 2.5706 }, { df: 6, crit: 2.4469 },
+        { df: 7, crit: 2.3646 }, { df: 8, crit: 2.3060 }, { df: 9, crit: 2.2622 },
+        { df: 10, crit: 2.2281 }, { df: 11, crit: 2.2010 }, { df: 12, crit: 2.1788 },
+        { df: 13, crit: 2.1604 }, { df: 14, crit: 2.1448 }, { df: 15, crit: 2.1315 },
+        { df: 16, crit: 2.1199 }, { df: 17, crit: 2.1098 }, { df: 18, crit: 2.1009 },
+        { df: 19, crit: 2.0930 }, { df: 20, crit: 2.0860 }, { df: 21, crit: 2.0796 },
+        { df: 22, crit: 2.0739 }, { df: 23, crit: 2.0687 }, { df: 24, crit: 2.0639 },
+        { df: 25, crit: 2.0595 }, { df: 26, crit: 2.0555 }, { df: 27, crit: 2.0518 },
+        { df: 28, crit: 2.0484 }, { df: 29, crit: 2.0452 }, { df: 30, crit: 2.0423 },
+        { df: 35, crit: 2.0301 }, { df: 40, crit: 2.0211 }, { df: 45, crit: 2.0141 },
+        { df: 50, crit: 2.0086 }, { df: 60, crit: 2.0003 }, { df: 70, crit: 1.9944 },
+        { df: 80, crit: 1.9901 }, { df: 90, crit: 1.9867 }, { df: 100, crit: 1.9840 },
+        { df: 120, crit: 1.9799 }, { df: 150, crit: 1.9759 }, { df: 200, crit: 1.9719 },
+        { df: 300, crit: 1.9679 }, { df: 500, crit: 1.9647 }, { df: 1000, crit: 1.9623 }
+    ];
+    
+    if (df <= 1) return 12.7062;
+    if (df >= 1000) return 1.9623;
+    
+    // Find surrounding values for interpolation
+    let lower = tTable[0], upper = tTable[tTable.length - 1];
+    for (let i = 0; i < tTable.length; i++) {
+        if (tTable[i].df <= df) lower = tTable[i];
+        if (tTable[i].df >= df) {
+            upper = tTable[i];
+            break;
+        }
+    }
+    
+    if (lower.df === upper.df) return lower.crit;
+    
+    // Linear interpolation
+    const t = lower.crit + (upper.crit - lower.crit) * (df - lower.df) / (upper.df - lower.df);
+    return t;
+}
+
+// Accurate F-distribution p-value using incomplete beta
+function getFpValue(F, df1, df2) {
+    if (F <= 0) return 1;
+    const x = df1 * F / (df1 * F + df2);
+    return 1 - ibeta(x, df1 / 2, df2 / 2);
+}
+
+// Accurate t-distribution p-value (two-tailed)
+function getTpValue(t, df) {
+    if (t === 0) return 1;
+    const absT = Math.abs(t);
+    const x = df / (df + absT * absT);
+    const p = ibeta(x, df / 2, 0.5);
+    return Math.min(1, p * 2);
+}
+
+// Regularized incomplete beta function
+function ibeta(x, a, b) {
+    if (x === 0) return 0;
+    if (x === 1) return 1;
+    
+    const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    
+    if (x < (a + 1) / (a + b + 2)) {
+        return bt * betacf(x, a, b) / a;
+    } else {
+        return 1 - bt * betacf(1 - x, b, a) / b;
+    }
+}
+
+function betacf(x, a, b) {
+    const maxIter = 200;
+    const eps = 1e-12;
+    const fpmin = 1e-30;
+    
+    const qab = a + b;
+    const qap = a + 1;
+    const qam = a - 1;
+    let c = 1;
+    let d = 1 - qab * x / qap;
+    
+    if (Math.abs(d) < fpmin) d = fpmin;
+    d = 1 / d;
+    let h = d;
+    
+    for (let m = 1; m <= maxIter; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < fpmin) d = fpmin;
+        c = 1 + aa / c;
+        if (Math.abs(c) < fpmin) c = fpmin;
+        d = 1 / d;
+        h *= d * c;
+        
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < fpmin) d = fpmin;
+        c = 1 + aa / c;
+        if (Math.abs(c) < fpmin) c = fpmin;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        
+        if (Math.abs(del - 1) < eps) break;
+    }
+    return h;
+}
+
+function lgamma(z) {
+    const g = 7;
+    const p = [
+        0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+        771.32342877765313, -176.61502916214059, 12.507343278686905,
+        -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+    ];
+    
+    if (z < 0.5) {
+        return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - lgamma(1 - z);
+    }
+    
+    z -= 1;
+    let x = p[0];
+    for (let i = 1; i < g + 2; i++) {
+        x += p[i] / (z + i);
+    }
+    const t = z + g + 0.5;
+    return 0.5 * Math.log(2 * Math.PI) + Math.log(x) - t + (z + 0.5) * Math.log(t);
+}
+
+// MAIN LINEAR REGRESSION FUNCTION
 function runLinearReg() {
-  const dep    = document.getElementById('adv_lin_dep').value;
-  const inds   = Array.from(document.getElementById('adv_lin_inds').selectedOptions).map(o => o.value);
-  if (inds.length === 0) { showToast('Error', 'Select at least one independent variable', 'warn'); return; }
-
-  // Encode categoricals as dummies, keep numerics as-is
-  const { X, colNames, n } = buildDesignMatrix(inds);
-  if (n < colNames.length + 1) { showToast('Error', 'Not enough observations for the number of predictors', 'warn'); return; }
-
-  const Y = buildY(dep);
-  const yMean = mean(Y);
-  const betas = olsSolve(X, Y);
-  const predicted = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
-  const residuals  = Y.map((y, i) => y - predicted[i]);
-
-  const SS_res = residuals.reduce((s, r) => s + r * r, 0);
-  const SS_tot = Y.reduce((s, y) => s + (y - yMean) ** 2, 0);
-  const SS_reg = SS_tot - SS_res;
-  const p_vars = colNames.length; // includes intercept
-  const df_reg = p_vars - 1, df_res = n - p_vars;
-  const MS_reg = SS_reg / df_reg, MS_res = SS_res / Math.max(1, df_res);
-  const F_stat = MS_reg / MS_res;
-  const p_F    = fpvalue(F_stat, df_reg, df_res);
-  const Rsq    = SS_reg / SS_tot;
-  const RsqAdj = 1 - (1 - Rsq) * (n - 1) / Math.max(1, df_res);
-
-  const Xt     = transposeMatrix(X);
-  const XtXinv = invertMatrix(multiplyMatrices(Xt, X));
-  const se_b   = XtXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]) * MS_res));
-  const t_b    = betas.map((b, i) => b / Math.max(1e-15, se_b[i]));
-  const p_b    = t_b.map(t => tpvalue(Math.abs(t), df_res));
-  const tCrit  = tinv(0.975, df_res);
-
-  // Standardized betas (skip intercept)
-  const sdY = sd(Y);
-  const stdBeta = betas.map((b, i) => {
-    if (i === 0) return '';
-    const colVals = X.map(row => row[i]);
-    const sdX = sd(colVals);
-    return (b * sdX / sdY).toFixed(4);
-  });
-
-  // VIF via correlation matrix of predictors (columns 1..)
-  const vif = computeVIF(X);
-
-  // Durbin-Watson
-  const DW = durbinWatson(residuals);
-
-  let html = `<h3>Linear Regression</h3>
-  <p><strong>Model Summary</strong></p>
-  <table class="desc-table">
-    <tr><th>R</th><th>R Square</th><th>Adjusted R Square</th><th>Std. Error of Estimate</th></tr>
-    <tr><td>${Math.sqrt(Rsq).toFixed(4)}</td><td>${Rsq.toFixed(4)}</td><td>${RsqAdj.toFixed(4)}</td><td>${Math.sqrt(MS_res).toFixed(4)}</td></tr>
-  </table>
-  <p><strong>ANOVA</strong></p>
-  <table class="desc-table">
-    <tr><th></th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr>
-    <tr><td>Regression</td><td>${SS_reg.toFixed(4)}</td><td>${df_reg}</td><td>${MS_reg.toFixed(4)}</td><td rowspan="2">${F_stat.toFixed(4)}</td><td rowspan="2">${p_F.toFixed(6)}</td></tr>
-    <tr><td>Residual</td><td>${SS_res.toFixed(4)}</td><td>${df_res}</td><td>${MS_res.toFixed(4)}</td></tr>
-    <tr><td>Total</td><td>${SS_tot.toFixed(4)}</td><td>${n-1}</td><td></td><td></td><td></td></tr>
-  </table>
-  <p><strong>Coefficients</strong></p>
-  <table class="desc-table">
-    <tr><th>Variable</th><th>B</th><th>Std. Error</th><th>Beta (std.)</th><th>t</th><th>Sig.</th><th>95% CI Lower</th><th>95% CI Upper</th><th>VIF</th></tr>`;
-
-  for (let i = 0; i < betas.length; i++) {
-    html += `<tr>
-      <td><strong>${escapeHtml(colNames[i])}</strong></td>
-      <td>${betas[i].toFixed(4)}</td><td>${se_b[i].toFixed(4)}</td>
-      <td>${stdBeta[i]}</td>
-      <td>${t_b[i].toFixed(4)}</td>
-      <td>${p_b[i].toFixed(6)}${p_b[i] < 0.05 ? '*' : ''}</td>
-      <td>${(betas[i] - tCrit * se_b[i]).toFixed(4)}</td>
-      <td>${(betas[i] + tCrit * se_b[i]).toFixed(4)}</td>
-      <td>${i === 0 ? '—' : vif[i-1].toFixed(3)}</td>
-    </tr>`;
-  }
-
-  html += `</table><p>* p &lt; 0.05</p>
-  <p><strong>Collinearity:</strong> ${vif.some(v => v > 10) ? '⚠ Multicollinearity detected (VIF > 10)' : '✓ No serious multicollinearity'}</p>
-  <p><strong>Durbin-Watson:</strong> ${DW.toFixed(4)} ${DW < 1.5 || DW > 2.5 ? '⚠ Possible autocorrelation' : '✓ Acceptable'}</p>
-  <p class="step-val">${p_F < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
-
-  displayResults(html);
+    const dep = document.getElementById('adv_lin_dep').value;
+    const indsSelect = document.getElementById('adv_lin_inds');
+    const inds = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    
+    if (inds.length === 0) {
+        showToast('Error', 'Select at least one independent variable', 'warn');
+        return;
+    }
+    
+    if (!advData || advData.length === 0) {
+        showToast('Error', 'Please load data first', 'warn');
+        return;
+    }
+    
+    // Update categorical reference UI
+    updateCategoricalReferenceUI();
+    
+    // Build design matrix with current reference categories
+    const { X, colNames, n, varEncodings } = buildDesignMatrixForRegression(inds);
+    
+    if (n < colNames.length + 1) {
+        showToast('Error', `Not enough observations (${n}) for ${colNames.length} predictors`, 'warn');
+        return;
+    }
+    
+    const Y = buildYForRegression(dep);
+    if (Y.length !== n) {
+        showToast('Error', 'Missing data in dependent variable', 'warn');
+        return;
+    }
+    
+    const yMean = mean(Y);
+    
+    try {
+        // Calculate OLS coefficients
+        const betas = olsSolve(X, Y);
+        
+        // Calculate predicted values and residuals
+        const predicted = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+        const residuals = Y.map((y, i) => y - predicted[i]);
+        
+        // Sum of squares
+        const SS_res = residuals.reduce((s, r) => s + r * r, 0);
+        const SS_tot = Y.reduce((s, y) => s + (y - yMean) ** 2, 0);
+        const SS_reg = SS_tot - SS_res;
+        
+        // Degrees of freedom
+        const p_vars = colNames.length;
+        const df_reg = p_vars - 1;
+        const df_res = n - p_vars;
+        
+        // Mean squares
+        const MS_reg = SS_reg / df_reg;
+        const MS_res = SS_res / Math.max(1, df_res);
+        
+        // F-statistic and p-value
+        const F_stat = MS_reg / MS_res;
+        const p_F = getFpValue(F_stat, df_reg, df_res);
+        
+        // R-squared
+        const Rsq = SS_reg / SS_tot;
+        const RsqAdj = 1 - (1 - Rsq) * (n - 1) / Math.max(1, df_res);
+        
+        // Variance-covariance matrix
+        const Xt = transposeMatrix(X);
+        const XtX = multiplyMatrices(Xt, X);
+        const XtXinv = invertMatrix(XtX);
+        
+        // Standard errors of coefficients
+        const se_b = XtXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]) * MS_res));
+        
+        // t-statistics and p-values
+        const t_b = betas.map((b, i) => b / Math.max(1e-15, se_b[i]));
+        const p_b = t_b.map(t => getTpValue(t, df_res));
+        
+        // Get critical t-value for 95% CI (α = 0.05, two-tailed)
+        const tCritical = getCriticalT(df_res, 0.05);
+        
+        // Calculate 95% confidence intervals MANUALLY: CI = β ± t_critical × SE
+        const ciLower = betas.map((b, i) => b - tCritical * se_b[i]);
+        const ciUpper = betas.map((b, i) => b + tCritical * se_b[i]);
+        
+        // Standardized betas (Beta)
+        const sdY = sd(Y);
+        const stdBeta = betas.map((b, i) => {
+            if (i === 0) return '';
+            const colVals = X.map(row => row[i]);
+            const sdX = sd(colVals);
+            return (b * sdX / sdY).toFixed(4);
+        });
+        
+        // VIF (Variance Inflation Factor)
+        const vif = computeVIF(X);
+        
+        // Durbin-Watson statistic
+        let dwNum = 0, dwDen = 0;
+        for (let i = 1; i < residuals.length; i++) {
+            dwNum += (residuals[i] - residuals[i-1]) ** 2;
+        }
+        for (const r of residuals) {
+            dwDen += r * r;
+        }
+        const DW = dwNum / Math.max(1e-15, dwDen);
+        
+        // Build HTML output
+        let html = `<h3>📈 Linear Regression Results</h3>
+        
+        <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)}</p>
+            <p><strong>Method:</strong> Ordinary Least Squares (OLS)</p>
+            <p><strong>Sample Size (n):</strong> ${n}</p>
+            <p><strong>Number of Predictors:</strong> ${p_vars - 1}</p>
+            <p><strong>Degrees of Freedom (Residual):</strong> ${df_res}</p>
+        </div>
+        
+        <p><strong>Model Summary</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>R</th><th>R Square</th><th>Adjusted R²</th><th>Std. Error of Estimate</th><th>Durbin-Watson</th></tr></thead>
+            <tbody><tr>
+                <td style="text-align:center">${Math.sqrt(Rsq).toFixed(4)}</td>
+                <td style="text-align:center">${Rsq.toFixed(4)}</td>
+                <td style="text-align:center">${RsqAdj.toFixed(4)}</td>
+                <td style="text-align:center">${Math.sqrt(MS_res).toFixed(4)}</td>
+                <td style="text-align:center">${DW.toFixed(4)}</td>
+            </tr></tbody>
+        </table>
+        
+        <p><strong>ANOVA</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>Source</th><th>Sum of Squares</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Regression</td>
+                    <td style="text-align:center">${SS_reg.toFixed(4)}</td>
+                    <td style="text-align:center">${df_reg}</td>
+                    <td style="text-align:center">${MS_reg.toFixed(4)}</td>
+                    <td rowspan="2" style="text-align:center">${F_stat.toFixed(4)}</td>
+                    <td rowspan="2" style="text-align:center">${p_F.toFixed(6)}${p_F < 0.05 ? ' *' : ''}</td>
+                </tr>
+                <tr>
+                    <td>Residual</td>
+                    <td style="text-align:center">${SS_res.toFixed(4)}</td>
+                    <td style="text-align:center">${df_res}</td>
+                    <td style="text-align:center">${MS_res.toFixed(4)}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:center">${SS_tot.toFixed(4)}</td>
+                    <td style="text-align:center">${n - 1}</td>
+                    <td style="text-align:center">—</td>
+                    <td style="text-align:center">—</td>
+                    <td style="text-align:center">—</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p><strong>Coefficients</strong></p>
+        <p><em>t-critical (${df_res} df, 95% CI) = ${tCritical.toFixed(4)}</em></p>
+        <table class="desc-table" style="font-size: 12px;">
+            <thead><tr>
+                <th>Variable</th>
+                <th>B (Unstd.)</th>
+                <th>Std. Error</th>
+                <th>Beta (Std.)</th>
+                <th>t</th>
+                <th>Sig.</th>
+                <th>95% CI Lower</th>
+                <th>95% CI Upper</th>
+                <th>VIF</th>
+            </tr></thead>
+            <tbody>`;
+        
+        for (let i = 0; i < betas.length; i++) {
+            let label = colNames[i];
+            if (i > 0 && varEncodings[i-1] && varEncodings[i-1].type === 'categorical') {
+                label = `${varEncodings[i-1].varName}: ${varEncodings[i-1].level} vs ${varEncodings[i-1].reference}`;
+            }
+            
+            const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
+            
+            html += `<tr>
+                <td><strong>${escapeHtml(label)}</strong></td>
+                <td style="text-align:center">${betas[i].toFixed(4)}</td>
+                <td style="text-align:center">${se_b[i].toFixed(4)}</td>
+                <td style="text-align:center">${stdBeta[i]}</td>
+                <td style="text-align:center">${t_b[i].toFixed(4)}</td>
+                <td style="text-align:center">${p_b[i].toFixed(6)} ${stars}</td>
+                <td style="text-align:center">${ciLower[i].toFixed(4)}</td>
+                <td style="text-align:center">${ciUpper[i].toFixed(4)}</td>
+                <td style="text-align:center">${i === 0 ? '—' : (vif[i-1] ? vif[i-1].toFixed(3) : '—')}</td>
+            </tr>`;
+        }
+        
+        html += `</tbody>
+        </table>
+        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>
+        
+        <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-top: 15px;">
+            <p><strong>📊 Diagnostic Checks:</strong></p>
+            <p>🔍 <strong>Collinearity (VIF):</strong> ${vif.some(v => v > 10) ? '⚠️ Multicollinearity detected (VIF > 10)' : '✓ No serious multicollinearity'}</p>
+            <p>🔍 <strong>Autocorrelation (Durbin-Watson):</strong> ${DW.toFixed(4)} — ${DW < 1.5 || DW > 2.5 ? '⚠️ Possible autocorrelation' : '✓ Acceptable range (1.5-2.5)'}</p>
+            <p>🔍 <strong>Model Significance:</strong> ${p_F < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>
+        </div>`;
+        
+        // Show categorical encoding summary
+        const categoricalUsed = varEncodings.filter(e => e.type === 'categorical');
+        if (categoricalUsed.length > 0) {
+            html += `<div style="background: var(--amber-dim); padding: 10px; border-radius: 8px; margin-top: 15px;">
+                        <p><strong>🏷️ Categorical Variable Encoding (Dummy Coding):</strong></p>
+                        <ul style="margin: 5px 0 0 20px;">
+                            ${categoricalUsed.map(cat => 
+                                `<li><strong>${escapeHtml(cat.varName)}</strong>: Reference category = "<strong>${escapeHtml(cat.reference)}</strong>"<br>
+                                &nbsp;&nbsp;→ Dummy variable "${escapeHtml(cat.level)}" = 1 for observations in that category, 0 otherwise</li>`
+                            ).join('')}
+                        </ul>
+                    </div>`;
+        }
+        
+        displayResults(html);
+        
+    } catch (error) {
+        showToast('Error', `Regression failed: ${error.message}`, 'error');
+        console.error(error);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LOGISTIC REGRESSION (Newton-Raphson IRLS, exact)
+// LOGISTIC REGRESSION - BOTH DIRECTIONS FOR DEPENDENT VARIABLE (WORKING)
 // ═══════════════════════════════════════════════════════════════
+
+// Store reference levels
+let logisticDepRefLevel = null;
+let logisticIndRefLevels = {};
+
+// Function to detect if a variable is categorical
+function isCategorical(varName) {
+    if (!advData || advData.length === 0) return false;
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    if (values.length === 0) return false;
+    
+    const allNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+    if (!allNumeric) return true;
+    
+    const uniqueValues = [...new Set(values)];
+    return uniqueValues.length <= 10;
+}
+
+// Get unique values for a variable
+function getUniqueValues(varName) {
+    if (!advData || advData.length === 0) return [];
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    return [...new Set(values)].sort();
+}
+
+// Update dependent variable reference UI
+function updateLogisticDepRefUI() {
+    const depSelect = document.getElementById('adv_log_dep');
+    if (!depSelect) return;
+    
+    const depVar = depSelect.value;
+    let depContainer = document.getElementById('logistic-dep-ref-container');
+    
+    if (!depContainer) {
+        const configContent = document.getElementById('adv-test-config-content');
+        if (configContent) {
+            depContainer = document.createElement('div');
+            depContainer.id = 'logistic-dep-ref-container';
+            configContent.insertBefore(depContainer, configContent.firstChild);
+        }
+    }
+    
+    if (!depContainer) return;
+    
+    if (!depVar || !advData || advData.length === 0 || !isCategorical(depVar)) {
+        depContainer.style.display = 'none';
+        return;
+    }
+    
+    const uniqueValues = getUniqueValues(depVar);
+    if (uniqueValues.length !== 2) {
+        depContainer.innerHTML = `<p style="color: var(--coral); padding: 10px; background: var(--coral-dim); border-radius: 6px;">
+            ⚠️ Binary logistic regression requires exactly 2 categories. Found: ${uniqueValues.length}</p>`;
+        depContainer.style.display = 'block';
+        return;
+    }
+    
+    const currentRef = logisticDepRefLevel || uniqueValues[0];
+    
+    depContainer.innerHTML = `
+        <div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin-bottom: 15px; border-left: 4px solid var(--coral);">
+            <h4 style="margin: 0 0 8px 0;">🎯 Dependent Variable: ${escapeHtml(depVar)}</h4>
+            <p style="font-size: 12px; margin-bottom: 10px;">Select the <strong>Reference Category</strong> for the primary analysis (the opposite direction will also be shown):</p>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                ${uniqueValues.map(val => `
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg2); border-radius: 6px; cursor: pointer; border: 2px solid ${currentRef === val ? 'var(--coral)' : 'var(--border)'};">
+                        <input type="radio" name="dep_ref" value="${escapeHtml(val)}" ${currentRef === val ? 'checked' : ''} 
+                               onchange="setLogisticDepRef('${escapeHtml(val)}')">
+                        <strong>${escapeHtml(String(val))}</strong>
+                        ${currentRef === val ? '<span style="color: var(--coral);">← Reference (Primary)</span>' : '<span style="color: var(--teal);">→ Event (Primary)</span>'}
+                    </label>
+                `).join('')}
+            </div>
+            <p style="font-size: 11px; color: var(--text3); margin-top: 8px;">
+                Results will be shown for both: ${escapeHtml(String(currentRef))} as reference AND ${escapeHtml(String(uniqueValues.find(v => v !== currentRef)))} as reference
+            </p>
+        </div>
+    `;
+    depContainer.style.display = 'block';
+}
+
+function setLogisticDepRef(refValue) {
+    logisticDepRefLevel = refValue;
+    updateLogisticDepRefUI();
+    showToast('Info', `Primary reference set to "${refValue}". Both directions will be shown.`, 'info');
+}
+
+// Update independent variables reference UI
+function updateLogisticIndRefUI() {
+    const indsSelect = document.getElementById('adv_log_inds');
+    if (!indsSelect) return;
+    
+    const selectedVars = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    let refContainer = document.getElementById('logistic-ind-ref-container');
+    
+    if (!refContainer) {
+        const configContent = document.getElementById('adv-test-config-content');
+        if (configContent) {
+            refContainer = document.createElement('div');
+            refContainer.id = 'logistic-ind-ref-container';
+            configContent.appendChild(refContainer);
+        }
+    }
+    
+    if (!refContainer) return;
+    
+    const categoricalVars = selectedVars.filter(v => isCategorical(v));
+    
+    if (categoricalVars.length === 0) {
+        refContainer.innerHTML = `<p style="color: var(--green); font-size: 12px; margin: 10px 0;">✓ No categorical independent variables.</p>`;
+        refContainer.style.display = 'block';
+        return;
+    }
+    
+    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px 0;">📊 Categorical Independent Variables</h4>
+        <p style="font-size: 12px; margin-bottom: 10px;">Select the Reference Category for each variable (other levels will be compared against this):</p>`;
+    
+    categoricalVars.forEach(varName => {
+        const levels = getUniqueValues(varName);
+        const currentRef = logisticIndRefLevels[varName] || levels[0];
+        
+        html += `
+            <div style="margin: 10px 0; padding: 10px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--teal);">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">${escapeHtml(varName)}</label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    ${levels.map(level => `
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg3); border-radius: 5px; cursor: pointer; border: 1px solid ${currentRef === level ? 'var(--teal)' : 'var(--border)'};">
+                            <input type="radio" name="ind_ref_${escapeHtml(varName)}" value="${escapeHtml(level)}" 
+                                   ${currentRef === level ? 'checked' : ''} 
+                                   onchange="setLogisticIndRef('${escapeHtml(varName)}', '${escapeHtml(level)}')">
+                            <strong>${escapeHtml(String(level))}</strong>
+                            ${currentRef === level ? '<span style="color: var(--teal);">← Reference</span>' : '<span style="color: var(--accent);">→ Comparison</span>'}
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    refContainer.innerHTML = html;
+    refContainer.style.display = 'block';
+}
+
+function setLogisticIndRef(varName, refValue) {
+    logisticIndRefLevels[varName] = refValue;
+    updateLogisticIndRefUI();
+    showToast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+}
+
+// Build design matrix with proper dummy coding
+function buildDesignMatrixLogisticFull(independentVars, dependentVar, depReference) {
+    if (!advData || advData.length === 0) return { X: [], colNames: [], n: 0, Y: [] };
+    
+    const depLevels = getUniqueValues(dependentVar);
+    if (depLevels.length !== 2) {
+        return { X: [], colNames: [], n: 0, Y: [] };
+    }
+    
+    const depRef = depReference;
+    const Y = [];
+    const validRows = [];
+    
+    for (let i = 0; i < advData.length; i++) {
+        const val = advData[i][dependentVar];
+        if (val && val !== '') {
+            Y.push(val === depRef ? 0 : 1);
+            validRows.push(i);
+        }
+    }
+    
+    const colNames = ['(Intercept)'];
+    const varEncodings = [];
+    
+    for (const varName of independentVars) {
+        if (isCategorical(varName)) {
+            const levels = getUniqueValues(varName);
+            const refLevel = logisticIndRefLevels[varName] || levels[0];
+            const otherLevels = levels.filter(v => v !== refLevel);
+            
+            otherLevels.forEach(level => {
+                colNames.push(`${varName}: ${level} vs ${refLevel}`);
+                varEncodings.push({
+                    varName: varName,
+                    type: 'categorical',
+                    level: level,
+                    ref: refLevel,
+                    allLevels: levels
+                });
+            });
+        } else {
+            colNames.push(varName);
+            varEncodings.push({
+                varName: varName,
+                type: 'numeric'
+            });
+        }
+    }
+    
+    const X = [];
+    for (const idx of validRows) {
+        const row = advData[idx];
+        const designRow = [1];
+        let valid = true;
+        
+        for (const varName of independentVars) {
+            const value = row[varName];
+            if (value === undefined || value === null || value === '') {
+                valid = false;
+                break;
+            }
+            
+            if (isCategorical(varName)) {
+                const levels = getUniqueValues(varName);
+                const refLevel = logisticIndRefLevels[varName] || levels[0];
+                const otherLevels = levels.filter(v => v !== refLevel);
+                
+                for (const level of otherLevels) {
+                    designRow.push(value === level ? 1 : 0);
+                }
+            } else {
+                const numVal = parseFloat(value);
+                if (isNaN(numVal)) {
+                    valid = false;
+                    break;
+                }
+                designRow.push(numVal);
+            }
+        }
+        
+        if (valid) {
+            X.push(designRow);
+        }
+    }
+    
+    const finalY = [];
+    for (let i = 0; i < Y.length && finalY.length < X.length; i++) {
+        finalY.push(Y[i]);
+    }
+    
+    return { X, colNames, n: X.length, varEncodings, Y: finalY };
+}
+
+// Logistic IRLS
+function logisticIRLS_Complete(X, Y, maxIter = 100, tol = 1e-8) {
+    const n = Y.length, p = X[0].length;
+    let betas = Array(p).fill(0);
+    let prevLL = -Infinity;
+    
+    for (let iter = 0; iter < maxIter; iter++) {
+        const eta = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+        const mu = eta.map(e => 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, e)))));
+        const W = mu.map(m => m * (1 - m));
+        const z = eta.map((e, i) => e + (Y[i] - mu[i]) / Math.max(1e-10, W[i]));
+        
+        const XtW = X.map((row, i) => row.map(v => v * W[i]));
+        const XtWX = multiplyMatrices(transposeMatrix(XtW), X);
+        const XtWz = multiplyMatrices(transposeMatrix(XtW), z.map(v => [v]));
+        const XtWXinv = invertMatrix(XtWX);
+        
+        if (!XtWXinv) break;
+        
+        const newBetas = multiplyMatrices(XtWXinv, XtWz).map(v => v[0]);
+        
+        const ll = Y.reduce((s, y, i) => {
+            const muI = 1 / (1 + Math.exp(-X[i].reduce((ss, b, j) => ss + b * newBetas[j], 0)));
+            return s + y * Math.log(Math.max(1e-300, muI)) + (1 - y) * Math.log(Math.max(1e-300, 1 - muI));
+        }, 0);
+        
+        const change = Math.max(...newBetas.map((b, i) => Math.abs(b - betas[i])));
+        betas = newBetas;
+        
+        if (change < tol && Math.abs(ll - prevLL) < tol) break;
+        prevLL = ll;
+    }
+    
+    const eta = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+    const mu = eta.map(e => 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, e)))));
+    const W = mu.map(m => m * (1 - m));
+    const XtW = X.map((row, i) => row.map(v => v * W[i]));
+    const XtWX = multiplyMatrices(transposeMatrix(XtW), X);
+    const XtWXinv = invertMatrix(XtWX);
+    const se = XtWXinv ? XtWXinv.map((row, i) => Math.sqrt(Math.max(0, row[i]))) : Array(p).fill(0);
+    
+    return { betas, se };
+}
+
+// Calculate organized pairwise odds ratios
+function calculateOrganizedOddsRatios(betas, se_b, varEncodings) {
+    const results = {};
+    
+    for (const enc of varEncodings) {
+        if (enc.type === 'categorical') {
+            const allLevels = enc.allLevels;
+            const comparisons = [];
+            
+            const levelCoeffs = {};
+            for (let i = 0; i < varEncodings.length; i++) {
+                const e = varEncodings[i];
+                if (e.varName === enc.varName && e.type === 'categorical') {
+                    levelCoeffs[e.level] = {
+                        b: betas[i + 1],
+                        se: se_b[i + 1]
+                    };
+                }
+            }
+            
+            const refLevel = enc.ref;
+            for (const level of allLevels) {
+                if (level === refLevel) continue;
+                
+                let logOR, stdError;
+                if (levelCoeffs[level]) {
+                    logOR = levelCoeffs[level].b;
+                    stdError = levelCoeffs[level].se;
+                } else {
+                    continue;
+                }
+                
+                const oddsRatio = Math.exp(logOR);
+                const ciLower = Math.exp(logOR - 1.96 * stdError);
+                const ciUpper = Math.exp(logOR + 1.96 * stdError);
+                const zScore = logOR / stdError;
+                const pValue = 2 * (1 - normCDF(Math.abs(zScore)));
+                
+                comparisons.push({
+                    level1: level,
+                    level2: refLevel,
+                    oddsRatio: oddsRatio,
+                    ciLower: ciLower,
+                    ciUpper: ciUpper,
+                    pValue: pValue,
+                    order: 1
+                });
+                
+                comparisons.push({
+                    level1: refLevel,
+                    level2: level,
+                    oddsRatio: 1 / oddsRatio,
+                    ciLower: 1 / ciUpper,
+                    ciUpper: 1 / ciLower,
+                    pValue: pValue,
+                    order: 2
+                });
+            }
+            
+            const nonRefLevels = allLevels.filter(l => l !== refLevel);
+            for (let i = 0; i < nonRefLevels.length; i++) {
+                for (let j = i + 1; j < nonRefLevels.length; j++) {
+                    const level1 = nonRefLevels[i];
+                    const level2 = nonRefLevels[j];
+                    
+                    let logOR, stdError;
+                    if (levelCoeffs[level1] && levelCoeffs[level2]) {
+                        logOR = levelCoeffs[level1].b - levelCoeffs[level2].b;
+                        stdError = Math.sqrt(levelCoeffs[level1].se ** 2 + levelCoeffs[level2].se ** 2);
+                    } else {
+                        continue;
+                    }
+                    
+                    const oddsRatio = Math.exp(logOR);
+                    const ciLower = Math.exp(logOR - 1.96 * stdError);
+                    const ciUpper = Math.exp(logOR + 1.96 * stdError);
+                    const zScore = logOR / stdError;
+                    const pValue = 2 * (1 - normCDF(Math.abs(zScore)));
+                    
+                    comparisons.push({
+                        level1: level1,
+                        level2: level2,
+                        oddsRatio: oddsRatio,
+                        ciLower: ciLower,
+                        ciUpper: ciUpper,
+                        pValue: pValue,
+                        order: 3
+                    });
+                    
+                    comparisons.push({
+                        level1: level2,
+                        level2: level1,
+                        oddsRatio: 1 / oddsRatio,
+                        ciLower: 1 / ciUpper,
+                        ciUpper: 1 / ciLower,
+                        pValue: pValue,
+                        order: 4
+                    });
+                }
+            }
+            
+            comparisons.sort((a, b) => {
+                if (a.order !== b.order) return a.order - b.order;
+                return String(a.level1).localeCompare(String(b.level1));
+            });
+            
+            results[enc.varName] = comparisons;
+        }
+    }
+    
+    return results;
+}
+
+function normCDF(x) {
+    const t = 1 / (1 + 0.2316419 * Math.abs(x));
+    const d = 0.3989423 * Math.exp(-x * x / 2);
+    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    return x > 0 ? 1 - p : p;
+}
+
+// Run a single direction model
+function runSingleDirectionModel(dep, inds, depReference, depLevels, directionNum) {
+    try {
+        const { X, colNames, n, varEncodings, Y } = buildDesignMatrixLogisticFull(inds, dep, depReference);
+        
+        if (n === 0 || Y.length === 0) {
+            return `<p style="color: red;">Error: No valid data for direction with reference = ${depReference}</p>`;
+        }
+        
+        const result = logisticIRLS_Complete(X, Y);
+        const betas = result.betas;
+        const se_b = result.se;
+        
+        const organizedOR = calculateOrganizedOddsRatios(betas, se_b, varEncodings);
+        
+        const prob = X.map(row => {
+            const linear = row.reduce((s, v, i) => s + v * betas[i], 0);
+            return 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, linear))));
+        });
+        
+        const llModel = Y.reduce((s, y, i) => {
+            return s + y * Math.log(Math.max(1e-300, prob[i])) + (1 - y) * Math.log(Math.max(1e-300, 1 - prob[i]));
+        }, 0);
+        
+        const pNull = Y.reduce((s, y) => s + y, 0) / Y.length;
+        const llNull = Y.reduce((s, y) => {
+            return s + y * Math.log(Math.max(1e-300, pNull)) + (1 - y) * Math.log(Math.max(1e-300, 1 - pNull));
+        }, 0);
+        
+        const G2 = -2 * (llNull - llModel);
+        const df_G2 = colNames.length - 1;
+        const p_G2 = chipvalue(G2, df_G2);
+        
+        const CoxSnell = 1 - Math.exp(2 * (llNull - llModel) / n);
+        const Nagelkerke = CoxSnell / (1 - Math.exp(2 * llNull / n));
+        const McFadden = 1 - llModel / llNull;
+        
+        const wald = betas.map((b, i) => (b / Math.max(1e-15, se_b[i])) ** 2);
+        const p_b = wald.map(w => chipvalue(w, 1));
+        const OR = betas.map(b => Math.exp(b));
+        
+        const depEvent = depLevels.find(v => v !== depReference);
+        
+        let html = `<h4>📊 Model ${directionNum}: ${escapeHtml(String(depEvent))} vs ${escapeHtml(String(depReference))}</h4>
+        
+        <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <p><strong>Event (coded as 1):</strong> ${escapeHtml(String(depEvent))}</p>
+            <p><strong>Reference (coded as 0):</strong> ${escapeHtml(String(depReference))}</p>
+            <p><strong>Sample Size (n):</strong> ${n}</p>
+            <p><strong>Event Rate:</strong> ${(Y.reduce((s, y) => s + y, 0) / n * 100).toFixed(1)}%</p>
+        </div>
+        
+        <p><strong>Omnibus Tests of Model Coefficients</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>χ²</th><th>df</th><th>Sig.</th></tr></thead>
+            <tbody><tr><td style="text-align:center">${G2.toFixed(4)}</span><td>${df_G2}</span><td>${p_G2.toFixed(6)}${p_G2 < 0.05 ? ' *' : ''}</span></tr></tbody>
+        </table>
+        
+        <p><strong>Model Summary</strong></p>
+        <table class="desc-table">
+            <thead><tr><th>-2 Log Likelihood</th><th>Cox & Snell R²</th><th>Nagelkerke R²</th><th>McFadden R²</th></tr></thead>
+            <tbody><tr><td style="text-align:center">${(-2 * llModel).toFixed(4)}</span><td>${CoxSnell.toFixed(4)}</span><td>${Nagelkerke.toFixed(4)}</span><td>${McFadden.toFixed(4)}</span></tr></tbody>
+        </table>
+        
+        <p><strong>Variables in the Equation</strong></p>
+        <table class="desc-table">
+            <thead><tr>
+                <th>Variable</th><th>B</th><th>S.E.</th><th>Wald</th><th>df</th><th>Sig.</th><th>Exp(B)</th><th>95% CI Lower</th><th>95% CI Upper</th>
+            </tr></thead>
+            <tbody>`;
+        
+        for (let i = 0; i < betas.length; i++) {
+            let label = colNames[i];
+            if (i === 0) label = '(Intercept)';
+            
+            const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
+            
+            html += `<tr>
+                <td><strong>${escapeHtml(label)}</strong></td>
+                <td style="text-align:center">${betas[i].toFixed(4)}</span><td>${se_b[i].toFixed(4)}</span><td>${wald[i].toFixed(4)}</span><td>1</span><td>${p_b[i].toFixed(6)} ${stars}</span>
+                <td style="text-align:center">${OR[i].toFixed(4)}</span><td>${Math.exp(betas[i] - 1.96 * se_b[i]).toFixed(4)}</span><td>${Math.exp(betas[i] + 1.96 * se_b[i]).toFixed(4)}</span>
+            </tr>`;
+        }
+        
+        html += `</tbody>
+        </table>
+        
+        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
+        
+        for (const [varName, comparisons] of Object.entries(organizedOR)) {
+            html += `<p><strong>Odds Ratios for ${escapeHtml(varName)}</strong></p>
+            <p><em>95% Confidence Interval (Wald)</em></p>
+            <table class="desc-table">
+                <thead>
+                    <tr>
+                        <th>Level1</th>
+                        <th>Level2</th>
+                        <th>Odds Ratio</th>
+                        <th>Prob&gt;Chisq</th>
+                        <th>Lower</th>
+                        <th>Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            for (const comp of comparisons) {
+                html += `<tr>
+                    <td><strong>${escapeHtml(String(comp.level1))}</strong></td>
+                    <td><strong>${escapeHtml(String(comp.level2))}</strong></td>
+                    <td>${comp.oddsRatio.toFixed(4)}</span></td>
+                    <td>${comp.pValue.toFixed(6)}${comp.pValue < 0.05 ? ' *' : ''}</span></td>
+                    <td>${comp.ciLower.toFixed(4)}</span></td>
+                    <td>${comp.ciUpper.toFixed(4)}</span></td>
+                </tr>`;
+            }
+            
+            html += `</tbody>
+            </table>`;
+        }
+        
+        html += `<p class="step-val">${p_G2 < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
+        
+        return html;
+        
+    } catch (error) {
+        console.error(`Error with reference ${depReference}:`, error);
+        return `<p style="color: red;">Error running model with reference = ${depReference}: ${error.message}</p>`;
+    }
+}
+
+// MAIN LOGISTIC REGRESSION FUNCTION
 function runLogisticReg() {
-  const dep  = document.getElementById('adv_log_dep').value;
-  const inds = Array.from(document.getElementById('adv_log_inds').selectedOptions).map(o => o.value);
-  if (inds.length === 0) { showToast('Error', 'Select at least one independent variable', 'warn'); return; }
-
-  const { X, colNames, n } = buildDesignMatrix(inds);
-  const Y = buildY(dep).map(v => Math.round(v)); // 0/1
-
-  const result = logisticIRLS(X, Y);
-  const betas = result.betas;
-  const { nullLogL, modelLogL } = computeLogLikelihoods(X, Y, betas);
-
-  const llNull = nullLogL, llModel = modelLogL;
-  const G2 = -2 * (llNull - llModel);
-  const df_G2 = inds.length; // comparing to intercept-only
-  const p_G2 = chipvalue(G2, df_G2);
-
-  const CoxSnell = 1 - Math.exp((2 * llNull - 2 * llModel) / n);
-  const Nagelkerke = CoxSnell / (1 - Math.exp(2 * llNull / n));
-
-  // SE via Hessian (Fisher information)
-  const se_b = result.se;
-  const wald = betas.map((b, i) => (b / Math.max(1e-15, se_b[i])) ** 2);
-  const p_b  = wald.map(w => chipvalue(w, 1));
-  const OR   = betas.map(b => Math.exp(b));
-  const tCrit = 1.96;
-
-  let html = `<h3>Binary Logistic Regression</h3>
-  <p><strong>Omnibus Tests of Model Coefficients</strong></p>
-  <table class="desc-table">
-    <tr><th></th><th>χ²</th><th>df</th><th>Sig.</th></tr>
-    <tr><td>Model</td><td>${G2.toFixed(4)}</td><td>${df_G2}</td><td>${p_G2.toFixed(6)}</td></tr>
-  </table>
-  <p><strong>Model Summary</strong></p>
-  <table class="desc-table">
-    <tr><th>-2 Log Likelihood</th><th>Cox & Snell R²</th><th>Nagelkerke R²</th></tr>
-    <tr><td>${(-2 * llModel).toFixed(4)}</td><td>${CoxSnell.toFixed(4)}</td><td>${Nagelkerke.toFixed(4)}</td></tr>
-  </table>
-  <p><strong>Variables in the Equation</strong></p>
-  <table class="desc-table">
-    <tr><th>Variable</th><th>B</th><th>S.E.</th><th>Wald</th><th>df</th><th>Sig.</th><th>Exp(B)</th><th>95% CI Lower</th><th>95% CI Upper</th></tr>`;
-
-  for (let i = 0; i < betas.length; i++) {
-    html += `<tr>
-      <td><strong>${escapeHtml(colNames[i])}</strong></td>
-      <td>${betas[i].toFixed(4)}</td><td>${se_b[i].toFixed(4)}</td>
-      <td>${wald[i].toFixed(4)}</td><td>1</td>
-      <td>${p_b[i].toFixed(6)}${p_b[i] < 0.05 ? '*' : ''}</td>
-      <td>${OR[i].toFixed(4)}</td>
-      <td>${Math.exp(betas[i] - tCrit * se_b[i]).toFixed(4)}</td>
-      <td>${Math.exp(betas[i] + tCrit * se_b[i]).toFixed(4)}</td>
-    </tr>`;
-  }
-
-  // Classification table
-  const prob = X.map(row => logistic(row.reduce((s, v, i) => s + v * betas[i], 0)));
-  const pred = prob.map(p => p >= 0.5 ? 1 : 0);
-  let TP=0, TN=0, FP=0, FN=0;
-  Y.forEach((y, i) => {
-    if (y===1 && pred[i]===1) TP++; else if (y===0 && pred[i]===0) TN++;
-    else if (y===0 && pred[i]===1) FP++; else FN++;
-  });
-  const accuracy = ((TP + TN) / n * 100).toFixed(1);
-
-  html += `</table><p>* p &lt; 0.05</p>
-  <p><strong>Classification Table</strong> (cutoff = 0.5)</p>
-  <table class="desc-table">
-    <tr><th></th><th>Predicted 0</th><th>Predicted 1</th><th>% Correct</th></tr>
-    <tr><td>Observed 0</td><td>${TN}</td><td>${FP}</td><td>${TN+FP>0?(TN/(TN+FP)*100).toFixed(1):0}%</td></tr>
-    <tr><td>Observed 1</td><td>${FN}</td><td>${TP}</td><td>${TP+FN>0?(TP/(TP+FN)*100).toFixed(1):0}%</td></tr>
-    <tr><td><strong>Overall</strong></td><td></td><td></td><td><strong>${accuracy}%</strong></td></tr>
-  </table>
-  <p class="step-val">${p_G2 < 0.05 ? '✓ Model significantly improves prediction over null' : '✗ Model does not significantly improve over null'}</p>`;
-
-  displayResults(html);
+    const dep = document.getElementById('adv_log_dep').value;
+    const indsSelect = document.getElementById('adv_log_inds');
+    const inds = Array.from(indsSelect.selectedOptions).map(o => o.value);
+    
+    if (!dep) {
+        showToast('Error', 'Please select a dependent variable', 'warn');
+        return;
+    }
+    
+    if (inds.length === 0) {
+        showToast('Error', 'Select at least one independent variable', 'warn');
+        return;
+    }
+    
+    if (!advData || advData.length === 0) {
+        showToast('Error', 'Please load data first', 'warn');
+        return;
+    }
+    
+    const depLevels = getUniqueValues(dep);
+    if (depLevels.length !== 2) {
+        showToast('Error', `Dependent variable must have exactly 2 categories. Found: ${depLevels.join(', ')}`, 'warn');
+        return;
+    }
+    
+    if (!logisticDepRefLevel) {
+        logisticDepRefLevel = depLevels[0];
+    }
+    
+    const direction1Ref = logisticDepRefLevel;
+    const direction2Ref = depLevels.find(v => v !== logisticDepRefLevel);
+    
+    let html = `<h3>📊 Binary Logistic Regression - Complete Results</h3>
+    <p><em>Showing results for both directions of the dependent variable.</em></p>`;
+    
+    // Run first direction
+    html += `<div style="background: var(--bg2); border-radius: 12px; margin: 20px 0; padding: 5px 20px 20px 20px; border: 1px solid var(--border);">`;
+    html += runSingleDirectionModel(dep, inds, direction1Ref, depLevels, "1");
+    html += `</div>`;
+    
+    // Run second direction
+    html += `<div style="background: var(--bg2); border-radius: 12px; margin: 20px 0; padding: 5px 20px 20px 20px; border: 1px solid var(--border);">`;
+    html += runSingleDirectionModel(dep, inds, direction2Ref, depLevels, "2");
+    html += `</div>`;
+    
+    displayResults(html);
 }
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const depSelect = document.getElementById('adv_log_dep');
+        if (depSelect) {
+            depSelect.addEventListener('change', () => {
+                logisticDepRefLevel = null;
+                updateLogisticDepRefUI();
+                updateLogisticIndRefUI();
+            });
+            if (depSelect.value) updateLogisticDepRefUI();
+        }
+        
+        const indsSelect = document.getElementById('adv_log_inds');
+        if (indsSelect) {
+            indsSelect.addEventListener('change', () => updateLogisticIndRefUI());
+        }
+        
+        updateLogisticDepRefUI();
+        updateLogisticIndRefUI();
+    }, 500);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // POISSON REGRESSION (IRLS, exact)
