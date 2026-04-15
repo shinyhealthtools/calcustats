@@ -1868,7 +1868,7 @@ body.dark .result-metric-value.highlight {
 <div class="calc-card c-adv" onclick="goTo('advstats')">
   <div class="card-icon">⚙</div>
   <h3>Advanced Inferential Tests</h3>
-  <p>t-tests, ANOVA, regression, chi-square, and others — full inferential statistics with estimates and p-values.</p>
+  <p>t-tests, ANOVA, regression, chi-square, Kruskal-Wallis, Mann-Whitney, and others — full inferential statistics with estimates and p-values.</p>
   <div class="card-link">Run Tests →</div>
 </div>
 </div>
@@ -1877,7 +1877,7 @@ body.dark .result-metric-value.highlight {
     <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">Strata Support (Unlimited)</div></div>
     <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Ads / Tracking</div></div>
     <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Free Forever</div></div>
-    <div class="stat-item"><div class="stat-num">14</div><div class="stat-label">Inferential Tests</div></div>
+    <div class="stat-item"><div class="stat-num">17</div><div class="stat-label">Inferential Tests</div></div>
 </div>
 </div>
 
@@ -2457,28 +2457,48 @@ body.dark .result-metric-value.highlight {
       </div>
     </div>
 
-    <!-- Category 5: Multivariate -->
-    <div class="test-category-card" data-category="multivariate" style="flex:1; min-width:180px; background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:all 0.2s; cursor:pointer;">
-      <div style="padding: 18px 16px; background:linear-gradient(135deg, rgba(106,90,205,0.08), transparent);">
-        <i class="fas fa-cubes" style="font-size:24px; color:#6a5acd;"></i>
-        <h3 style="margin: 10px 0 4px 0; font-size:18px;">🔬 Multivariate</h3>
-        <p style="font-size:12px; color:var(--text2); margin:0;">Advanced models</p>
-      </div>
-      <div class="test-list" style="display:none; padding:12px; border-top:1px solid var(--border); background:var(--bg);">
-        <div class="test-option" data-test="ancova" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('ancova')">
-          <i class="fas fa-chart-line" style="width:24px;"></i> ANCOVA
-        </div>
-        <div class="test-option" data-test="manova" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('manova')">
-          <i class="fas fa-chart-gantt" style="width:24px;"></i> MANOVA
-        </div>
-        <div class="test-option" data-test="multinomial" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('multinomial')">
-          <i class="fas fa-chart-pie" style="width:24px;"></i> Multinomial Logistic
-        </div>
-        <div class="test-option" data-test="ordinal" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('ordinal')">
-          <i class="fas fa-chart-simple" style="width:24px;"></i> Ordinal Logistic
-        </div>
-      </div>
+  <!-- Category 5: Non-Parametric Tests -->
+<div class="test-category-card" data-category="nonparametric" style="flex:1; min-width:180px; background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:all 0.2s; cursor:pointer;">
+  <div style="padding: 18px 16px; background:linear-gradient(135deg, rgba(22,160,133,0.08), transparent);">
+    <i class="fas fa-chart-simple" style="font-size:24px; color:#16a085;"></i>
+    <h3 style="margin: 10px 0 4px 0; font-size:18px;">📊 Non-Parametric Tests</h3>
+    <p style="font-size:12px; color:var(--text2); margin:0;">Distribution-free statistical tests</p>
+  </div>
+  <div class="test-list" style="display:none; padding:12px; border-top:1px solid var(--border); background:var(--bg);">
+    <div class="test-option" data-test="mannwhitney" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('mannwhitney')">
+      <i class="fas fa-arrow-right" style="width:24px;"></i> Mann-Whitney U Test
     </div>
+    <div class="test-option" data-test="wilcoxon" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('wilcoxon')">
+      <i class="fas fa-link" style="width:24px;"></i> Wilcoxon Signed-Rank
+    </div>
+    <div class="test-option" data-test="kruskal" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('kruskal')">
+      <i class="fas fa-chart-bar" style="width:24px;"></i> Kruskal-Wallis H Test
+    </div>
+  </div>
+</div>
+
+<!-- Category 6: Multivariate Analysis -->
+<div class="test-category-card" data-category="multivariate" style="flex:1; min-width:180px; background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:all 0.2s; cursor:pointer;">
+  <div style="padding: 18px 16px; background:linear-gradient(135deg, rgba(106,90,205,0.08), transparent);">
+    <i class="fas fa-cubes" style="font-size:24px; color:#6a5acd;"></i>
+    <h3 style="margin: 10px 0 4px 0; font-size:18px;">🔬 Multivariate Analysis</h3>
+    <p style="font-size:12px; color:var(--text2); margin:0;">Advanced multivariate models</p>
+  </div>
+  <div class="test-list" style="display:none; padding:12px; border-top:1px solid var(--border); background:var(--bg);">
+    <div class="test-option" data-test="ancova" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('ancova')">
+      <i class="fas fa-chart-line" style="width:24px;"></i> ANCOVA
+    </div>
+    <div class="test-option" data-test="manova" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('manova')">
+      <i class="fas fa-chart-gantt" style="width:24px;"></i> MANOVA
+    </div>
+    <div class="test-option" data-test="multinomial" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('multinomial')">
+      <i class="fas fa-chart-pie" style="width:24px;"></i> Multinomial Logistic
+    </div>
+    <div class="test-option" data-test="ordinal" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('ordinal')">
+      <i class="fas fa-chart-simple" style="width:24px;"></i> Ordinal Logistic
+    </div>
+  </div>
+</div>
   </div>
 
   <!-- ========== DYNAMIC TEST CONFIGURATION PANEL (appears only when test selected) ========== -->
@@ -2651,6 +2671,40 @@ function selectAdvTest(testId) {
         </div>
       `;
       break;
+ case 'mannwhitney':
+  testTitle.innerHTML = '📊 Mann-Whitney U Test (Wilcoxon Rank-Sum)';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Dependent Variable (numeric)</label><select id="adv_mw_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Grouping Variable (2 groups)</label><select id="adv_mw_group" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+  `;
+  break;
+  
+case 'wilcoxon':
+  testTitle.innerHTML = '🔗 Wilcoxon Signed-Rank Test';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Variable 1 (Before/Reference)</label><select id="adv_wilcox_pair1" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Variable 2 (After/Comparison)</label><select id="adv_wilcox_pair2" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+  `;
+  break;
+  
+case 'kruskal':
+  testTitle.innerHTML = '📈 Kruskal-Wallis H Test';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Dependent Variable (numeric)</label><select id="adv_kw_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Grouping Variable (2+ groups)</label><select id="adv_kw_group" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Post-Hoc Test</label><select id="adv_kw_posthoc">
+      <option value="none">None</option>
+      <option value="dunn">Dunn's Test (Bonferroni)</option>
+    </select></div>
+  `;
+  break;
+  
     default:
       html = `<p style="color:var(--text3);">Configuration for this test will appear here.</p>`;
   }
@@ -2670,19 +2724,26 @@ function runSelectedAdvTest() {
     return;
   }
   
-  // Dispatch to existing functions (make sure your backend functions exist)
-  const testMap = {
-    'ind_t': () => runIndTTest(),
-    'paired_t': () => runPairedTTest(),
-    'one_t': () => runOneTTest(),
-    'oneway_anova': () => runOneWayANOVA(),
-    'twoway_anova': () => runTwoWayANOVA(),
-    'linear_reg': () => runLinearReg(),
-    'logistic_reg': () => runLogisticReg(),
-    'poisson_reg': () => runPoissonReg(),
-    'chisq': () => runChiSquare(),
-    'fisher': () => runFisherExact()
-  };
+  // Dispatch to existing functions 
+const testMap = {
+  'ind_t': () => runIndTTest(),
+  'paired_t': () => runPairedTTest(),
+  'one_t': () => runOneTTest(),
+  'oneway_anova': () => runOneWayANOVA(),
+  'twoway_anova': () => runTwoWayANOVA(),
+  'linear_reg': () => runLinearReg(),
+  'logistic_reg': () => runLogisticReg(),
+  'poisson_reg': () => runPoissonReg(),
+  'chisq': () => runChiSquare(),
+  'fisher': () => runFisherExact(),
+  'mannwhitney': () => runMannWhitney(),
+  'wilcoxon': () => runWilcoxon(),
+  'kruskal': () => runKruskalWallis(),
+  'ancova': () => runANCOVA(),
+  'manova': () => runMANOVA(),
+  'multinomial': () => runMultinomialReg(),
+  'ordinal': () => runOrdinalReg()
+};
   
   if (testMap[currentSelectedAdvTest]) {
     testMap[currentSelectedAdvTest]();
@@ -11205,6 +11266,628 @@ function showToast(msg, title, type) {
     }
   }, 100);
 })();
+
+// ═══════════════════════════════════════════════════════════════
+// MANN-WHITNEY U TEST
+// ═══════════════════════════════════════════════════════════════
+
+function runMannWhitney() {
+    const dep = document.getElementById('adv_mw_dep').value;
+    const group = document.getElementById('adv_mw_group').value;
+    
+    if (!dep || !group) {
+        showToast('Error', 'Please select both dependent and grouping variables', 'warn');
+        return;
+    }
+    
+    // Group the data
+    const groups = {};
+    advData.forEach(row => {
+        const g = row[group];
+        const v = parseFloat(row[dep]);
+        if (!isNaN(v) && g && g !== '') {
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(v);
+        }
+    });
+    
+    const groupNames = Object.keys(groups);
+    if (groupNames.length !== 2) {
+        showToast('Error', 'Mann-Whitney U test requires exactly 2 groups', 'warn');
+        return;
+    }
+    
+    // Sort group names alphabetically for consistency
+    groupNames.sort();
+    const group1 = groupNames[0];
+    const group2 = groupNames[1];
+    
+    const values1 = groups[group1];
+    const values2 = groups[group2];
+    const n1 = values1.length;
+    const n2 = values2.length;
+    const N = n1 + n2;
+    
+    // Combine all values for ranking
+    const allValues = [];
+    values1.forEach(v => allValues.push({ value: v, group: group1 }));
+    values2.forEach(v => allValues.push({ value: v, group: group2 }));
+    
+    // Sort by value
+    allValues.sort((a, b) => a.value - b.value);
+    
+    // Assign ranks (average for ties)
+    let ranks = new Array(N);
+    let i = 0;
+    while (i < N) {
+        let j = i;
+        while (j < N && allValues[j].value === allValues[i].value) j++;
+        const avgRank = (i + 1 + j) / 2;
+        for (let k = i; k < j; k++) ranks[k] = avgRank;
+        i = j;
+    }
+    
+    // Calculate sum of ranks for each group
+    let sumRank1 = 0;
+    let sumRank2 = 0;
+    for (let idx = 0; idx < N; idx++) {
+        if (allValues[idx].group === group1) sumRank1 += ranks[idx];
+        else sumRank2 += ranks[idx];
+    }
+    
+    // Calculate mean ranks
+    const meanRank1 = sumRank1 / n1;
+    const meanRank2 = sumRank2 / n2;
+    
+    // Expected score under null
+    const expectedSum1 = n1 * (N + 1) / 2;
+    const expectedSum2 = n2 * (N + 1) / 2;
+    
+    // Calculate tie correction factor
+    let tieSum = 0;
+    let tieCount = 1;
+    for (let idx = 1; idx < N; idx++) {
+        if (allValues[idx].value === allValues[idx - 1].value) {
+            tieCount++;
+        } else {
+            if (tieCount > 1) {
+                tieSum += (tieCount * tieCount * tieCount - tieCount);
+            }
+            tieCount = 1;
+        }
+    }
+    if (tieCount > 1) {
+        tieSum += (tieCount * tieCount * tieCount - tieCount);
+    }
+    
+    // Calculate standard error for Wilcoxon
+    const wilcoxonVar = (n1 * n2 * (N + 1)) / 12 - (n1 * n2 * tieSum) / (12 * N * (N - 1));
+    const wilcoxonSE = Math.sqrt(wilcoxonVar);
+    
+    // Calculate Z statistics for both groups (opposite signs)
+    const Z1 = (sumRank1 - expectedSum1) / wilcoxonSE;
+    const Z2 = (sumRank2 - expectedSum2) / wilcoxonSE;
+    
+    // Two-tailed p-value
+    const pValue = 2 * (1 - normCDF(Math.abs(Z1)));
+    
+    // Calculate Kruskal-Wallis H (equals Z^2 for 2 groups)
+    const chiSquare = Z1 * Z1;
+    const pChiSquare = chipvalue(chiSquare, 1);
+    
+    // Build HTML output - EXACT SPSS/SAS FORMAT without Alternative Hypothesis
+    let html = `<h3>📊 Wilcoxon / Kruskal-Wallis Tests (Rank Sums)</h3>
+    
+    <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)}</p>
+        <p><strong>Grouping Variable:</strong> ${escapeHtml(group)}</p>
+    </div>
+    
+    <p><strong>Wilcoxon / Kruskal-Wallis Tests (Rank Sums)</strong></p>
+    <table class="desc-table">
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Count</th>
+                <th>Score Sum</th>
+                <th>Expected Score</th>
+                <th>Score Mean</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: bold;">${escapeHtml(group1)}</span></td>
+                <td style="text-align: center;">${n1}</span></td>
+                <td style="text-align: center;">${sumRank1.toFixed(0)}</span></td>
+                <td style="text-align: center;">${expectedSum1.toFixed(0)}</span></td>
+                <td style="text-align: center;">${meanRank1.toFixed(4)}</span></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">${escapeHtml(group2)}</span></td>
+                <td style="text-align: center;">${n2}</span></td>
+                <td style="text-align: center;">${sumRank2.toFixed(0)}</span></td>
+                <td style="text-align: center;">${expectedSum2.toFixed(0)}</span></td>
+                <td style="text-align: center;">${meanRank2.toFixed(4)}</span></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p><strong>Wilcoxon Two-Sample Test, Normal Approximation</strong></p>
+    <table class="desc-table">
+        <thead><tr><th>S (Sum of Scores for ${escapeHtml(group1)})</th><th>Z</th><th>Prob&gt;|Z|</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center;">${sumRank1.toFixed(0)}</span></td>
+                <td style="text-align: center;">${Z1.toFixed(5)}</span></td>
+                <td style="text-align: center;">${pValue.toFixed(4)}</span></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p><strong>Wilcoxon Two-Sample Test, Normal Approximation</strong></p>
+    <table class="desc-table">
+        <thead><tr><th>S (Sum of Scores for ${escapeHtml(group2)})</th><th>Z</th><th>Prob&gt;|Z|</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center;">${sumRank2.toFixed(0)}</span></td>
+                <td style="text-align: center;">${Z2.toFixed(5)}</span></td>
+                <td style="text-align: center;">${pValue.toFixed(4)}</span></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p><strong>Kruskal-Wallis Test, Chi-Square Approximation</strong></p>
+    <table class="desc-table">
+        <thead><tr><th>Chi-Square</th><th>DF</th><th>Prob&gt;ChiSq</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center;">${chiSquare.toFixed(4)}</span></td>
+                <td style="text-align: center;">1</span></td>
+                <td style="text-align: center;">${pChiSquare.toFixed(4)}</span></td>
+            </tr>
+        </tbody>
+    </table>`;
+    
+    html += `<p class="step-val">${pValue < 0.05 ? '✓ Statistically significant difference between groups (p < 0.05)' : '✗ No statistically significant difference between groups (p ≥ 0.05)'}</p>`;
+    
+    displayResults(html);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WILCOXON SIGNED-RANK TEST - CLEAR INTERPRETATION
+// ═══════════════════════════════════════════════════════════════
+
+function runWilcoxon() {
+    const var1 = document.getElementById('adv_wilcox_pair1').value;
+    const var2 = document.getElementById('adv_wilcox_pair2').value;
+    
+    if (!var1 || !var2) {
+        showToast('Error', 'Please select both paired variables', 'warn');
+        return;
+    }
+    
+    const pairs = [];
+    advData.forEach(row => {
+        const v1 = parseFloat(row[var1]);
+        const v2 = parseFloat(row[var2]);
+        if (!isNaN(v1) && !isNaN(v2)) pairs.push({ v1, v2, diff: v2 - v1 });
+    });
+    
+    const n = pairs.length;
+    if (n === 0) {
+        showToast('Error', 'No valid paired data', 'warn');
+        return;
+    }
+    
+    // Separate negative, positive, and zero differences
+    const negativeDiffs = [];
+    const positiveDiffs = [];
+    const zeroDiffs = [];
+    
+    pairs.forEach(p => {
+        if (p.diff < 0) negativeDiffs.push(Math.abs(p.diff));
+        else if (p.diff > 0) positiveDiffs.push(p.diff);
+        else zeroDiffs.push(p.diff);
+    });
+    
+    const nNeg = negativeDiffs.length;
+    const nPos = positiveDiffs.length;
+    const nTies = zeroDiffs.length;
+    
+    // Combine absolute differences for ranking
+    const allAbsDiffs = [];
+    negativeDiffs.forEach(d => allAbsDiffs.push({ value: d, sign: 'negative' }));
+    positiveDiffs.forEach(d => allAbsDiffs.push({ value: d, sign: 'positive' }));
+    
+    // Sort by absolute value
+    allAbsDiffs.sort((a, b) => a.value - b.value);
+    
+    // Assign ranks (handle ties)
+    const m = allAbsDiffs.length;
+    let ranks = new Array(m);
+    let i = 0;
+    while (i < m) {
+        let j = i;
+        while (j < m && allAbsDiffs[j].value === allAbsDiffs[i].value) j++;
+        const avgRank = (i + 1 + j) / 2;
+        for (let k = i; k < j; k++) ranks[k] = avgRank;
+        i = j;
+    }
+    
+    // Calculate sum of ranks for positive and negative
+    let sumPosRanks = 0;
+    let sumNegRanks = 0;
+    
+    for (let idx = 0; idx < m; idx++) {
+        if (allAbsDiffs[idx].sign === 'positive') {
+            sumPosRanks += ranks[idx];
+        } else {
+            sumNegRanks += ranks[idx];
+        }
+    }
+    
+    // Calculate mean ranks
+    const meanPosRank = nPos > 0 ? sumPosRanks / nPos : 0;
+    const meanNegRank = nNeg > 0 ? sumNegRanks / nNeg : 0;
+    
+    // Test statistic (smaller of the two sums)
+    const V = Math.min(sumPosRanks, sumNegRanks);
+    
+    // Calculate Z statistic with continuity correction
+    const mu = m * (m + 1) / 4;
+    
+    // Tie correction
+    let tieSum = 0;
+    let tieCount = 1;
+    for (let idx = 1; idx < m; idx++) {
+        if (allAbsDiffs[idx].value === allAbsDiffs[idx - 1].value) {
+            tieCount++;
+        } else {
+            if (tieCount > 1) {
+                tieSum += (tieCount * tieCount * tieCount - tieCount);
+            }
+            tieCount = 1;
+        }
+    }
+    if (tieCount > 1) {
+        tieSum += (tieCount * tieCount * tieCount - tieCount);
+    }
+    
+    const sigma = Math.sqrt((m * (m + 1) * (2 * m + 1) - tieSum / 2) / 24);
+    
+    // Use continuity correction
+    let z;
+    if (V > mu) {
+        z = (V - mu - 0.5) / sigma;
+    } else {
+        z = (V - mu + 0.5) / sigma;
+    }
+    
+    // Two-tailed p-value
+    const pValue = 2 * (1 - normCDF(Math.abs(z)));
+    
+    // Effect size r = Z / sqrt(n)
+    const r = Math.abs(z) / Math.sqrt(n);
+    
+    // Calculate median difference
+    const diffs = pairs.map(p => p.diff);
+    const medianDiff = median(diffs);
+    
+    // INTERPRETATION: Determine which variable is higher based on rank sums
+    let interpretation = "";
+    let recommendation = "";
+    
+    if (sumPosRanks > sumNegRanks) {
+        interpretation = `The sum of ranks for POSITIVE differences (${sumPosRanks.toFixed(2)}) is LARGER than the sum of ranks for NEGATIVE differences (${sumNegRanks.toFixed(2)}). This indicates that ${escapeHtml(var2)} tends to be HIGHER than ${escapeHtml(var1)}. In other words, there is a significant increase from ${escapeHtml(var1)} to ${escapeHtml(var2)}.`;
+    } else if (sumNegRanks > sumPosRanks) {
+        interpretation = `The sum of ranks for NEGATIVE differences (${sumNegRanks.toFixed(2)}) is LARGER than the sum of ranks for POSITIVE differences (${sumPosRanks.toFixed(2)}). This indicates that ${escapeHtml(var2)} tends to be LOWER than ${escapeHtml(var1)}. In other words, there is a significant decrease from ${escapeHtml(var1)} to ${escapeHtml(var2)}.`;
+    } else {
+        interpretation = `The sum of ranks for POSITIVE differences (${sumPosRanks.toFixed(2)}) and NEGATIVE differences (${sumNegRanks.toFixed(2)}) are equal. This indicates no consistent directional difference between ${escapeHtml(var1)} and ${escapeHtml(var2)}.`;
+    }
+    
+    // Significance interpretation
+    let significanceText = "";
+    if (pValue < 0.001) {
+        significanceText = `The observed difference is HIGHLY SIGNIFICANT (p < 0.001), meaning there is strong evidence that the two measurements differ.`;
+    } else if (pValue < 0.01) {
+        significanceText = `The observed difference is VERY SIGNIFICANT (p < 0.01), meaning there is good evidence that the two measurements differ.`;
+    } else if (pValue < 0.05) {
+        significanceText = `The observed difference is SIGNIFICANT (p < 0.05), meaning there is evidence that the two measurements differ.`;
+    } else {
+        significanceText = `The observed difference is NOT STATISTICALLY SIGNIFICANT (p = ${pValue.toFixed(4)}), meaning there is insufficient evidence to conclude that the two measurements differ.`;
+    }
+    
+    // Effect size interpretation
+    let effectText = "";
+    if (Math.abs(r) < 0.1) {
+        effectText = `negligible (r = ${r.toFixed(4)})`;
+    } else if (Math.abs(r) < 0.3) {
+        effectText = `small (r = ${r.toFixed(4)})`;
+    } else if (Math.abs(r) < 0.5) {
+        effectText = `medium (r = ${r.toFixed(4)})`;
+    } else {
+        effectText = `large (r = ${r.toFixed(4)})`;
+    }
+    
+    // Build HTML output
+    let html = `<h3>🔗 Wilcoxon Signed-Rank Test</h3>
+    
+    <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>First Variable (Before/Reference):</strong> ${escapeHtml(var1)}</p>
+        <p><strong>Second Variable (After/Comparison):</strong> ${escapeHtml(var2)}</p>
+        <p><strong>Total Pairs Analyzed:</strong> ${n}</p>
+        <p><strong>Median Difference (${escapeHtml(var2)} - ${escapeHtml(var1)}):</strong> ${medianDiff.toFixed(4)}</p>
+    </div>
+    
+    <p><strong>Ranks Summary</strong></p>
+    <table class="desc-table">
+        <thead>
+            <tr>
+                <th>Type of Difference</th>
+                <th>Meaning</th>
+                <th>Count (N)</th>
+                <th>Mean Rank</th>
+                <th>Sum of Ranks</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: bold;">⬇ Negative Ranks</td>
+                <td>${escapeHtml(var2)} &lt; ${escapeHtml(var1)}<br>(Decrease after intervention)</td>
+                <td style="text-align: center;">${nNeg}</td>
+                <td style="text-align: center;">${meanNegRank.toFixed(2)}</td>
+                <td style="text-align: center;">${sumNegRanks.toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">⬆ Positive Ranks</td>
+                <td>${escapeHtml(var2)} &gt; ${escapeHtml(var1)}<br>(Increase after intervention)</td>
+                <td style="text-align: center;">${nPos}</td>
+                <td style="text-align: center;">${meanPosRank.toFixed(2)}</td>
+                <td style="text-align: center;">${sumPosRanks.toFixed(2)}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">➖ Ties</td>
+                <td>${escapeHtml(var2)} = ${escapeHtml(var1)}<br>(No change)</td>
+                <td style="text-align: center;">${nTies}</td>
+                <td style="text-align: center;">—</td>
+                <td style="text-align: center;">—</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">📊 Total</td>
+                <td>—</td>
+                <td style="text-align: center;"><strong>${n}</strong></td>
+                <td style="text-align: center;">—</td>
+                <td style="text-align: center;">—</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p><strong>Test Statistics</strong></p>
+    <table class="desc-table">
+        <thead><tr><th>Z Statistic</th><th>P-value (2-tailed)</th><th>Effect Size (r)</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="text-align: center;">${z.toFixed(4)}</td>
+                <td style="text-align: center;">${pValue.toFixed(6)}${pValue < 0.05 ? ' *' : ''}</td>
+                <td style="text-align: center;">${r.toFixed(4)}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p class="step-val">${pValue < 0.05 ? '✓ CONCLUSION: Reject the null hypothesis. There is sufficient evidence that the paired measurements differ significantly.' : '✗ CONCLUSION: Fail to reject the null hypothesis. There is insufficient evidence that the paired measurements differ significantly.'}</p>`;
+    
+    displayResults(html);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KRUSKAL-WALLIS H TEST with Dunn's Test
+// ═══════════════════════════════════════════════════════════════
+
+function runKruskalWallis() {
+    const dep = document.getElementById('adv_kw_dep').value;
+    const group = document.getElementById('adv_kw_group').value;
+    const posthoc = document.getElementById('adv_kw_posthoc')?.value || 'none';
+    
+    if (!dep || !group) {
+        showToast('Error', 'Please select both dependent and grouping variables', 'warn');
+        return;
+    }
+    
+    const groups = {};
+    advData.forEach(row => {
+        const g = row[group];
+        const v = parseFloat(row[dep]);
+        if (!isNaN(v) && g && g !== '') {
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(v);
+        }
+    });
+    
+    const groupNames = Object.keys(groups);
+    const k = groupNames.length;
+    
+    if (k < 2) {
+        showToast('Error', 'Need at least 2 groups for Kruskal-Wallis test', 'warn');
+        return;
+    }
+    
+    // Combine all values with group labels
+    const allValues = [];
+    groupNames.forEach(g => {
+        groups[g].forEach(v => allValues.push({ value: v, group: g }));
+    });
+    const N = allValues.length;
+    
+    // Rank all values
+    allValues.sort((a, b) => a.value - b.value);
+    let ranks = new Array(N);
+    let i = 0;
+    while (i < N) {
+        let j = i;
+        while (j < N && allValues[j].value === allValues[i].value) j++;
+        const rank = (i + j + 1) / 2;
+        for (let k = i; k < j; k++) ranks[k] = rank;
+        i = j;
+    }
+    
+    // Add ranks back to groups
+    const groupRanks = {};
+    groupNames.forEach(g => groupRanks[g] = []);
+    for (let idx = 0; idx < N; idx++) {
+        groupRanks[allValues[idx].group].push(ranks[idx]);
+    }
+    
+    // Calculate sum of ranks per group
+    const sumRanks = {};
+    const nPerGroup = {};
+    groupNames.forEach(g => {
+        sumRanks[g] = groupRanks[g].reduce((a, b) => a + b, 0);
+        nPerGroup[g] = groups[g].length;
+    });
+    
+    // Calculate H statistic
+    let H = (12 / (N * (N + 1))) * Object.values(sumRanks).reduce((sum, R) => sum + (R * R / nPerGroup[Object.keys(sumRanks).find(key => sumRanks[key] === R)]), 0) - 3 * (N + 1);
+    
+    // Tie correction
+    let tieCorrection = 0;
+    let t = 1;
+    for (let idx = 1; idx < N; idx++) {
+        if (allValues[idx].value === allValues[idx-1].value) t++;
+        else {
+            if (t > 1) tieCorrection += t * t * t - t;
+            t = 1;
+        }
+    }
+    if (t > 1) tieCorrection += t * t * t - t;
+    
+    const tieFactor = 1 - tieCorrection / (N * N * N - N);
+    H = H / tieFactor;
+    
+    const df = k - 1;
+    const p = chipvalue(H, df);
+    
+    // Calculate epsilon-squared effect size
+    const epsilonSq = H / (N - 1);
+    
+    // Calculate mean ranks for each group
+    const meanRanks = {};
+    groupNames.forEach(g => {
+        meanRanks[g] = sumRanks[g] / nPerGroup[g];
+    });
+    
+    // Build HTML
+    let html = `<h3>📈 Kruskal-Wallis H Test</h3>
+    
+    <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)}</p>
+        <p><strong>Grouping Variable:</strong> ${escapeHtml(group)}</p>
+        <p><strong>Number of Groups (k):</strong> ${k}</p>
+        <p><strong>Total Sample Size (N):</strong> ${N}</p>
+    </div>
+    
+    <p><strong>Group Statistics</strong></p>
+    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
+        <thead>
+            <tr style="background: var(--bg3);">
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Group</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">N</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Median</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean Rank</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sum of Ranks</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    
+    for (const g of groupNames) {
+        const medianVal = median(groups[g]);
+        const meanRank = sumRanks[g] / nPerGroup[g];
+        html += `<tr style="border: 1px solid var(--border);">
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(g)}</strong></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${nPerGroup[g]}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${medianVal.toFixed(4)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${meanRank.toFixed(2)}</span></td>
+            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${sumRanks[g].toFixed(2)}</span></td>
+        </tr>`;
+    }
+    
+    html += `</tbody>
+    </table>
+    
+    <p><strong>Test Statistics</strong></p>
+    <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
+        <thead>
+            <tr style="background: var(--bg3);">
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Kruskal-Wallis H</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value</th>
+                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Epsilon-squared (η²)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border: 1px solid var(--border);">
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${H.toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p.toFixed(6)}${p < 0.05 ? ' *' : ''}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${epsilonSq.toFixed(4)}</span> — ${epsilonSq < 0.01 ? 'Negligible' : epsilonSq < 0.06 ? 'Small' : epsilonSq < 0.14 ? 'Medium' : 'Large'}</span></td>
+            </tr>
+        </tbody>
+    </table>`;
+    
+    // Dunn's Test only (Steel-Dwass removed)
+    if (posthoc === 'dunn' && p < 0.05 && k > 2) {
+        html += `<p><strong>Dunn's Test for Multiple Comparisons</strong></p>
+        <p><em>Bonferroni-adjusted p-values shown</em></p>
+        <table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid var(--border);">
+            <thead>
+                <tr style="background: var(--bg3);">
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">- Level</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Score Mean Difference</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std Err Dif</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Z</th>
+                    <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-Value</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        
+        const comparisons = [];
+        for (let i = 0; i < k; i++) {
+            for (let j = i + 1; j < k; j++) {
+                const g1 = groupNames[i];
+                const g2 = groupNames[j];
+                const n1 = nPerGroup[g1];
+                const n2 = nPerGroup[g2];
+                const meanRank1 = sumRanks[g1] / n1;
+                const meanRank2 = sumRanks[g2] / n2;
+                const scoreMeanDiff = meanRank1 - meanRank2;
+                const se = Math.sqrt((N * (N + 1) / 12) * (1/n1 + 1/n2));
+                const zDunn = Math.abs(scoreMeanDiff) / se;
+                const pUnadj = 2 * (1 - normCDF(zDunn));
+                const pAdj = Math.min(1, pUnadj * (k * (k - 1) / 2));
+                comparisons.push({ g1, g2, scoreMeanDiff, se, zDunn, pAdj });
+            }
+        }
+        comparisons.sort((a, b) => a.pAdj - b.pAdj);
+        
+        for (const comp of comparisons) {
+            const pDisplay = comp.pAdj < 0.0001 ? '<.0001' : comp.pAdj.toFixed(6);
+            html += `<tr style="border: 1px solid var(--border);">
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(comp.g1)}</strong></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(comp.g2)}</strong></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.scoreMeanDiff.toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.se.toFixed(6)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.zDunn.toFixed(5)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pDisplay}</span>${comp.pAdj < 0.05 ? ' *' : ''}</span></td>
+            </tr>`;
+        }
+        html += `</tbody>
+        </table>`;
+    }
+    
+    html += `<p class="step-val">${p < 0.05 ? '✓ Significant difference exists between groups (p < 0.05)' : '✗ No significant difference between groups (p ≥ 0.05)'}</p>`;
+    
+    displayResults(html);
+}
 
 
 </script>
