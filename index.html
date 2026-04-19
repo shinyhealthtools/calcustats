@@ -8140,107 +8140,809 @@ function logGamma(z) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TWO-WAY ANOVA — Type III SS (matches SPSS/SAS for unbalanced designs)
+// TWO-WAY ANOVA — COMPLETE WITH CORRECT PARAMETER ESTIMATES
+// Using proper t-distribution for p-values and confidence intervals
 // ═══════════════════════════════════════════════════════════════
+
+// Global store for Two-Way ANOVA reference levels
+let twowayAnovaRefLevels = {};
+
+// Function to detect categorical variables
+function isCategoricalTwoway(varName) {
+    if (!advData || advData.length === 0) return false;
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    if (values.length === 0) return false;
+    
+    const allNumeric = values.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+    if (!allNumeric) return true;
+    
+    const uniqueValues = [...new Set(values)];
+    return uniqueValues.length <= 10;
+}
+
+// Get unique values for a variable
+function getUniqueValuesTwoway(varName) {
+    if (!advData || advData.length === 0) return [];
+    const values = advData.map(row => row[varName]).filter(v => v !== null && v !== undefined && v !== '');
+    return [...new Set(values)].sort();
+}
+
+// Update reference category UI
+function updateTwowayAnovaRefUI() {
+    const f1Select = document.getElementById('adv_2way_f1');
+    const f2Select = document.getElementById('adv_2way_f2');
+    
+    if (!f1Select || !f2Select) return;
+    
+    const factor1 = f1Select.value;
+    const factor2 = f2Select.value;
+    
+    let refContainer = document.getElementById('twoway-ref-container');
+    
+    if (!refContainer) {
+        const configContent = document.getElementById('adv-test-config-content');
+        if (configContent) {
+            refContainer = document.createElement('div');
+            refContainer.id = 'twoway-ref-container';
+            configContent.appendChild(refContainer);
+        }
+    }
+    
+    if (!refContainer) return;
+    
+    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <h4 style="margin: 0 0 8px 0;">🏷️ Reference Category Selection</h4>
+        <p style="font-size: 12px; margin-bottom: 10px;">Select reference categories for each factor (other levels will be compared against these):</p>`;
+    
+    if (factor1 && advData && advData.length > 0 && isCategoricalTwoway(factor1)) {
+        const levels = getUniqueValuesTwoway(factor1);
+        const currentRef1 = twowayAnovaRefLevels[factor1] || levels[0];
+        
+        html += `
+            <div style="margin: 10px 0; padding: 10px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--accent);">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">Factor 1: ${escapeHtml(factor1)}</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${levels.map(level => `
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg3); border-radius: 5px; cursor: pointer; border: 1px solid ${currentRef1 === level ? 'var(--accent)' : 'var(--border)'};">
+                            <input type="radio" name="twoway_ref1" value="${escapeHtml(level)}" 
+                                   ${currentRef1 === level ? 'checked' : ''} 
+                                   onchange="setTwowayAnovaRef('${escapeHtml(factor1)}', '${escapeHtml(level)}')">
+                            <strong>${escapeHtml(String(level))}</strong>
+                            ${currentRef1 === level ? '<span style="color: var(--accent);">← Reference</span>' : ''}
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (factor2 && advData && advData.length > 0 && isCategoricalTwoway(factor2)) {
+        const levels = getUniqueValuesTwoway(factor2);
+        const currentRef2 = twowayAnovaRefLevels[factor2] || levels[0];
+        
+        html += `
+            <div style="margin: 10px 0; padding: 10px; background: var(--bg2); border-radius: 6px; border-left: 3px solid var(--teal);">
+                <label style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">Factor 2: ${escapeHtml(factor2)}</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${levels.map(level => `
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg3); border-radius: 5px; cursor: pointer; border: 1px solid ${currentRef2 === level ? 'var(--teal)' : 'var(--border)'};">
+                            <input type="radio" name="twoway_ref2" value="${escapeHtml(level)}" 
+                                   ${currentRef2 === level ? 'checked' : ''} 
+                                   onchange="setTwowayAnovaRef('${escapeHtml(factor2)}', '${escapeHtml(level)}')">
+                            <strong>${escapeHtml(String(level))}</strong>
+                            ${currentRef2 === level ? '<span style="color: var(--teal);">← Reference</span>' : ''}
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `<button class="btn-secondary" style="margin-top: 8px; padding: 8px 16px;" onclick="runTwoWayANOVA()">⟳ Rerun with Selected References</button>`;
+    html += `</div>`;
+    refContainer.innerHTML = html;
+    refContainer.style.display = 'block';
+}
+
+function setTwowayAnovaRef(varName, refValue) {
+    twowayAnovaRefLevels[varName] = refValue;
+    updateTwowayAnovaRefUI();
+    if (typeof toast === 'function') {
+        toast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+    }
+}
+
+// ==============================================================
+// CORRECT T-DISTRIBUTION FUNCTIONS
+// ==============================================================
+
+// Student's t-distribution CDF (cumulative distribution function)
+function tcdf(t, df) {
+    if (t === 0) return 0.5;
+    if (df <= 0) return t > 0 ? 1 : 0;
+    
+    // For large df, use normal approximation
+    if (df > 1000) {
+        const z = t;
+        const p = 0.5 * (1 + erf(z / Math.sqrt(2)));
+        return p;
+    }
+    
+    // Use regularized incomplete beta function
+    const x = (t + Math.sqrt(t * t + df)) / (2 * Math.sqrt(t * t + df));
+    const p = betainc(x, df / 2, df / 2);
+    return p;
+}
+
+// Two-tailed p-value from t
+function tpvalue(t, df) {
+    if (t === 0) return 1;
+    const p = tcdf(Math.abs(t), df);
+    return 2 * (1 - p);
+}
+
+// Inverse t-distribution for critical values (using approximation)
+function tinv(p, df) {
+    if (p <= 0) return Infinity;
+    if (p >= 1) return -Infinity;
+    if (p === 0.5) return 0;
+    
+    // For large df, use normal approximation
+    if (df > 1000) {
+        const z = normInv(p);
+        return z;
+    }
+    
+    // Use approximation algorithm
+    let t = normInv(p);
+    for (let i = 0; i < 5; i++) {
+        const pt = tcdf(t, df);
+        const err = pt - p;
+        if (Math.abs(err) < 1e-10) break;
+        
+        // Derivative approximation
+        const pdf = Math.exp(lgamma((df + 1) / 2) - lgamma(df / 2) - 0.5 * Math.log(Math.PI * df) - ((df + 1) / 2) * Math.log(1 + t * t / df));
+        t -= err / pdf;
+    }
+    return t;
+}
+
+// Normal inverse CDF
+function normInv(p) {
+    const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924];
+    const b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857];
+    const c = [-7.78489400243029e-3, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878];
+    const d = [7.78469570904146e-3, 0.32246712907004, 2.445134137143, 3.75440866190742];
+    
+    const q = p - 0.5;
+    let r;
+    if (Math.abs(q) <= 0.425) {
+        r = 0.180625 - q * q;
+        const num = ((((a[5] * r + a[4]) * r + a[3]) * r + a[2]) * r + a[1]) * r + a[0];
+        const den = ((((b[4] * r + b[3]) * r + b[2]) * r + b[1]) * r + b[0]) * r + 1;
+        return q * num / den;
+    } else {
+        r = p <= 0.5 ? p : 1 - p;
+        r = Math.sqrt(-Math.log(r));
+        const num = ((((c[5] * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]) * r + c[0];
+        const den = (((d[3] * r + d[2]) * r + d[1]) * r + d[0]) * r + 1;
+        const t = num / den;
+        return p < 0.5 ? -t : t;
+    }
+}
+
+// Error function
+function erf(x) {
+    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+    const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+    const sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    const t = 1 / (1 + p * x);
+    const y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    return sign * y;
+}
+
+// Incomplete beta function
+function betainc(x, a, b) {
+    if (x === 0) return 0;
+    if (x === 1) return 1;
+    const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    if (x < (a + 1) / (a + b + 2)) {
+        return bt * betacf(x, a, b) / a;
+    } else {
+        return 1 - bt * betacf(1 - x, b, a) / b;
+    }
+}
+
+function betacf(x, a, b) {
+    const maxIter = 200, eps = 1e-12, fpmin = 1e-30;
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < fpmin) d = fpmin;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= maxIter; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < fpmin) d = fpmin;
+        c = 1 + aa / c;
+        if (Math.abs(c) < fpmin) c = fpmin;
+        d = 1 / d;
+        h *= d * c;
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d;
+        if (Math.abs(d) < fpmin) d = fpmin;
+        c = 1 + aa / c;
+        if (Math.abs(c) < fpmin) c = fpmin;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < eps) break;
+    }
+    return h;
+}
+
+function lgamma(z) {
+    const g = 7;
+    const p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+        771.32342877765313, -176.61502916214059, 12.507343278686905,
+        -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (z < 0.5) {
+        return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - lgamma(1 - z);
+    }
+    z -= 1;
+    let x = p[0];
+    for (let i = 1; i < g + 2; i++) x += p[i] / (z + i);
+    const t = z + g + 0.5;
+    return 0.5 * Math.log(2 * Math.PI) + Math.log(x) - t + (z + 0.5) * Math.log(t);
+}
+
+// ==============================================================
+// MAIN FUNCTION
+// ==============================================================
 
 function runTwoWayANOVA() {
   const dep = document.getElementById('adv_2way_dep').value;
-  const f1  = document.getElementById('adv_2way_f1').value;
-  const f2  = document.getElementById('adv_2way_f2').value;
+  const f1 = document.getElementById('adv_2way_f1').value;
+  const f2 = document.getElementById('adv_2way_f2').value;
 
-  const rows = advData.filter(r =>
-    !isNaN(parseFloat(r[dep])) && r[f1] !== undefined && r[f2] !== undefined
-  );
+  if (!dep || !f1 || !f2) {
+    toast('Error', 'Please select dependent variable and both factors', 'warn');
+    return;
+  }
 
-  const Y = rows.map(r => parseFloat(r[dep]));
-  const N = rows.length;
+  if (!advData || advData.length === 0) {
+    toast('Error', 'Please load data first', 'warn');
+    return;
+  }
 
-  const aLevels = [...new Set(rows.map(r => r[f1]))].sort();
-  const bLevels = [...new Set(rows.map(r => r[f2]))].sort();
-  const a = aLevels.length, b = bLevels.length;
+  updateTwowayAnovaRefUI();
 
-  // ── Build design matrix X for full model: intercept + A dummies + B dummies + AB dummies
-  // Uses last-category reference (effect coding omitted for simplicity; dummy gives same SS)
-  function buildX(includeA, includeB, includeAB) {
-    return rows.map(r => {
-      const row = [1]; // intercept
-      if (includeA)  aLevels.slice(0,-1).forEach(al => row.push(r[f1] === al ? 1 : 0));
-      if (includeB)  bLevels.slice(0,-1).forEach(bl => row.push(r[f2] === bl ? 1 : 0));
-      if (includeAB) {
-        aLevels.slice(0,-1).forEach(al =>
-          bLevels.slice(0,-1).forEach(bl =>
-            row.push(r[f1] === al && r[f2] === bl ? 1 : 0)
-          )
-        );
+  // ==============================================================
+  // STEP 1: Prepare data with reference categories
+  // ==============================================================
+  
+  let f1LevelsRaw = [...new Set(advData.map(r => r[f1]).filter(v => v !== null && v !== undefined && v !== ''))].sort();
+  let f2LevelsRaw = [...new Set(advData.map(r => r[f2]).filter(v => v !== null && v !== undefined && v !== ''))].sort();
+  
+  const f1Ref = twowayAnovaRefLevels[f1] || f1LevelsRaw[0];
+  const f2Ref = twowayAnovaRefLevels[f2] || f2LevelsRaw[0];
+  
+  const f1Levels = [f1Ref, ...f1LevelsRaw.filter(l => l !== f1Ref)];
+  const f2Levels = [f2Ref, ...f2LevelsRaw.filter(l => l !== f2Ref)];
+  
+  const n1 = f1Levels.length;
+  const n2 = f2Levels.length;
+  
+  const f1Codes = {};
+  const f2Codes = {};
+  f1Levels.forEach((level, idx) => { f1Codes[level] = idx; });
+  f2Levels.forEach((level, idx) => { f2Codes[level] = idx; });
+  
+  const validData = [];
+  for (const row of advData) {
+    const depVal = parseFloat(row[dep]);
+    const f1Val = row[f1];
+    const f2Val = row[f2];
+    
+    if (!isNaN(depVal) && f1Val !== undefined && f2Val !== undefined && 
+        f1Val !== '' && f2Val !== '' && f1Val !== null && f2Val !== null &&
+        f1Codes[f1Val] !== undefined && f2Codes[f2Val] !== undefined) {
+      validData.push({
+        y: depVal,
+        f1: f1Codes[f1Val],
+        f2: f2Codes[f2Val]
+      });
+    }
+  }
+  
+  const N = validData.length;
+  if (N === 0) {
+    toast('Error', 'No valid data for analysis', 'warn');
+    return;
+  }
+  
+  // ==============================================================
+  // STEP 2: Calculate cell statistics
+  // ==============================================================
+  
+  const cellSums = Array(n1).fill().map(() => Array(n2).fill(0));
+  const cellCounts = Array(n1).fill().map(() => Array(n2).fill(0));
+  const cellValues = Array(n1).fill().map(() => Array(n2).fill().map(() => []));
+  
+  for (const d of validData) {
+    cellSums[d.f1][d.f2] += d.y;
+    cellCounts[d.f1][d.f2]++;
+    cellValues[d.f1][d.f2].push(d.y);
+  }
+  
+  const cellMeans = Array(n1).fill().map(() => Array(n2).fill(0));
+  for (let i = 0; i < n1; i++) {
+    for (let j = 0; j < n2; j++) {
+      if (cellCounts[i][j] > 0) {
+        cellMeans[i][j] = cellSums[i][j] / cellCounts[i][j];
       }
-      return row;
+    }
+  }
+  
+  let grandSum = 0;
+  let grandN = 0;
+  for (let i = 0; i < n1; i++) {
+    for (let j = 0; j < n2; j++) {
+      grandSum += cellSums[i][j];
+      grandN += cellCounts[i][j];
+    }
+  }
+  const grandMean = grandSum / grandN;
+  
+  // ==============================================================
+  // STEP 3: Calculate Error SS
+  // ==============================================================
+  
+  let SS_error = 0;
+  for (let i = 0; i < n1; i++) {
+    for (let j = 0; j < n2; j++) {
+      const cellMean = cellMeans[i][j];
+      for (const val of cellValues[i][j]) {
+        SS_error += (val - cellMean) ** 2;
+      }
+    }
+  }
+  
+  let SS_total = 0;
+  for (const d of validData) {
+    SS_total += (d.y - grandMean) ** 2;
+  }
+  
+  // ==============================================================
+  // STEP 4: Type III SS using effect coding
+  // ==============================================================
+  
+  function effectCode(value, nLevels) {
+    const codes = Array(nLevels - 1).fill(0);
+    if (value === nLevels - 1) {
+      for (let i = 0; i < nLevels - 1; i++) codes[i] = -1;
+    } else {
+      codes[value] = 1;
+    }
+    return codes;
+  }
+  
+  const X_full_effect = [];
+  for (const d of validData) {
+    const row = [1];
+    row.push(...effectCode(d.f1, n1));
+    row.push(...effectCode(d.f2, n2));
+    const f1Codes_effect = effectCode(d.f1, n1);
+    const f2Codes_effect = effectCode(d.f2, n2);
+    for (let i = 0; i < f1Codes_effect.length; i++) {
+      for (let j = 0; j < f2Codes_effect.length; j++) {
+        row.push(f1Codes_effect[i] * f2Codes_effect[j]);
+      }
+    }
+    X_full_effect.push(row);
+  }
+  
+  const Y = validData.map(d => d.y);
+  
+  function olsRegression(X, Y) {
+    const n = X.length;
+    const p = X[0].length;
+    
+    const XtX = Array(p).fill().map(() => Array(p).fill(0));
+    const XtY = Array(p).fill(0);
+    
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < p; j++) {
+        XtY[j] += X[i][j] * Y[i];
+        for (let k = 0; k < p; k++) {
+          XtX[j][k] += X[i][j] * X[i][k];
+        }
+      }
+    }
+    
+    const augmented = XtX.map((row, i) => [...row, XtY[i]]);
+    
+    for (let i = 0; i < p; i++) {
+      let maxRow = i;
+      for (let j = i + 1; j < p; j++) {
+        if (Math.abs(augmented[j][i]) > Math.abs(augmented[maxRow][i])) maxRow = j;
+      }
+      if (Math.abs(augmented[maxRow][i]) < 1e-12) return null;
+      [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+      const pivot = augmented[i][i];
+      for (let j = i; j <= p; j++) augmented[i][j] /= pivot;
+      for (let j = 0; j < p; j++) {
+        if (j !== i) {
+          const factor = augmented[j][i];
+          for (let k = i; k <= p; k++) augmented[j][k] -= factor * augmented[i][k];
+        }
+      }
+    }
+    
+    const betas = augmented.map(row => row[p]);
+    const predicted = X.map(row => row.reduce((s, v, i) => s + v * betas[i], 0));
+    const residuals = Y.map((y, i) => y - predicted[i]);
+    const SS_res = residuals.reduce((s, r) => s + r * r, 0);
+    
+    return { betas, SS_res, n, p };
+  }
+  
+  const full = olsRegression(X_full_effect, Y);
+  if (!full) {
+    toast('Error', 'Could not fit full model', 'warn');
+    return;
+  }
+  const RSS_full = full.SS_res;
+  
+  const p_per_factor = n1 - 1;
+  const f1_cols = Array.from({ length: p_per_factor }, (_, i) => 1 + i);
+  const X_no_f1 = X_full_effect.map(row => row.filter((_, idx) => !f1_cols.includes(idx)));
+  const no_f1 = olsRegression(X_no_f1, Y);
+  const RSS_no_f1 = no_f1 ? no_f1.SS_res : RSS_full;
+  
+  const f2_cols = Array.from({ length: n2 - 1 }, (_, i) => 1 + p_per_factor + i);
+  const X_no_f2 = X_full_effect.map(row => row.filter((_, idx) => !f2_cols.includes(idx)));
+  const no_f2 = olsRegression(X_no_f2, Y);
+  const RSS_no_f2 = no_f2 ? no_f2.SS_res : RSS_full;
+  
+  const interaction_cols = Array.from({ length: (n1 - 1) * (n2 - 1) }, (_, i) => 1 + p_per_factor + (n2 - 1) + i);
+  const X_no_interaction = X_full_effect.map(row => row.filter((_, idx) => !interaction_cols.includes(idx)));
+  const no_interaction = olsRegression(X_no_interaction, Y);
+  const RSS_no_interaction = no_interaction ? no_interaction.SS_res : RSS_full;
+  
+  const SS_f1 = Math.max(0, RSS_no_f1 - RSS_full);
+  const SS_f2 = Math.max(0, RSS_no_f2 - RSS_full);
+  const SS_interaction = Math.max(0, RSS_no_interaction - RSS_full);
+  const SS_model = SS_f1 + SS_f2 + SS_interaction;
+  
+  const df_f1 = n1 - 1;
+  const df_f2 = n2 - 1;
+  const df_interaction = (n1 - 1) * (n2 - 1);
+  const df_error = grandN - (n1 * n2);
+  const df_model = df_f1 + df_f2 + df_interaction;
+  const df_total = grandN - 1;
+  
+  const MS_f1 = SS_f1 / df_f1;
+  const MS_f2 = SS_f2 / df_f2;
+  const MS_interaction = SS_interaction / df_interaction;
+  const MS_error = SS_error / df_error;
+  
+  const F_f1 = MS_f1 / MS_error;
+  const F_f2 = MS_f2 / MS_error;
+  const F_interaction = MS_interaction / MS_error;
+  
+  // F-distribution p-value
+  function fpvalue(F, df1, df2) {
+    if (F <= 0 || isNaN(F) || !isFinite(F)) return 1;
+    try {
+      const x = df1 * F / (df1 * F + df2);
+      const p = betainc(x, df1 / 2, df2 / 2);
+      return 1 - Math.min(1, Math.max(0, p));
+    } catch(e) {
+      return Math.exp(-0.5 * F);
+    }
+  }
+  
+  const p_f1 = fpvalue(F_f1, df_f1, df_error);
+  const p_f2 = fpvalue(F_f2, df_f2, df_error);
+  const p_interaction = fpvalue(F_interaction, df_interaction, df_error);
+  
+  const eta2_f1 = SS_f1 / (SS_f1 + SS_error);
+  const eta2_f2 = SS_f2 / (SS_f2 + SS_error);
+  const eta2_interaction = SS_interaction / (SS_interaction + SS_error);
+  
+  const Rsq = SS_model / SS_total;
+  const RsqAdj = 1 - (1 - Rsq) * (grandN - 1) / df_error;
+  
+  const SS_intercept = grandN * grandMean * grandMean;
+  const MS_intercept = SS_intercept / 1;
+  const F_intercept = MS_intercept / MS_error;
+  const p_intercept = fpvalue(F_intercept, 1, df_error);
+  
+  // ==============================================================
+  // STEP 5: PARAMETER ESTIMATES using correct formulas
+  // ==============================================================
+  
+  const refCellSize = cellCounts[0][0];
+  const refCellMean = cellMeans[0][0];
+  
+  // Standard error for a single cell mean
+  function seCell(cellSize) {
+    return Math.sqrt(MS_error / cellSize);
+  }
+  
+  // Standard error for difference between two independent means
+  function seDiff(size1, size2) {
+    return Math.sqrt(MS_error * (1/size1 + 1/size2));
+  }
+  
+  // Get t-critical for 95% confidence interval
+  const tCrit = tinv(0.975, df_error);
+  
+  const paramEstimates = [];
+  
+  // 1. Intercept = mean of reference cell
+  const intercept = refCellMean;
+  const seIntercept = seCell(refCellSize);
+  const tIntercept = intercept / seIntercept;
+  const pIntercept = tpvalue(tIntercept, df_error);
+  
+  paramEstimates.push({
+    term: 'Intercept',
+    estimate: intercept,
+    stdError: seIntercept,
+    tRatio: tIntercept,
+    prob: pIntercept
+  });
+  
+  // 2. Main effects for Factor 1
+  for (let i = 1; i < n1; i++) {
+    const levelMean = cellMeans[i][0];
+    const levelSize = cellCounts[i][0];
+    const estimate = levelMean - refCellMean;
+    const se = seDiff(levelSize, refCellSize);
+    const tRatio = estimate / se;
+    const prob = tpvalue(tRatio, df_error);
+    
+    paramEstimates.push({
+      term: `${f1}[${f1Levels[i]}]`,
+      estimate: estimate,
+      stdError: se,
+      tRatio: tRatio,
+      prob: prob
     });
   }
-
-  // ── OLS: returns SS_residual = Y'Y - Y'X(X'X)^{-1}X'Y
-  function ssResidual(X) {
-    const Xt  = transpose(X);
-    const XtX = matMul(Xt, X);
-    const XtY = matVec(Xt, Y);
-    const inv = matInv(XtX);
-    if (!inv) return NaN;
-    const beta = matVec(inv, XtY);
-    const fitted = matVec(X, beta);
-    return Y.reduce((s, yi, i) => s + (yi - fitted[i]) ** 2, 0);
+  
+  // 3. Main effects for Factor 2
+  for (let j = 1; j < n2; j++) {
+    const levelMean = cellMeans[0][j];
+    const levelSize = cellCounts[0][j];
+    const estimate = levelMean - refCellMean;
+    const se = seDiff(levelSize, refCellSize);
+    const tRatio = estimate / se;
+    const prob = tpvalue(tRatio, df_error);
+    
+    paramEstimates.push({
+      term: `${f2}[${f2Levels[j]}]`,
+      estimate: estimate,
+      stdError: se,
+      tRatio: tRatio,
+      prob: prob
+    });
   }
-
-  // ── Type III SS: SS_effect = RSS(model without effect) - RSS(full model)
-  const X_full   = buildX(true,  true,  true);
-  const X_noA    = buildX(false, true,  true);
-  const X_noB    = buildX(true,  false, true);
-  const X_noAB   = buildX(true,  true,  false);
-
-  const RSS_full = ssResidual(X_full);
-  const SS_A     = ssResidual(X_noA)  - RSS_full;
-  const SS_B     = ssResidual(X_noB)  - RSS_full;
-  const SS_AB    = ssResidual(X_noAB) - RSS_full;
-  const SS_W     = RSS_full;
-  const SS_total = Y.reduce((s, yi) => s + (yi - mean(Y)) ** 2, 0);
-
-  const df_A  = a - 1;
-  const df_B  = b - 1;
-  const df_AB = df_A * df_B;
-  const df_W  = N - a * b;
-
-  const MS_A  = SS_A  / df_A;
-  const MS_B  = SS_B  / df_B;
-  const MS_AB = SS_AB / df_AB;
-  const MS_W  = SS_W  / df_W;
-
-  const F_A  = MS_A  / MS_W;
-  const F_B  = MS_B  / MS_W;
-  const F_AB = MS_AB / MS_W;
-
-  const p_A  = fpvalue(F_A,  df_A,  df_W);
-  const p_B  = fpvalue(F_B,  df_B,  df_W);
-  const p_AB = fpvalue(F_AB, df_AB, df_W);
-
-  // Partial η² = SS_effect / (SS_effect + SS_error)
-  const eta2_A  = SS_A  / (SS_A  + SS_W);
-  const eta2_B  = SS_B  / (SS_B  + SS_W);
-  const eta2_AB = SS_AB / (SS_AB + SS_W);
-
-  const sig = p => p < .001 ? '< .001 ***' : p < .01 ? p.toFixed(6)+' **' : p < .05 ? p.toFixed(6)+' *' : p.toFixed(6);
-
-  let html = `
-  <h3>Two-Way Analysis of Variance (ANOVA)</h3>
-  <p><strong>Tests of Between-Subjects Effects (Type III Sum of Squares) — Dependent: ${escapeHtml(dep)}</strong></p>
-  <table class="desc-table">
-    <tr><th>Source</th><th>Type III SS</th><th>df</th><th>Mean Square</th><th>F</th><th>Sig.</th><th>Partial η²</th></tr>
-    <tr><td>${escapeHtml(f1)}</td><td>${SS_A.toFixed(4)}</td><td>${df_A}</td><td>${MS_A.toFixed(4)}</td><td>${F_A.toFixed(4)}</td><td>${sig(p_A)}</td><td>${eta2_A.toFixed(4)}</td></tr>
-    <tr><td>${escapeHtml(f2)}</td><td>${SS_B.toFixed(4)}</td><td>${df_B}</td><td>${MS_B.toFixed(4)}</td><td>${F_B.toFixed(4)}</td><td>${sig(p_B)}</td><td>${eta2_B.toFixed(4)}</td></tr>
-    <tr><td>${escapeHtml(f1)} × ${escapeHtml(f2)}</td><td>${SS_AB.toFixed(4)}</td><td>${df_AB}</td><td>${MS_AB.toFixed(4)}</td><td>${F_AB.toFixed(4)}</td><td>${sig(p_AB)}</td><td>${eta2_AB.toFixed(4)}</td></tr>
-    <tr><td>Error</td><td>${SS_W.toFixed(4)}</td><td>${df_W}</td><td>${MS_W.toFixed(4)}</td><td></td><td></td><td></td></tr>
-    <tr><td>Total</td><td>${SS_total.toFixed(4)}</td><td>${N - 1}</td><td></td><td></td><td></td><td></td></tr>
-  </table>`;
-
+  
+  // 4. Interaction effects
+  for (let i = 1; i < n1; i++) {
+    for (let j = 1; j < n2; j++) {
+      const cellMean_ij = cellMeans[i][j];
+      const rowEffect = cellMeans[i][0] - refCellMean;
+      const colEffect = cellMeans[0][j] - refCellMean;
+      const estimate = cellMean_ij - rowEffect - colEffect - refCellMean;
+      
+      const n_ij = cellCounts[i][j];
+      const n_i0 = cellCounts[i][0];
+      const n_0j = cellCounts[0][j];
+      const n_00 = refCellSize;
+      
+      const varEstimate = MS_error * (1/n_ij + 1/n_i0 + 1/n_0j + 1/n_00);
+      const se = Math.sqrt(varEstimate);
+      const tRatio = estimate / se;
+      const prob = tpvalue(tRatio, df_error);
+      
+      paramEstimates.push({
+        term: `${f1}[${f1Levels[i]}] * ${f2}[${f2Levels[j]}]`,
+        estimate: estimate,
+        stdError: se,
+        tRatio: tRatio,
+        prob: prob
+      });
+    }
+  }
+  
+  // ==============================================================
+  // STEP 6: Display results
+  // ==============================================================
+  
+  function formatPval(p) {
+    if (p < 0.0001) return '< .0001';
+    return p.toFixed(4);
+  }
+  
+  let html = `<h3>📊 Two-Way Analysis of Variance (ANOVA)</h3>
+  
+  <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+      <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)}</p>
+      <p><strong>Factor 1:</strong> ${escapeHtml(f1)} (${n1} levels)</p>
+      <p><strong>Factor 2:</strong> ${escapeHtml(f2)} (${n2} levels)</p>
+      <p><strong>Total Sample Size (N):</strong> ${grandN}</p>
+      <p><strong>Reference Categories:</strong> ${escapeHtml(f1Ref)} (${escapeHtml(f1)}), ${escapeHtml(f2Ref)} (${escapeHtml(f2)})</p>
+  </div>
+  
+  <p><strong>Tests of Between-Subjects Effects (Type III Sum of Squares)</strong></p>
+  <div style="overflow-x: auto;">
+      <table class="desc-table" style="border-collapse: collapse; width: 100%;">
+          <thead>
+              <tr style="background: var(--bg3);">
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Source</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sum of Squares</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Mean Square</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">F</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Partial η²</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Corrected Model</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_model.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_model}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(SS_model / df_model).toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${((SS_model / df_model) / MS_error).toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${formatPval(fpvalue((SS_model / df_model) / MS_error, df_model, df_error))}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Intercept</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_intercept.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">1</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_intercept.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_intercept.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${formatPval(p_intercept)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(SS_intercept / (SS_intercept + SS_error)).toFixed(4)}</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">${escapeHtml(f1)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_f1.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_f1}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_f1.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_f1.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${formatPval(p_f1)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${eta2_f1.toFixed(4)}</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">${escapeHtml(f2)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_f2.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_f2}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_f2.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_f2.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${formatPval(p_f2)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${eta2_f2.toFixed(4)}</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">${escapeHtml(f1)} * ${escapeHtml(f2)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_interaction.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_interaction}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_interaction.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${F_interaction.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${formatPval(p_interaction)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${eta2_interaction.toFixed(4)}</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Error</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_error.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_error}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${MS_error.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Total</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(SS_total + SS_intercept).toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${grandN}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+              </tr>
+              <tr style="border: 1px solid var(--border);">
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: left;">Corrected Total</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${SS_total.toFixed(4)}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df_total}</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+                  <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">—</span></td>
+              </tr>
+          </tbody>
+      </table>
+  </div>
+  
+  <p><em>a. R Squared = ${Rsq.toFixed(4)} (Adjusted R Squared = ${RsqAdj.toFixed(4)})</em></p>
+  
+  <!-- PARAMETER ESTIMATES TABLE -->
+  <p><strong>Parameter Estimates</strong></p>
+  <p><em>t-critical (${df_error} df, 95% CI) = ${tCrit.toFixed(4)}</em></p>
+  <p><em>Reference categories: ${escapeHtml(f1Ref)} for ${escapeHtml(f1)}, ${escapeHtml(f2Ref)} for ${escapeHtml(f2)}</em></p>
+  <div style="overflow-x: auto;">
+      <table class="desc-table" style="border-collapse: collapse; width: 100%; font-size: 12px;">
+          <thead>
+              <tr style="background: var(--bg3);">
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Term</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std Error</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t Ratio</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Prob>|t|</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Lower 95%</th>
+                  <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Upper 95%</th>
+              </tr>
+          </thead>
+          <tbody>`;
+  
+  for (const param of paramEstimates) {
+    const stars = param.prob < 0.001 ? '***' : param.prob < 0.01 ? '**' : param.prob < 0.05 ? '*' : '';
+    const ciLower = param.estimate - tCrit * param.stdError;
+    const ciUpper = param.estimate + tCrit * param.stdError;
+    
+    html += `<tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(param.term)}</strong> ${stars}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${param.estimate.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${param.stdError.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${param.tRatio.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${param.prob.toFixed(6)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciLower.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciUpper.toFixed(4)}</span></td>
+    </tr>`;
+  }
+  
+  html += `</tbody>
+      </table>
+  </div>
+  <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
+  
+  html += `<p class="step-val">${p_interaction < 0.05 ? '✓ Significant interaction effect detected (p < 0.05)' : '✗ No significant interaction effect (p ≥ 0.05)'}</p>`;
+  
   displayResults(html);
+  
+  if (typeof toast === 'function') {
+    toast("Two-Way ANOVA Complete", `F(${df_interaction}, ${df_error}) = ${F_interaction.toFixed(4)}, p = ${p_interaction.toFixed(4)}`, "success");
+  }
 }
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const f1Select = document.getElementById('adv_2way_f1');
+        const f2Select = document.getElementById('adv_2way_f2');
+        
+        if (f1Select) {
+            f1Select.addEventListener('change', () => {
+                twowayAnovaRefLevels = {};
+                updateTwowayAnovaRefUI();
+            });
+        }
+        if (f2Select) {
+            f2Select.addEventListener('change', () => {
+                twowayAnovaRefLevels = {};
+                updateTwowayAnovaRefUI();
+            });
+        }
+        updateTwowayAnovaRefUI();
+    }, 500);
+});
 
 
 // ═══════════════════════════════════════════════════════════════
