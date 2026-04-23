@@ -2017,6 +2017,24 @@ body.dark .result-metric-value.highlight {
   }
 }
 
+/* Ensure Poisson regression table borders show properly */
+.desc-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+  font-size: 13px;
+}
+.desc-table th,
+.desc-table td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+.desc-table th {
+  background: var(--bg3);
+  font-weight: 600;
+}
+
 </style>
 </head>
 <body>
@@ -3061,13 +3079,40 @@ case 'correlation_kendall':
         <div class="field"><label>Independent Variables</label><select id="adv_log_inds" class="adv-select" multiple size="4">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
       `;
       break;
-    case 'poisson_reg':
-      testTitle.innerHTML = '📊 Poisson Regression';
-      html = `
-        <div class="field"><label>Dependent Variable (count)</label><select id="adv_pois_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-        <div class="field"><label>Independent Variables</label><select id="adv_pois_inds" class="adv-select" multiple size="4">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-      `;
-      break;
+  case 'poisson_reg':
+  testTitle.innerHTML = '📊 Poisson Regression';
+  html = `
+    <p style="margin-bottom: 15px; color: var(--text2);">📝 Poisson regression is used for count data (e.g., number of events, hospital visits, etc.)</p>
+    <div class="field">
+      <label>Dependent Variable (count data)</label>
+      <select id="adv_pois_dep" class="adv-select">
+        <option value="">-- Select a variable --</option>
+        ${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <div class="field-hint">Must contain non-negative integer counts (0, 1, 2, ...)</div>
+    </div>
+    <div class="field">
+      <label>Independent Variables (Ctrl+Click to select multiple)</label>
+      <select id="adv_pois_inds" class="adv-select" multiple size="5">
+        ${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <div class="field-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple variables</div>
+    </div>
+    <div id="poisson-ind-ref-container" style="margin-top: 15px;"></div>
+  `;
+  // Initialize reference UI after DOM update
+  setTimeout(() => {
+    if (typeof updatePoissonIndRefUI === 'function') {
+      updatePoissonIndRefUI();
+    }
+    const indsSelect = document.getElementById('adv_pois_inds');
+    if (indsSelect) {
+      indsSelect.addEventListener('change', () => {
+        if (typeof updatePoissonIndRefUI === 'function') updatePoissonIndRefUI();
+      });
+    }
+  }, 100);
+  break;
     case 'chisq':
       testTitle.innerHTML = '📋 Chi-Square Test';
       html = `
@@ -9891,6 +9936,8 @@ function matInv(M) {
   return A.map(row => row.slice(n));
 }
 
+
+
 // ═══════════════════════════════════════════════════════════════
 // CHI-SQUARE TEST OF INDEPENDENCE - WITH ENHANCED CROSSTAB
 // ═══════════════════════════════════════════════════════════════
@@ -11823,7 +11870,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// POISSON REGRESSION 
+// POISSON REGRESSION - WITH CONFIDENCE INTERVALS FOR B COEFFICIENTS
 // ═══════════════════════════════════════════════════════════════
 
 // Store reference levels for independent variables
@@ -11911,7 +11958,7 @@ function updatePoissonIndRefUI() {
 function setPoissonIndRef(varName, refValue) {
     poissonIndRefLevels[varName] = refValue;
     updatePoissonIndRefUI();
-    showToast('Info', `${varName}: Reference = "${refValue}"`, 'info');
+    toast('Info', `${varName}: Reference = "${refValue}"`, 'info');
 }
 
 // Build design matrix with user-selected reference categories
@@ -12098,19 +12145,28 @@ function poissonLogL_Enhanced(X, Y, betas) {
     }, 0);
 }
 
-// MAIN POISSON REGRESSION FUNCTION
+// ============================================================
+// MAIN POISSON REGRESSION FUNCTION - WITH CI FOR B COEFFICIENTS
+// ============================================================
 function runPoissonReg() {
+    console.log("=== Poisson Regression Started ===");
+    
     const dep = document.getElementById('adv_pois_dep').value;
     const indsSelect = document.getElementById('adv_pois_inds');
     const inds = Array.from(indsSelect.selectedOptions).map(o => o.value);
     
+    if (!dep) {
+        toast('Error', 'Please select a dependent variable', 'warn');
+        return;
+    }
+    
     if (inds.length === 0) {
-        showToast('Error', 'Select at least one independent variable', 'warn');
+        toast('Error', 'Select at least one independent variable', 'warn');
         return;
     }
     
     if (!advData || advData.length === 0) {
-        showToast('Error', 'Please load data first', 'warn');
+        toast('Error', 'Please load data first', 'warn');
         return;
     }
     
@@ -12119,26 +12175,58 @@ function runPoissonReg() {
     
     // Build design matrix with user-selected reference categories
     const { X, colNames, n, varEncodings } = buildDesignMatrixPoissonWithRef(inds);
-    const Y = buildY(dep).map(v => Math.round(Math.max(0, v)));
     
-    if (Y.length !== n) {
-        showToast('Error', 'Missing data in dependent variable', 'warn');
+    // Build dependent variable Y (count data, must be non-negative integers)
+    const Y = [];
+    for (let i = 0; i < advData.length; i++) {
+        const val = parseFloat(advData[i][dep]);
+        if (!isNaN(val) && val >= 0 && Number.isInteger(val)) {
+            Y.push(val);
+        }
+    }
+    
+    // Filter X to match Y length (use same indices)
+    const filteredX = [];
+    let yIdx = 0;
+    for (let i = 0; i < advData.length && yIdx < Y.length; i++) {
+        const val = parseFloat(advData[i][dep]);
+        if (!isNaN(val) && val >= 0 && Number.isInteger(val)) {
+            if (X[yIdx]) {
+                filteredX.push(X[yIdx]);
+            }
+            yIdx++;
+        }
+    }
+    
+    const finalX = filteredX;
+    const finalY = Y;
+    
+    if (finalY.length !== finalX.length) {
+        toast('Error', 'Data mismatch between dependent and independent variables', 'warn');
         return;
     }
     
+    if (finalY.length === 0) {
+        toast('Error', 'No valid count data found. Dependent variable must contain non-negative integers.', 'warn');
+        return;
+    }
+    
+    console.log(`Poisson regression: ${finalY.length} observations, ${colNames.length} predictors`);
+    
     try {
-        const result = poissonIRLS_Enhanced(X, Y);
+        const result = poissonIRLS_Enhanced(finalX, finalY);
         const betas = result.betas;
         const se_b = result.se;
         
-        const llModel = poissonLogL_Enhanced(X, Y, betas);
-        const nullBeta = [Math.log(Math.max(1e-10, mean(Y))), ...Array(betas.length-1).fill(0)];
-        const llNull = poissonLogL_Enhanced(X, Y, nullBeta.slice(0,1).concat(Array(betas.length-1).fill(0)).slice(0, betas.length));
+        const llModel = poissonLogL_Enhanced(finalX, finalY, betas);
+        const nullBeta = [Math.log(Math.max(1e-10, mean(finalY))), ...Array(betas.length-1).fill(0)];
+        const nullBetasAdjusted = [nullBeta[0], ...Array(betas.length-1).fill(0)];
+        const llNull = poissonLogL_Enhanced(finalX, finalY, nullBetasAdjusted);
         
         // Pseudo R-squared measures
         const McFadden = 1 - llModel / llNull;
-        const CoxSnell = 1 - Math.exp(2 * (llNull - llModel) / n);
-        const Nagelkerke = CoxSnell / (1 - Math.exp(2 * llNull / n));
+        const CoxSnell = 1 - Math.exp(2 * (llNull - llModel) / finalY.length);
+        const Nagelkerke = CoxSnell / (1 - Math.exp(2 * llNull / finalY.length));
         
         const deviance = -2 * llModel;
         const G2 = 2 * (llModel - llNull);
@@ -12149,23 +12237,17 @@ function runPoissonReg() {
         const p_b = wald.map(w => chipvalue(w, 1));
         const IRR = betas.map(b => Math.exp(b));
         
-        // Pearson chi-square goodness of fit
-        const mu = X.map(row => Math.exp(row.reduce((s, v, i) => s + v * betas[i], 0)));
-        const pearsonChi = Y.reduce((s, y, i) => s + (y - mu[i]) ** 2 / Math.max(1e-10, mu[i]), 0);
-        const df_gof = n - colNames.length;
-        const overdispersion = pearsonChi / Math.max(1, df_gof);
-        
-        // Calculate ALL pairwise comparisons (both directions)
-        const allPairwise = calculateAllPairwisePoisson(betas, se_b, varEncodings);
-        
+        // ============================================================
+        // BUILD HTML OUTPUT WITH CI FOR B COEFFICIENTS
+        // ============================================================
         let html = `<h3>📊 Poisson Regression Results</h3>
         
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
             <p><strong>Dependent Variable:</strong> ${escapeHtml(dep)} (Count data)</p>
-            <p><strong>Sample Size (n):</strong> ${n}</p>
+            <p><strong>Sample Size (n):</strong> ${finalY.length}</p>
             <p><strong>Number of Predictors:</strong> ${colNames.length - 1}</p>
-            <p><strong>Mean of Dependent Variable:</strong> ${mean(Y).toFixed(4)}</p>
-            <p><strong>Variance of Dependent Variable:</strong> ${variance(Y).toFixed(4)}</p>
+            <p><strong>Mean of Dependent Variable:</strong> ${mean(finalY).toFixed(4)}</p>
+            <p><strong>Variance of Dependent Variable:</strong> ${variance(finalY).toFixed(4)}</p>
         </div>
         
         <p><strong>Pseudo R-squared</strong></p>
@@ -12178,38 +12260,37 @@ function runPoissonReg() {
             </tbody>
         </table>
         
-        <p><strong>Goodness of Fit</strong></p>
-        <table class="desc-table">
-            <thead><tr><th>Criterion</th><th>Value</th><th>df</th><th>Value/df</th></tr></thead>
-            <tbody>
-                <tr><td style="text-align:left">Deviance</span><td>${deviance.toFixed(4)}</span><td>${df_gof}</span><td>${(deviance/Math.max(1,df_gof)).toFixed(4)}</span></tr>
-                <tr><td style="text-align:left">Pearson χ²</span><td>${pearsonChi.toFixed(4)}</span><td>${df_gof}</span><td>${overdispersion.toFixed(4)}</span></tr>
-            </tbody>
-        </table>
-        
-        ${overdispersion > 1.5 ? '<p style="color: var(--coral);">⚠️ Possible overdispersion detected (Pearson χ²/df > 1.5). Consider Negative Binomial regression.</p>' : '<p style="color: var(--green);">✓ No evidence of overdispersion.</p>'}
-        
         <p><strong>Omnibus Test</strong></p>
         <table class="desc-table">
             <thead><tr><th>χ²</th><th>df</th><th>Sig.</th></tr></thead>
             <tbody><tr><td style="text-align:center">${G2.toFixed(4)}</span><td>${df_G2}</span><td>${p_G2.toFixed(6)}${p_G2 < 0.05 ? ' *' : ''}</span></tr></tbody>
         </table>
         
+        <!-- PARAMETER ESTIMATES TABLE WITH CI FOR B COEFFICIENTS -->
         <p><strong>Parameter Estimates</strong></p>
         <p><em>IRR = Incidence Rate Ratio (Exp(B))</em></p>
-        <table class="desc-table" style="font-size: 12px;">
-            <thead><tr>
-                <th>Variable</th>
-                <th>B (log-rate)</th>
-                <th>Std. Error</th>
-                <th>Wald χ²</th>
-                <th>df</th>
-                <th>Sig.</th>
-                <th>IRR</th>
-                <th>95% CI Lower</th>
-                <th>95% CI Upper</th>
-            </tr></thead>
-            <tbody>`;
+        <div style="overflow-x: auto;">
+            <table class="desc-table" style="font-size: 12px; border-collapse: collapse; width: 100%;">
+                <thead>
+                    <tr style="background: var(--bg3);">
+                        <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: middle;">Variable</th>
+                        <th colspan="3" style="border: 1px solid var(--border); padding: 8px; text-align: center;">B (log-rate)</th>
+                        <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
+                        <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center;">Wald χ²</th>
+                        <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                        <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
+                        <th colspan="3" style="border: 1px solid var(--border); padding: 8px; text-align: center;">IRR (Exp(B))</th>
+                    </tr>
+                    <tr style="background: var(--bg3);">
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">Estimate</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">95% CI Lower</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">95% CI Upper</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">Estimate</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">95% CI Lower</th>
+                        <th style="border: 1px solid var(--border); padding: 6px; text-align: center;">95% CI Upper</th>
+                    </tr>
+                </thead>
+                <tbody>`;
         
         for (let i = 0; i < betas.length; i++) {
             let label = colNames[i];
@@ -12217,18 +12298,37 @@ function runPoissonReg() {
             
             const stars = p_b[i] < 0.001 ? '***' : p_b[i] < 0.01 ? '**' : p_b[i] < 0.05 ? '*' : '';
             
-            html += `<tr>
-                <td><strong>${escapeHtml(label)}</strong></td>
-                <td style="text-align:center">${betas[i].toFixed(4)}</span><td>${se_b[i].toFixed(4)}</span><td>${wald[i].toFixed(4)}</span><td>1</span><td>${p_b[i].toFixed(6)} ${stars}</span>
-                <td style="text-align:center">${IRR[i].toFixed(4)}</span><td>${Math.exp(betas[i] - 1.96 * se_b[i]).toFixed(4)}</span><td>${Math.exp(betas[i] + 1.96 * se_b[i]).toFixed(4)}</span>
+            // Calculate CI for B (log-rate) coefficients
+            const bLowerCI = betas[i] - 1.96 * se_b[i];
+            const bUpperCI = betas[i] + 1.96 * se_b[i];
+            
+            // Calculate CI for IRR
+            const irrLowerCI = Math.exp(bLowerCI);
+            const irrUpperCI = Math.exp(bUpperCI);
+            
+            html += `<tr style="border: 1px solid var(--border);">
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(label)}</strong> ${stars}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${betas[i].toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${bLowerCI.toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${bUpperCI.toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${se_b[i].toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${wald[i].toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">1</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${p_b[i].toFixed(6)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${IRR[i].toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${irrLowerCI.toFixed(4)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${irrUpperCI.toFixed(4)}</span></td>
             </tr>`;
         }
         
         html += `</tbody>
-        </table>
-        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
+            </table>
+        </div>
+        <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>
+        <p><em>Confidence intervals are Wald-type (95% CI = Estimate ± 1.96 × Std. Error)</em></p>`;
         
-        // Add ALL pairwise comparisons (both directions, like logistic)
+        // Add ALL pairwise comparisons for categorical variables
+        const allPairwise = calculateAllPairwisePoisson(betas, se_b, varEncodings);
         for (const [varName, comparisons] of Object.entries(allPairwise)) {
             html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)} (IRR)</strong></p>
             <p><em>95% Confidence Interval (Wald)</em></p>
@@ -12248,7 +12348,6 @@ function runPoissonReg() {
                 </thead>
                 <tbody>`;
             
-            // Sort for better readability
             const sortedComps = [...comparisons].sort((a, b) => {
                 if (a.level1 === b.level1) return String(a.level2).localeCompare(String(b.level2));
                 return String(a.level1).localeCompare(String(b.level1));
@@ -12277,9 +12376,10 @@ function runPoissonReg() {
         html += `<p class="step-val">${p_G2 < 0.05 ? '✓ Model is statistically significant' : '✗ Model is not statistically significant'}</p>`;
         
         displayResults(html);
+        toast("Poisson Regression Complete", `χ²(${df_G2}) = ${G2.toFixed(4)}, p = ${p_G2.toFixed(6)}`, "success");
         
     } catch (error) {
-        showToast('Error', `Poisson regression failed: ${error.message}`, 'error');
+        toast('Error', `Poisson regression failed: ${error.message}`, 'error');
         console.error(error);
     }
 }
@@ -12297,7 +12397,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePoissonIndRefUI();
     }, 500);
 });
-
 
 // ═══════════════════════════════════════════════════════════════
 // IRLS / GLM ENGINES
