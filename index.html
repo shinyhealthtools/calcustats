@@ -7743,7 +7743,7 @@ function runOneTTest() {
   const tCrit = getTCriticalOneSample(df, 1 - ci);
   const ciLower = meanDiff - tCrit * se;
   const ciUpper = meanDiff + tCrit * se;
-  const cohensD = Math.abs(meanDiff) / s;
+const cohensD = meanDiff / s;
 
   // --- t-critical from standard table ---
   function getTCriticalOneSample(df, alphaTwoTailed) {
@@ -7938,7 +7938,7 @@ function runOneTTest() {
       <td>${ciUpper.toFixed(4)}</td>
     </tr>
   </table>
-  <p><strong>Effect Size (Cohen's d):</strong> ${cohensD.toFixed(4)} — ${cohensD < 0.2 ? 'Negligible' : cohensD < 0.5 ? 'Small' : cohensD < 0.8 ? 'Medium' : 'Large'}</p>
+<p><strong>Effect Size (Cohen's d):</strong> ${cohensD.toFixed(4)} — ${Math.abs(cohensD) < 0.2 ? 'Negligible' : Math.abs(cohensD) < 0.5 ? 'Small' : Math.abs(cohensD) < 0.8 ? 'Medium' : 'Large'} ${cohensD < 0 ? '(negative: sample mean less than test value)' : '(positive: sample mean greater than test value)'}</p>
   <p class="step-val">${p < 0.05 ? '✓ Statistically significant at α = 0.05' : '✗ Not statistically significant at α = 0.05'}</p>`;
 
   displayResults(html);
