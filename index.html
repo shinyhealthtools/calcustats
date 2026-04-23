@@ -1830,6 +1830,193 @@ body.dark .result-metric-value.highlight {
   background: var(--bg3);
   font-weight: 600;
 }
+
+/* Advanced Strata Styling */
+.advanced-stratum-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.advanced-stratum-header {
+  background: linear-gradient(135deg, var(--accent-glow), transparent);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.advanced-stratum-header:hover {
+  background: var(--accent-glow);
+}
+
+.advanced-stratum-title {
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.advanced-stratum-title input {
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: auto;
+  min-width: 120px;
+}
+
+.advanced-stratum-pop {
+  font-size: 12px;
+  color: var(--text2);
+  margin-left: 12px;
+}
+
+.advanced-stratum-header-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.advanced-subnode-list {
+  padding: 12px;
+}
+
+.advanced-subnode-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.advanced-subnode-row input {
+  padding: 8px 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  width: 100%;
+}
+
+.advanced-subnode-row input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.advanced-subnode-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.advanced-add-subnode {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border: 1px dashed var(--teal);
+  border-radius: 8px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.advanced-add-subnode:hover {
+  background: var(--teal-dim);
+  border-color: var(--teal);
+}
+
+.advanced-del-subnode {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.advanced-del-subnode:hover {
+  background: var(--coral-dim);
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+.response-rate-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.response-rate-badge.low {
+  background: var(--coral-dim);
+  color: var(--coral);
+}
+
+.response-rate-badge.medium {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+/* Correlation Analysis Styles */
+.corr-select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 9px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+}
+
+/* Ensure all 7 cards are exactly equal width */
+.test-category-card {
+  flex: 1 1 0 !important;
+  min-width: 160px !important;
+}
+
+/* On larger screens, limit max width so they don't stretch too much */
+@media (min-width: 1200px) {
+  .test-category-card {
+    max-width: 200px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1859,8 +2046,8 @@ body.dark .result-metric-value.highlight {
   <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
   <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran Formula</button>
   <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
-<button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
-<button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Inferential Tests</button>
+  <button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
+  <button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Inferential Tests</button>
 </nav>
     <button class="theme-btn" id="themeBtn" title="Toggle theme">☾</button>
     <button class="hamburger" id="hamburger">≡</button>
@@ -1874,8 +2061,8 @@ body.dark .result-metric-value.highlight {
   <button class="mobile-nav-btn" data-page="yamane">◐  &nbsp;Taro Yamane</button>
   <button class="mobile-nav-btn" data-page="cochran">◑  &nbsp;Cochran Formula</button>
   <button class="mobile-nav-btn" data-page="other">◇  &nbsp;Other Formulas</button>
-<button class="mobile-nav-btn" data-page="descriptives">▣  &nbsp;Descriptive Statistics</button>
-<button class="mobile-nav-btn" data-page="advstats">⚙  &nbsp;Inferential Tests</button>
+  <button class="mobile-nav-btn" data-page="descriptives">▣  &nbsp;Descriptive Statistics</button>
+  <button class="mobile-nav-btn" data-page="advstats">⚙  &nbsp;Inferential Tests</button>
 </div>
   
 </div>
@@ -1963,13 +2150,53 @@ body.dark .result-metric-value.highlight {
           <input type="number" id="prop-nr" value="0" min="0" max="99" step="1">
         </div>
       </div>
+      
+      <!-- Main Strata Section -->
       <div class="strata-wrap visible" id="prop-strata-wrap">
         <div class="strata-header-row">
-          <span>Strata</span>
-          <button class="add-stratum-btn" onclick="addStratum('prop')">+ Add Stratum</button>
+          <span>Major Strata (e.g., Hospitals)</span>
+          <button class="add-stratum-btn" onclick="addStratum('prop')">+ Add Major Stratum</button>
         </div>
         <div class="strata-list" id="prop-strata-list"></div>
       </div>
+      
+      <!-- ADVANCED BUTTON -->
+      <div class="toggle-row" onclick="toggleAdvancedFeatures()" id="advanced-toggle-row" style="margin-top: 16px;">
+        <div class="toggle-switch" id="advanced-toggle"><div class="toggle-knob"></div></div>
+        <span class="toggle-label"><i class="fas fa-chart-line"></i> <strong>Advanced Mode</strong> — Add Sub-strata + Track Returned Questionnaires</span>
+      </div>
+      
+      <!-- ADVANCED PANEL (hidden by default) -->
+      <div id="advanced-panel" style="display: none; margin-top: 16px;">
+        <div class="formula-box" style="background: linear-gradient(135deg, var(--accent-glow), transparent); border-left-color: var(--teal);">
+          <div class="formula-label">✨ Advanced Features</div>
+          <div class="formula-desc">• Click <strong>"+ Add Sub-stratum"</strong> under any major stratum to add sub-groups (e.g., Nurses, Midwives)<br>
+          • Enter population for each sub-stratum → <strong>automatic proportional allocation</strong><br>
+          • Enter <strong>Returned Questionnaires</strong> → auto-calculates Response Rate = (Returned / Allocated) × 100%<br>
+          • <strong>Flowchart remains based on MAJOR STRATA ONLY</strong> (sub-strata for reporting only)</div>
+        </div>
+        
+        <div class="field-row">
+          <div class="field">
+            <label>📊 Show Response Rate Column</label>
+            <select id="show-response-rate" onchange="renderAdvancedStrata()">
+              <option value="true">Yes - Show Returned & Response Rate</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>📈 Show Population Proportion</label>
+            <select id="show-proportion" onchange="renderAdvancedStrata()">
+              <option value="true">Yes - Show % of Total</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Container for advanced strata with sub-nodes -->
+        <div id="advanced-strata-container" style="margin-top: 16px;"></div>
+      </div>
+      
       <div class="btn-row">
         <button class="btn-primary" onclick="calcProportional()">⟳ &nbsp;Calculate Allocation</button>
         <button class="btn-secondary" onclick="resetProportional()">↺ Reset</button>
@@ -2135,11 +2362,6 @@ body.dark .result-metric-value.highlight {
         <label>Select Formula Type</label>
         <select id="other-type" onchange="updateOtherFormula()">
           <option value="prop">Single Population Proportion (EPI INFO)</option>
-<!-- <option value="mean">Mean Estimation (Known Variance)</option> -->
-<!-- <option value="casecontrol">Case-Control Study</option> -->
-<!-- <option value="cohort">Cohort Study</option> -->
-<!-- <option value="corr">Correlation Coefficient</option> -->
-<!-- <option value="prevalence">Prevalence Study</option> -->
         </select>
       </div>
       <div class="formula-box" style="border-left-color:var(--coral);" id="other-formula-box">
@@ -2549,8 +2771,24 @@ body.dark .result-metric-value.highlight {
     <div class="test-option" data-test="multinomial" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('multinomial')">
       <i class="fas fa-chart-pie" style="width:24px;"></i> Multinomial Logistic
     </div>
-    <div class="test-option" data-test="ordinal" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer;" onclick="selectAdvTest('ordinal')">
-      <i class="fas fa-chart-simple" style="width:24px;"></i> Ordinal Logistic
+  </div>
+</div>
+<!-- Category 7: Correlation -->
+<div class="test-category-card" data-category="correlation" style="flex:1; min-width:180px; background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:all 0.2s; cursor:pointer;">
+  <div style="padding: 18px 16px; background:linear-gradient(135deg, rgba(155,89,182,0.08), transparent);">
+    <i class="fas fa-chart-line" style="font-size:24px; color:#9b59b6;"></i>
+    <h3 style="margin: 10px 0 4px 0; font-size:18px;">📈 Correlation</h3>
+    <p style="font-size:12px; color:var(--text2); margin:0;">Pearson, Spearman, Kendall Tau</p>
+  </div>
+  <div class="test-list" style="display:none; padding:12px; border-top:1px solid var(--border); background:var(--bg);">
+    <div class="test-option" data-test="correlation_pearson" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer; transition:all 0.15s;" onclick="selectAdvTest('correlation_pearson')">
+      <i class="fas fa-chart-scatter" style="width:24px;"></i> Pearson Correlation
+    </div>
+    <div class="test-option" data-test="correlation_spearman" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer; transition:all 0.15s;" onclick="selectAdvTest('correlation_spearman')">
+      <i class="fas fa-chart-line" style="width:24px;"></i> Spearman Rank Correlation
+    </div>
+    <div class="test-option" data-test="correlation_kendall" style="padding:10px 12px; margin:4px 0; border-radius:10px; background:var(--bg3); cursor:pointer; transition:all 0.15s;" onclick="selectAdvTest('correlation_kendall')">
+      <i class="fas fa-chart-simple" style="width:24px;"></i> Kendall Tau Correlation
     </div>
   </div>
 </div>
@@ -2651,6 +2889,128 @@ function selectAdvTest(testId) {
         </div>
       `;
       break;
+case 'correlation_pearson':
+  testTitle.innerHTML = '📈 Pearson Correlation';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Variable 1 (X)</label><select id="corr_var1" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Variable 2 (Y)</label><select id="corr_var2" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Confidence Level (%)</label><input type="number" id="corr_ci" value="95" min="80" max="99.9" step="1"></div>
+      <div class="field"><label>Hypothesis Test</label>
+        <select id="corr_tail">
+          <option value="two">Two-tailed (r ≠ 0)</option>
+          <option value="positive">Positive (r > 0)</option>
+          <option value="negative">Negative (r < 0)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>📊 Scatter Plot Options</label>
+      <select id="corr_plot_type">
+        <option value="points">Points Only</option>
+        <option value="regression">Points + Regression Line</option>
+        <option value="smooth">Points + LOESS Smoother</option>
+      </select>
+    </div>
+    <div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin-top: 15px;">
+      <div class="field-title" style="font-weight: 600; margin-bottom: 10px;">🎨 Display Options</div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_fitline" checked> Show Fit Line
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_ci" checked> Show 95% Confidence Band
+        </label>
+      </div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_equation" checked> Show Regression Equation
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_stats" checked> Show Correlation & R²
+        </label>
+      </div>
+    </div>
+  `;
+  break;
+case 'correlation_spearman':
+  testTitle.innerHTML = '📊 Spearman Rank Correlation';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Variable 1 (X)</label><select id="corr_var1" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Variable 2 (Y)</label><select id="corr_var2" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Confidence Level (%)</label><input type="number" id="corr_ci" value="95" min="80" max="99.9" step="1"></div>
+      <div class="field"><label>Hypothesis Test</label>
+        <select id="corr_tail">
+          <option value="two">Two-tailed (ρ ≠ 0)</option>
+          <option value="positive">Positive (ρ > 0)</option>
+          <option value="negative">Negative (ρ < 0)</option>
+        </select>
+      </div>
+    </div>
+    <div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin-top: 15px;">
+      <div class="field-title" style="font-weight: 600; margin-bottom: 10px;">🎨 Display Options</div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_fitline" checked> Show Fit Line
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_ci" checked> Show 95% Confidence Band
+        </label>
+      </div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_equation" checked> Show Regression Equation
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_stats" checked> Show Correlation & R²
+        </label>
+      </div>
+    </div>
+  `;
+  break;
+case 'correlation_kendall':
+  testTitle.innerHTML = '🔗 Kendall Tau Correlation';
+  html = `
+    <div class="field-row">
+      <div class="field"><label>Variable 1 (X)</label><select id="corr_var1" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Variable 2 (Y)</label><select id="corr_var2" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Confidence Level (%)</label><input type="number" id="corr_ci" value="95" min="80" max="99.9" step="1"></div>
+      <div class="field"><label>Hypothesis Test</label>
+        <select id="corr_tail">
+          <option value="two">Two-tailed (τ ≠ 0)</option>
+          <option value="positive">Positive (τ > 0)</option>
+          <option value="negative">Negative (τ < 0)</option>
+        </select>
+      </div>
+    </div>
+    <div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin-top: 15px;">
+      <div class="field-title" style="font-weight: 600; margin-bottom: 10px;">🎨 Display Options</div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_fitline" checked> Show Fit Line
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_ci" checked> Show 95% Confidence Band
+        </label>
+      </div>
+      <div class="field-row">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_equation" checked> Show Regression Equation
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="corr_show_stats" checked> Show Correlation & R²
+        </label>
+      </div>
+    </div>
+  `;
+  break;
     case 'paired_t':
       testTitle.innerHTML = '🔗 Paired t-Test Configuration';
       html = `
@@ -2805,25 +3165,6 @@ case 'multinomial':
         }
     }, 50);
     break;
- case 'ordinal':
-  testTitle.innerHTML = '📊 Ordinal Logistic Regression';
-  html = `
-    <div class="field"><label>Dependent Variable (ordinal, 3+ levels)</label><select id="adv_ord_dep" class="adv-select">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-    <div class="field"><label>Independent Variables (Ctrl+Click for multiple)</label><select id="adv_ord_inds" class="adv-select" multiple size="4">${getCols().map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
-    <div id="ordinal-ind-ref-container" style="margin-top: 15px;"></div>
-  `;
-  // Initialize reference category UI after rendering
-  setTimeout(() => {
-    updateOrdinalIndRefUI();
-    const indsSelect = document.getElementById('adv_ord_inds');
-    if (indsSelect) {
-      indsSelect.addEventListener('change', () => {
-        ordinalIndRefLevels = {};
-        updateOrdinalIndRefUI();
-      });
-    }
-  }, 100);
-  break;
     default:
       testTitle.innerHTML = '⚙️ Test Configuration';
       html = `<p style="color:var(--text3); text-align:center; padding:20px;">Configuration options will appear here when you select a test.</p>`;
@@ -2860,7 +3201,9 @@ function runSelectedAdvTest() {
     'ancova': () => runANCOVA(),
     'manova': () => runMANOVA(),
     'multinomial': () => runMultinomialReg(),
-    'ordinal': () => runOrdinalReg()
+    'correlation_pearson': () => runCorrelationAnalysisInferential('pearson'),
+'correlation_spearman': () => runCorrelationAnalysisInferential('spearman'),
+'correlation_kendall': () => runCorrelationAnalysisInferential('kendall')
   };
   
   if (testMap[currentSelectedAdvTest]) {
@@ -14318,292 +14661,1518 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
 });
 
-// ═══════════════════════════════════════════════════════════════
-// MANUAL ORDINAL LOGISTIC REGRESSION - NO OPTIMIZATION FUNCTIONS
-// Calculates coefficients directly using iteratively reweighted least squares (IRLS)
-// Matches JMP output exactly
-// ═══════════════════════════════════════════════════════════════
 
-let ordinalIndRefLevels = {};
+// ============================================================
+// ADVANCED PROPORTIONAL ALLOCATION WITH SUB-NODES
+// SUB-NODES DO NOT AFFECT FLOWCHART - ONLY FOR REPORTING
+// ============================================================
 
-function isCategoricalOrdinal(v) {
-    if (!advData || advData.length === 0) return false;
-    const vals = advData.map(r => r[v]).filter(x => x !== null && x !== undefined && x !== '');
-    if (vals.length === 0) return false;
-    const allNumeric = vals.every(x => !isNaN(parseFloat(x)) && isFinite(x));
-    if (!allNumeric) return true;
-    const unique = [...new Set(vals)];
-    return unique.length <= 10;
+// Global storage for advanced strata data (sub-nodes under major strata)
+let advancedSubNodes = {}; // Format: { stratumId: [{ id, name, pop, returned }] }
+let subNodeIdCounter = 0;
+
+// Toggle advanced features panel
+function toggleAdvancedFeatures() {
+  const toggle = document.getElementById('advanced-toggle');
+  const panel = document.getElementById('advanced-panel');
+  const isOn = toggle.classList.toggle('on');
+  
+  if (isOn) {
+    panel.style.display = 'block';
+    renderAdvancedStrata();
+  } else {
+    panel.style.display = 'none';
+  }
 }
 
-function getUniqueValuesOrdinal(v) {
-    if (!advData || advData.length === 0) return [];
-    const vals = advData.map(r => r[v]).filter(x => x !== null && x !== undefined && x !== '');
-    return [...new Set(vals)].sort();
-}
-
-function updateOrdinalIndRefUI() {
-    const sel = document.getElementById('adv_ord_inds');
-    if (!sel) return;
-    const vars = Array.from(sel.selectedOptions).map(o => o.value);
-    let container = document.getElementById('ordinal-ind-ref-container');
-    if (!container) {
-        const cfg = document.getElementById('adv-test-config-content');
-        if (cfg) {
-            container = document.createElement('div');
-            container.id = 'ordinal-ind-ref-container';
-            cfg.appendChild(container);
-        }
+// Render sub-node management UI for each major stratum
+function renderAdvancedStrata() {
+  const container = document.getElementById('advanced-strata-container');
+  if (!container) return;
+  
+  const strata = getStrata('prop');
+  
+  if (strata.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text3);">⚠️ Add major strata first in the section above</div>';
+    return;
+  }
+  
+  // Initialize advancedSubNodes for any new strata
+  strata.forEach(stratum => {
+    if (!advancedSubNodes[stratum.name]) {
+      advancedSubNodes[stratum.name] = [];
     }
-    if (!container) return;
-    const catVars = vars.filter(v => isCategoricalOrdinal(v));
-    if (catVars.length === 0) {
-        container.innerHTML = `<p style="color: var(--green); font-size: 12px;">✓ No categorical independent variables.</p>`;
-        container.style.display = 'block';
-        return;
+  });
+  
+  // Clean up deleted strata
+  Object.keys(advancedSubNodes).forEach(key => {
+    if (!strata.find(s => s.name === key)) {
+      delete advancedSubNodes[key];
     }
-    let html = `<div style="background: var(--bg3); border-radius: 8px; padding: 12px; margin: 15px 0;">
-        <h4 style="margin:0 0 8px 0;">📊 Reference Categories</h4>`;
-    catVars.forEach(v => {
-        const levels = getUniqueValuesOrdinal(v);
-        const curr = ordinalIndRefLevels[v] || levels[0];
-        html += `<div style="margin:10px 0; padding:10px; background:var(--bg2); border-radius:6px;">
-            <label style="font-weight:600;">${escapeHtml(v)}</label>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">`;
-        levels.forEach(l => {
-            html += `<label style="display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--bg3); border-radius:5px; cursor:pointer; border:1px solid ${curr === l ? 'var(--accent)' : 'var(--border)'};">
-                <input type="radio" name="ord_ref_${escapeHtml(v)}" value="${escapeHtml(l)}" ${curr === l ? 'checked' : ''} onchange="setOrdinalIndRef('${escapeHtml(v)}', '${escapeHtml(l)}')">
-                <strong>${escapeHtml(String(l))}</strong>
-                ${curr === l ? '<span style="color:var(--accent);">← Reference</span>' : ''}
-            </label>`;
-        });
-        html += `</div></div>`;
-    });
-    html += `<button class="btn-secondary" style="margin-top:8px; padding:8px 16px;" onclick="runOrdinalReg()">⟳ Rerun</button></div>`;
-    container.innerHTML = html;
-    container.style.display = 'block';
-}
-
-function setOrdinalIndRef(v, ref) {
-    ordinalIndRefLevels[v] = ref;
-    updateOrdinalIndRefUI();
-    toast('Info', `${v}: Reference = "${ref}"`, 'info');
-}
-
-// Build design matrix - creates 0/1 dummy variables
-function buildDesignMatrix(inds) {
-    const X = [];
-    const colNames = [];
-    const validIdx = [];
+  });
+  
+  let html = `<div class="formula-box" style="margin-bottom: 16px;">
+    <div class="formula-label">📌 Sub-stratum Management (Reporting Only - Not in Flowchart)</div>
+    <div class="formula-desc">Add sub-groups (e.g., Nurses, Midwives) under each major stratum. 
+    <strong>Calculation Logic:</strong> Sub-stratum sample = (Sub-stratum Pop / Total Sub-strata Pop under this major stratum) × Major Stratum Sample Size<br>
+    <strong>Response Rate</strong> = (Returned Questionnaires / Calculated Sample Size) × 100%<br>
+    <strong>⚠️ Flowchart shows ONLY major strata - sub-strata are for detailed reporting only.</strong></div>
+  </div>`;
+  
+  strata.forEach((stratum, idx) => {
+    const subNodes = advancedSubNodes[stratum.name] || [];
+    const totalSubPop = subNodes.reduce((sum, sn) => sum + (sn.pop || 0), 0);
+    const showResponseRate = document.getElementById('show-response-rate')?.value === 'true';
+    const showProportion = document.getElementById('show-proportion')?.value === 'true';
     
-    for (let i = 0; i < advData.length; i++) {
-        const row = advData[i];
-        const xrow = [];
-        let ok = true;
+    html += `
+      <div class="advanced-stratum-card">
+        <div class="advanced-stratum-header" onclick="toggleSubNodeList(${idx})">
+          <div class="advanced-stratum-title">
+            <span>🏥</span>
+            <strong>${escapeHtml(stratum.name)}</strong>
+            <span class="advanced-stratum-pop">(Major Stratum Pop: ${fmtN(stratum.pop)} | Sub-strata Pop: ${fmtN(totalSubPop)})</span>
+          </div>
+          <div class="advanced-stratum-header-btns">
+            <span style="font-size: 14px;">▼</span>
+          </div>
+        </div>
+        <div class="advanced-subnode-list" id="subnode-list-${idx}" style="display: block;">
+          <div class="advanced-subnode-header">
+            <span>Sub-stratum Name</span>
+            <span>Population (N)</span>
+            ${showResponseRate ? '<span>Returned (n)</span>' : ''}
+            ${showResponseRate ? '<span>Response Rate</span>' : ''}
+            ${showProportion ? '<span>% of Stratum Pop</span>' : ''}
+            <span></span>
+          </div>`;
+    
+    if (subNodes.length === 0) {
+      html += `<div style="text-align: center; padding: 20px; color: var(--text3);">No sub-strata added yet. Click below to add.</div>`;
+    } else {
+      subNodes.forEach((subNode, subIdx) => {
+        const pctOfStratum = stratum.pop > 0 ? ((subNode.pop / stratum.pop) * 100).toFixed(1) : 0;
         
-        for (const v of inds) {
-            const val = row[v];
-            if (val === undefined || val === null || val === '') { ok = false; break; }
-            
-            if (isCategoricalOrdinal(v)) {
-                const levels = getUniqueValuesOrdinal(v);
-                const ref = ordinalIndRefLevels[v] || levels[0];
-                for (const l of levels) {
-                    if (l !== ref) {
-                        xrow.push(val === l ? 1 : 0);
-                    }
-                }
-            } else {
-                const num = parseFloat(val);
-                if (isNaN(num)) { ok = false; break; }
-                xrow.push(num);
-            }
+        html += `
+          <div class="advanced-subnode-row" id="subnode-row-${subNode.id}">
+            <input type="text" value="${escapeHtml(subNode.name)}" 
+                   onchange="updateSubNodeName('${escapeHtml(stratum.name)}', '${subNode.id}', this.value)">
+            <input type="number" value="${subNode.pop || 0}" min="0" 
+                   onchange="updateSubNodePop('${escapeHtml(stratum.name)}', '${subNode.id}', this.value)">`;
+        
+        if (showResponseRate) {
+          html += `<input type="number" value="${subNode.returned !== null ? subNode.returned : ''}" min="0" 
+                   placeholder="Optional"
+                   onchange="updateSubNodeReturned('${escapeHtml(stratum.name)}', '${subNode.id}', this.value)">`;
         }
-        if (ok) {
-            X.push(xrow);
-            validIdx.push(i);
+        
+        if (showResponseRate) {
+          html += `<td style="text-align: center;" id="response-rate-${subNode.id}">—</span></td>`;
         }
+        
+        if (showProportion) {
+          html += `<td style="text-align: center;">${pctOfStratum}%</span></td>`;
+        }
+        
+        html += `<td><button class="advanced-del-subnode" onclick="deleteSubNode('${escapeHtml(stratum.name)}', '${subNode.id}')" title="Remove">✕</button></td>
+          </div>`;
+      });
     }
     
-    for (const v of inds) {
-        if (isCategoricalOrdinal(v)) {
-            const levels = getUniqueValuesOrdinal(v);
-            const ref = ordinalIndRefLevels[v] || levels[0];
-            for (const l of levels) {
-                if (l !== ref) {
-                    colNames.push(`${v}[${l}]`);
-                }
-            }
-        } else {
-            colNames.push(v);
-        }
-    }
-    
-    return { X, colNames, n: X.length, validIdx };
+    html += `
+          <button class="advanced-add-subnode" onclick="addSubNode('${escapeHtml(stratum.name)}')">
+            + Add Sub-stratum (e.g., Nurses, Midwives, Doctors)
+          </button>
+          <div class="advanced-warning" style="font-size: 11px; color: var(--text3); margin-top: 8px; padding: 8px; background: var(--bg3); border-radius: 6px;">
+            💡 <strong>Note:</strong> Sub-stratum sample = (Sub Pop / Total Sub Pop under ${escapeHtml(stratum.name)}) × Major Stratum Sample Size
+            ${totalSubPop !== stratum.pop ? `<span style="color: var(--amber);"> ⚠️ Warning: Sub-strata total (${fmtN(totalSubPop)}) ≠ Major stratum population (${fmtN(stratum.pop)}). Allocation will use sub-strata populations proportionally.</span>` : ' ✓ Sub-strata total matches major stratum population.'}
+          </div>
+        </div>
+      </div>`;
+  });
+  
+  container.innerHTML = html;
+  
+  // Auto-update response rates if we have calculation results
+  updateAllResponseRates();
 }
 
-// MAIN ORDINAL REGRESSION - USING CORRECT JMP VALUES
-function runOrdinalReg() {
-    const dep = document.getElementById('adv_ord_dep').value;
-    const indsSel = document.getElementById('adv_ord_inds');
-    const inds = Array.from(indsSel.selectedOptions).map(o => o.value);
+// Toggle sub-node list visibility
+function toggleSubNodeList(idx) {
+  const list = document.getElementById(`subnode-list-${idx}`);
+  if (list) {
+    const isVisible = list.style.display !== 'none';
+    list.style.display = isVisible ? 'none' : 'block';
+  }
+}
+
+// Add sub-node to a stratum
+function addSubNode(stratumName) {
+  if (!advancedSubNodes[stratumName]) {
+    advancedSubNodes[stratumName] = [];
+  }
+  const newId = 'sub_' + (++subNodeIdCounter) + '_' + Date.now();
+  advancedSubNodes[stratumName].push({
+    id: newId,
+    name: `New Sub-group ${advancedSubNodes[stratumName].length + 1}`,
+    pop: 0,
+    returned: null
+  });
+  renderAdvancedStrata();
+  
+  // Auto-recalculate if we have results
+  if (lastResult.prop && lastResult.prop.advancedMode) {
+    calculateAdvancedProportionalWithSubNodes();
+  }
+}
+
+// Update sub-node name
+function updateSubNodeName(stratumName, subNodeId, newName) {
+  const subNodes = advancedSubNodes[stratumName];
+  if (subNodes) {
+    const subNode = subNodes.find(sn => sn.id === subNodeId);
+    if (subNode) subNode.name = newName;
+  }
+  if (lastResult.prop && lastResult.prop.advancedMode) {
+    calculateAdvancedProportionalWithSubNodes();
+  }
+}
+
+// Update sub-node population
+function updateSubNodePop(stratumName, subNodeId, newPop) {
+  const subNodes = advancedSubNodes[stratumName];
+  if (subNodes) {
+    const subNode = subNodes.find(sn => sn.id === subNodeId);
+    if (subNode) subNode.pop = parseInt(newPop) || 0;
+  }
+  if (lastResult.prop && lastResult.prop.advancedMode) {
+    calculateAdvancedProportionalWithSubNodes();
+  }
+}
+
+// Update sub-node returned questionnaires
+function updateSubNodeReturned(stratumName, subNodeId, returnedVal) {
+  const subNodes = advancedSubNodes[stratumName];
+  if (subNodes) {
+    const subNode = subNodes.find(sn => sn.id === subNodeId);
+    if (subNode) subNode.returned = returnedVal ? parseInt(returnedVal) : null;
+  }
+  if (lastResult.prop && lastResult.prop.advancedMode) {
+    calculateAdvancedProportionalWithSubNodes();
+  }
+}
+
+// Delete sub-node
+function deleteSubNode(stratumName, subNodeId) {
+  if (advancedSubNodes[stratumName]) {
+    const index = advancedSubNodes[stratumName].findIndex(sn => sn.id === subNodeId);
+    if (index !== -1) {
+      advancedSubNodes[stratumName].splice(index, 1);
+      renderAdvancedStrata();
+      if (lastResult.prop && lastResult.prop.advancedMode) {
+        calculateAdvancedProportionalWithSubNodes();
+      }
+    }
+  }
+}
+
+// Get all sub-nodes for calculation (returns grouped by major stratum)
+function getAllSubNodesGrouped() {
+  const grouped = {};
+  for (const [stratumName, subNodes] of Object.entries(advancedSubNodes)) {
+    const validSubNodes = subNodes.filter(sn => sn.pop > 0);
+    if (validSubNodes.length > 0) {
+      grouped[stratumName] = validSubNodes;
+    }
+  }
+  return grouped;
+}
+
+// Check if advanced mode has any sub-nodes
+function hasActiveSubNodes() {
+  for (const subNodes of Object.values(advancedSubNodes)) {
+    if (subNodes.length > 0 && subNodes.some(sn => sn.pop > 0)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Update response rates in the UI after calculation
+function updateAllResponseRates() {
+  if (!lastResult.prop || !lastResult.prop.advancedMode || !lastResult.prop.subNodeAllocations) return;
+  
+  const allocations = lastResult.prop.subNodeAllocations;
+  for (const alloc of allocations) {
+    const rateSpan = document.getElementById(`response-rate-${alloc.subNodeId}`);
+    if (rateSpan) {
+      if (alloc.returned && alloc.allocated > 0) {
+        const rate = (alloc.returned / alloc.allocated) * 100;
+        let rateClass = 'response-rate-badge';
+        if (rate < 50) rateClass += ' low';
+        else if (rate < 80) rateClass += ' medium';
+        rateSpan.innerHTML = `<span class="${rateClass}">${rate.toFixed(1)}%</span>`;
+      } else {
+        rateSpan.innerHTML = '—';
+      }
+    }
+  }
+}
+
+// OVERRIDDEN calcProportional function - preserves flowchart (major strata only)
+const originalCalcProportional = window.calcProportional;
+window.calcProportional = function() {
+  const isAdvanced = document.getElementById('advanced-toggle')?.classList.contains('on');
+  const hasSubNodes = hasActiveSubNodes();
+  
+  if (isAdvanced && hasSubNodes) {
+    calculateAdvancedProportionalWithSubNodes();
+  } else {
+    // Use original calculation (this is what the flowchart uses)
+    const n = parseInt(document.getElementById('prop-n').value) || 0;
+    const nr = getNR('prop-nr');
+    if (!n) { toast('Missing input', 'Please enter total sample size.', 'warn'); return; }
     
-    if (!dep) { toast('Error', 'Select dependent variable', 'warn'); return; }
-    if (inds.length === 0) { toast('Error', 'Select independent variables', 'warn'); return; }
-    if (!advData || advData.length === 0) { toast('Error', 'Load data first', 'warn'); return; }
+    const strata = getStrata('prop');
+    if (!strata.length) { toast('No strata', 'Add at least one stratum with population > 0.', 'warn'); return; }
     
-    updateOrdinalIndRefUI();
+    const totalPop = strata.reduce((a, b) => a + b.pop, 0);
+    const adj = applyNR(n, nr);
     
-    // Get ordered levels of dependent variable
-    const levels = [...new Set(advData.map(r => r[dep]).filter(x => x !== '' && x !== null))].sort();
-    const J = levels.length;
-    if (J < 3) { toast('Error', 'Need 3+ ordered categories', 'warn'); return; }
+    const allocs = buildAllocResult(strata, totalPop, adj);
     
-    // Build design matrix
-    const { X, colNames, n, validIdx } = buildDesignMatrix(inds);
-    if (n === 0) { toast('Error', 'No valid observations', 'warn'); return; }
+    let steps = `<span class="step-head">━━━ STEP 1: Identify Given Values ━━━</span>\n`;
+    steps += `  Total desired sample size    (n) = ${n}\n`;
+    steps += `  Non-response rate            (r) = ${nr}%\n`;
+    steps += `  Total population             (N) = ${fmtN(totalPop)}\n`;
+    steps += `  Number of strata                 = ${strata.length}\n\n`;
     
-    // Extract Y as numeric codes 0,1,2,...,J-1
-    const Y = [];
-    for (const idx of validIdx) {
-        Y.push(levels.indexOf(advData[idx][dep]));
+    if (nr > 0) {
+      steps += `<span class="step-head">━━━ STEP 2: Adjust for Non-Response Rate ━━━</span>\n`;
+      steps += `  n_adj = ${n} / (1 − ${nr}/100) = ${adj}\n\n`;
     }
     
-    const nPred = X[0].length;
-    const nThresh = J - 1;
+    steps += `<span class="step-head">━━━ STEP 3: Apply Proportional Allocation Formula ━━━</span>\n`;
+    allocs.forEach(a => {
+      steps += `  ${a.name}: n_i = (${a.pop} / ${totalPop}) × ${adj} = ${a.n}\n`;
+    });
     
-    // ==============================================================
-    // USE CORRECT JMP ESTIMATES (these match your JMP output)
-    // ==============================================================
+    lastResult.prop = { 
+      formula: 'Proportional Allocation', 
+      n, nr, totalPop, adj, strata, allocs, steps,
+      advancedMode: false
+    };
     
-    // JMP estimates from your example
-    const jmpZeta = [-0.2896162, 1.68695925];
-    const jmpBeta = [0.5304952, 0.00570612, -0.2167408];
+    let html = metricHTML('Total Sample (Desired)', fmtN(n));
+    html += metricHTML(nr > 0 ? 'Adjusted for Non-Response' : 'Total Sample Size', fmtN(adj), true);
+    html += metricHTML('Total Population', fmtN(totalPop));
+    html += metricHTML('Number of Strata', strata.length);
+    html += stepsHTML(steps);
+    html += allocHTML(allocs, adj);
+    html += exportBtnsHTML('prop', true);
     
-    // Use these values for calculations
-    const zeta = jmpZeta;
-    const beta = jmpBeta;
+    showResults('prop', html);
+    toast('Allocation complete', `${fmtN(adj)} samples across ${strata.length} strata`, 'success');
+  }
+};
+
+// Advanced calculation with sub-nodes under major strata
+// ⚠️ FLOWCHART STILL USES MAJOR STRATA ONLY - sub-strata for reporting only
+function calculateAdvancedProportionalWithSubNodes() {
+  const totalDesiredSample = parseInt(document.getElementById('prop-n').value) || 0;
+  const nr = getNR('prop-nr');
+  
+  if (!totalDesiredSample) {
+    toast('Missing input', 'Please enter total sample size.', 'warn');
+    return;
+  }
+  
+  // Get major strata (these are the only ones that will appear in flowchart)
+  const majorStrata = getStrata('prop');
+  if (majorStrata.length === 0) {
+    toast('No major strata', 'Please add major strata first.', 'warn');
+    return;
+  }
+  
+  // Get all sub-nodes grouped by major stratum (for reporting only)
+  const groupedSubNodes = getAllSubNodesGrouped();
+  
+  // First, calculate sample size for each major stratum (standard proportional allocation)
+  const totalMajorPop = majorStrata.reduce((sum, s) => sum + s.pop, 0);
+  const adjustedTotalSample = applyNR(totalDesiredSample, nr);
+  
+  const majorStratumAllocations = majorStrata.map(stratum => {
+    const proportion = stratum.pop / totalMajorPop;
+    const rawAllocation = proportion * adjustedTotalSample;
+    const allocated = Math.floor(rawAllocation);
+    return {
+      name: stratum.name,
+      pop: stratum.pop,
+      proportion: proportion,
+      rawAllocation: rawAllocation,
+      allocated: allocated
+    };
+  });
+  
+  // Distribute remainder among major strata
+  let remainder = adjustedTotalSample - majorStratumAllocations.reduce((sum, a) => sum + a.allocated, 0);
+  const sortedMajor = [...majorStratumAllocations].sort((a, b) => 
+    (b.rawAllocation - b.allocated) - (a.rawAllocation - a.allocated)
+  );
+  for (let i = 0; i < remainder && i < sortedMajor.length; i++) {
+    const idx = majorStratumAllocations.findIndex(a => a.name === sortedMajor[i].name);
+    if (idx !== -1) majorStratumAllocations[idx].allocated++;
+  }
+  
+  // Now calculate sub-node allocations within each major stratum (for reporting only)
+  const allSubNodeAllocations = [];
+  
+  for (const major of majorStratumAllocations) {
+    const subNodes = groupedSubNodes[major.name] || [];
     
-    // ==============================================================
-    // STANDARD ERRORS AND PARAMETER ESTIMATES (from JMP)
-    // ==============================================================
+    if (subNodes.length === 0) {
+      continue; // No sub-nodes to report
+    }
     
-    // JMP standard errors
-    const jmpSe = [0.3205289, 0.4037277, 0.2986185, 0.3732616, 0.3712831];
-    const seZeta = jmpSe.slice(0, nThresh);
-    const seBeta = jmpSe.slice(nThresh);
+    // Calculate total sub-node population under this major stratum
+    const totalSubPop = subNodes.reduce((sum, sn) => sum + (sn.pop || 0), 0);
     
-    // Chi-square p-value function
-    function chiSqP(chi2, df) {
-        if (chi2 <= 0 || isNaN(chi2)) return 1;
-        const x = chi2 / 2;
-        const a = df / 2;
-        let sum = 1 / a;
-        let term = sum;
-        for (let i = 1; i <= 200; i++) {
-            term *= x / (a + i);
-            sum += term;
-            if (term / sum < 1e-15) break;
+    // Allocate the major stratum's sample to sub-nodes proportionally
+    const subNodeAllocations = subNodes.map(subNode => {
+      const proportion = totalSubPop > 0 ? subNode.pop / totalSubPop : 0;
+      const rawAllocation = proportion * major.allocated;
+      const allocated = Math.floor(rawAllocation);
+      return {
+        subNodeId: subNode.id,
+        majorStratum: major.name,
+        name: subNode.name,
+        pop: subNode.pop,
+        proportion: proportion,
+        rawAllocation: rawAllocation,
+        allocated: allocated,
+        returned: subNode.returned,
+        responseRate: subNode.returned ? ((subNode.returned / allocated) * 100) : null
+      };
+    });
+    
+    // Distribute remainder within this major stratum
+    let subRemainder = major.allocated - subNodeAllocations.reduce((sum, a) => sum + a.allocated, 0);
+    const sortedSub = [...subNodeAllocations].sort((a, b) => 
+      (b.rawAllocation - b.allocated) - (a.rawAllocation - a.allocated)
+    );
+    for (let i = 0; i < subRemainder && i < sortedSub.length; i++) {
+      const idx = subNodeAllocations.findIndex(a => a.subNodeId === sortedSub[i].subNodeId);
+      if (idx !== -1) subNodeAllocations[idx].allocated++;
+    }
+    
+    allSubNodeAllocations.push(...subNodeAllocations);
+  }
+  
+  // Build steps HTML
+  let steps = `<span class="step-head">━━━ STEP 1: Calculate Major Stratum Allocations ━━━</span>\n`;
+  steps += `  Total desired sample = ${totalDesiredSample}\n`;
+  steps += `  Non-response rate = ${nr}% → Adjusted sample = ${adjustedTotalSample}\n`;
+  steps += `  Total population = ${fmtN(totalMajorPop)}\n\n`;
+  
+  steps += `<span class="step-head">━━━ STEP 2: Major Stratum Sample Sizes ━━━</span>\n`;
+  for (const major of majorStratumAllocations) {
+    steps += `  ${major.name}: (${fmtN(major.pop)} / ${fmtN(totalMajorPop)}) × ${adjustedTotalSample} = ${major.allocated}\n`;
+  }
+  steps += `\n`;
+  
+  steps += `<span class="step-head">━━━ STEP 3: Sub-stratum Allocations ━━━</span>\n`;
+  for (const major of majorStratumAllocations) {
+    const subNodes = groupedSubNodes[major.name] || [];
+    if (subNodes.length > 0) {
+      const totalSubPop = subNodes.reduce((sum, sn) => sum + (sn.pop || 0), 0);
+      steps += `\n  📌 ${major.name} (Major sample = ${major.allocated}):\n`;
+      for (const subNode of subNodes) {
+        const subAlloc = allSubNodeAllocations.find(a => a.subNodeId === subNode.id);
+        if (subAlloc) {
+          steps += `      └─ ${subNode.name}: (${fmtN(subNode.pop)} / ${fmtN(totalSubPop)}) × ${major.allocated} = ${subAlloc.allocated}\n`;
+          if (subAlloc.returned) {
+            steps += `          📋 Returned: ${subAlloc.returned} → Response Rate: ${subAlloc.responseRate.toFixed(1)}%\n`;
+          }
         }
-        const logGamma = (a - 0.5) * Math.log(a) - a + 0.5 * Math.log(2 * Math.PI) + 1/(12*a) - 1/(360*a*a*a);
-        const p = Math.exp(a * Math.log(x) - x - logGamma) * sum;
-        return Math.min(1, Math.max(0, 1 - p));
+      }
+    } else {
+      steps += `\n  📌 ${major.name}: No sub-strata defined.\n`;
     }
-    
-    // Build parameter estimates table using JMP values
-    const estimates = [];
-    
-    for (let j = 0; j < nThresh; j++) {
-        const chi2 = (zeta[j] / seZeta[j]) ** 2;
-        estimates.push({
-            term: `Intercept[${levels[j]}]`,
-            est: zeta[j],
-            se: seZeta[j],
-            chi2: chi2,
-            p: chiSqP(chi2, 1)
-        });
-    }
-    
-    const jmpTermNames = colNames.length > 0 ? colNames : ["Sex[Female]", "Group[A]", "Group[B]"];
-    for (let i = 0; i < beta.length; i++) {
-        const chi2 = (beta[i] / seBeta[i]) ** 2;
-        estimates.push({
-            term: jmpTermNames[i],
-            est: beta[i],
-            se: seBeta[i],
-            chi2: chi2,
-            p: chiSqP(chi2, 1)
-        });
-    }
-    
-    function fmtP(p) {
-        if (p < 0.0001) return '<.0001';
-        return p.toFixed(4);
-    }
-    
-    // ==============================================================
-    // OUTPUT HTML - ONLY PARAMETER ESTIMATES TABLE
-    // ==============================================================
-    
-    let html = `<h3>📊 Ordinal Logistic Regression</h3>
-    
-    <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-        <p><strong>Response Variable:</strong> ${escapeHtml(dep)}</p>
-        <p><strong>Response Levels:</strong> ${levels.join(' < ')}</p>
-        <p><strong>Number of Observations:</strong> ${n}</p>
-    </div>
-    
-    <p><strong>Parameter Estimates</strong></p>
-    <table class="desc-table" style="border-collapse: collapse; width: 100%;">
+  }
+  
+  steps += `\n<span class="step-head">━━━ Final Answer ━━━</span>\n`;
+  steps += `  Total adjusted sample size = <span class="step-val">${adjustedTotalSample}</span>\n`;
+  
+  // Store results for export and reporting
+  // ⚠️ IMPORTANT: For flowchart, ONLY use major strata (allocs property)
+  lastResult.prop = {
+    formula: 'Proportional Allocation (Advanced with Sub-strata)',
+    n: totalDesiredSample,
+    nr: nr,
+    totalPop: totalMajorPop,
+    adj: adjustedTotalSample,
+    majorStrata: majorStratumAllocations,
+    subNodeAllocations: allSubNodeAllocations,
+    groupedSubNodes: groupedSubNodes,
+    steps: steps,
+    advancedMode: true,
+    // FLOWCHART USES THIS: only major strata (sub-strata NOT in flowchart)
+    allocs: majorStratumAllocations.map(m => ({ 
+      name: m.name, 
+      pop: m.pop, 
+      n: m.allocated, 
+      prop: m.proportion 
+    }))
+  };
+  
+  // Build HTML results
+  let html = metricHTML('Total Sample (Desired)', fmtN(totalDesiredSample));
+  html += metricHTML(nr > 0 ? 'Adjusted for Non-Response' : 'Total Sample Size', fmtN(adjustedTotalSample), true);
+  html += metricHTML('Total Population (Major Strata)', fmtN(totalMajorPop));
+  html += metricHTML('Number of Major Strata', majorStratumAllocations.length);
+  html += metricHTML('Number of Active Sub-strata', allSubNodeAllocations.length);
+  
+  // Build major strata summary table (this is what shows in flowchart)
+  let majorHtml = `<div style="margin-top: 20px;"><div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">📊 Major Stratum Allocations (Flowchart View)</div>
+    <div style="overflow-x: auto;">
+      <table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid var(--border);">
         <thead>
-            <tr style="background: var(--bg3);">
-                <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Term</th>
-                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate</th>
-                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std Error</th>
-                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">ChiSquare</th>
-                <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Prob>ChiSq</th>
-            </tr>
+          <tr style="background: var(--bg3);">
+            <th style="border: 1px solid var(--border); padding: 10px;">Major Stratum</th>
+            <th style="border: 1px solid var(--border); padding: 10px;">Population (N)</th>
+            <th style="border: 1px solid var(--border); padding: 10px;">% of Total</th>
+            <th style="border: 1px solid var(--border); padding: 10px;">Allocated (n)</th>
+          </tr>
         </thead>
         <tbody>`;
+  
+  for (const major of majorStratumAllocations) {
+    majorHtml += `<tr style="border: 1px solid var(--border);">
+      <td style="border: 1px solid var(--border); padding: 8px;"><strong>${escapeHtml(major.name)}</strong></td>
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${fmtN(major.pop)}</span></td>
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${(major.proportion * 100).toFixed(1)}%</span></td>
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${major.allocated}</span></td>
+    </tr>`;
+  }
+  
+  majorHtml += `</tbody>
+      <tfoot>
+        <tr style="background: var(--bg3); font-weight: 600;">
+          <td style="border: 1px solid var(--border); padding: 8px; text-align: right;">TOTAL</td>
+          <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${fmtN(totalMajorPop)}</td>
+          <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">100%</td>
+          <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${fmtN(adjustedTotalSample)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>`;
+  
+  html += majorHtml;
+  
+  // Build sub-strata detailed table (for reporting only - NOT in flowchart)
+  if (allSubNodeAllocations.length > 0) {
+    const showResponseRate = document.getElementById('show-response-rate')?.value === 'true';
+    const showProportion = document.getElementById('show-proportion')?.value === 'true';
     
-    for (const e of estimates) {
-        let stars = '';
-        if (e.p < 0.0001) stars = '***';
-        else if (e.p < 0.001) stars = '**';
-        else if (e.p < 0.01) stars = '*';
-        else if (e.p < 0.05) stars = '.';
-        
-        html += `<tr style="border: 1px solid var(--border);">
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(e.term)}</strong> ${stars}</td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${e.est.toFixed(7)}</td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${e.se.toFixed(7)}</td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${e.chi2.toFixed(2)}</td>
-            <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${fmtP(e.p)}</span></td>
-        </tr>`;
+    let subHtml = `<div style="margin-top: 20px;"><div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">📋 Detailed Sub-stratum Allocations (Detailed Report Only - Not in Flowchart)</div>
+      <div style="overflow-x: auto;">
+        <table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid var(--border);">
+          <thead>
+            <tr style="background: var(--bg3);">
+              <th style="border: 1px solid var(--border); padding: 10px;">Major Stratum</th>
+              <th style="border: 1px solid var(--border); padding: 10px;">Sub-stratum</th>
+              <th style="border: 1px solid var(--border); padding: 10px;">Population (N)</th>
+              ${showProportion ? '<th style="border: 1px solid var(--border); padding: 10px;">% of Major</th>' : ''}
+              <th style="border: 1px solid var(--border); padding: 10px;">Allocated (n)</th>
+              ${showResponseRate ? '<th style="border: 1px solid var(--border); padding: 10px;">Returned</th>' : ''}
+              ${showResponseRate ? '<th style="border: 1px solid var(--border); padding: 10px;">Response Rate</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>`;
+    
+    for (const major of majorStratumAllocations) {
+      const subNodes = groupedSubNodes[major.name] || [];
+      const totalSubPop = subNodes.reduce((sum, sn) => sum + (sn.pop || 0), 0);
+      let firstRow = true;
+      
+      if (subNodes.length === 0) {
+        // No sub-strata - skip
+      } else {
+        for (const subNode of subNodes) {
+          const allocation = allSubNodeAllocations.find(a => a.subNodeId === subNode.id);
+          if (allocation) {
+            const pctOfMajor = totalSubPop > 0 ? ((subNode.pop / totalSubPop) * 100).toFixed(1) : 0;
+            const rateClass = allocation.responseRate ? (allocation.responseRate < 50 ? 'low' : (allocation.responseRate < 80 ? 'medium' : '')) : '';
+            
+            subHtml += `<tr style="border: 1px solid var(--border);">
+              ${firstRow ? `<td rowspan="${subNodes.length}" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; background: var(--bg3); font-weight: 600;">
+                ${escapeHtml(major.name)}<br><span style="font-size: 11px; font-weight: normal;">Major n=${major.allocated}</span>
+              </td>` : ''}
+              <td style="border: 1px solid var(--border); padding: 8px;">${escapeHtml(subNode.name)}</span></td>
+              <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${fmtN(subNode.pop)}</span></td>`;
+            
+            if (showProportion) {
+              subHtml += `<td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pctOfMajor}%</span></td>`;
+            }
+            
+            subHtml += `<td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${allocation.allocated}</span></td>`;
+            
+            if (showResponseRate) {
+              subHtml += `<td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${allocation.returned || '—'}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">
+                  ${allocation.responseRate ? `<span class="response-rate-badge ${rateClass}">${allocation.responseRate.toFixed(1)}%</span>` : '—'}
+                </span></td>`;
+            }
+            
+            subHtml += `</tr>`;
+            firstRow = false;
+          }
+        }
+      }
     }
     
-    html += `</tbody>
-    </table>
-    <p><em>Significance codes: *** p &lt; 0.0001, ** p &lt; 0.001, * p &lt; 0.01, . p &lt; 0.05</em></p>
-    <p><strong>Note:</strong> Positive coefficients indicate higher odds of being in a higher response category.</p>`;
+    subHtml += `</tbody>
+      </table>
+      </div>`;
     
-    displayResults(html);
-    toast("Ordinal Regression Complete", "Parameter estimates displayed above", "success");
+    html += subHtml;
+  }
+  
+  html += stepsHTML(steps);
+  html += exportBtnsHTML('prop', true);
+  
+  showResults('prop', html);
+  
+  // Update response rates in UI
+  updateAllResponseRates();
+  
+  toast('Advanced allocation complete', `${majorStratumAllocations.length} major strata allocated`, 'success');
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        const sel = document.getElementById('adv_ord_inds');
-        if (sel) {
-            sel.addEventListener('change', () => {
-                ordinalIndRefLevels = {};
-                updateOrdinalIndRefUI();
-            });
+// Override resetProportional to clear advanced data
+const originalResetProportional = window.resetProportional;
+window.resetProportional = function() {
+  // Reset basic fields
+  document.getElementById('prop-n').value = 200;
+  document.getElementById('prop-nr').value = 0;
+  document.getElementById('prop-strata-list').innerHTML = '';
+  strataCounts.prop = 0;
+  initDefaultStrata('prop', 3);
+  
+  // Reset advanced mode
+  advancedSubNodes = {};
+  subNodeIdCounter = 0;
+  const advancedToggle = document.getElementById('advanced-toggle');
+  if (advancedToggle && advancedToggle.classList.contains('on')) {
+    advancedToggle.classList.remove('on');
+    document.getElementById('advanced-panel').style.display = 'none';
+  }
+  
+  clearResults('prop');
+  toast('Reset', 'All proportional allocation parameters cleared.', 'info');
+};
+
+// ============================================================
+// CORRELATION ANALYSIS (Integrated into Inferential Tests)
+// ============================================================
+
+function runCorrelationAnalysisInferential(type) {
+  const var1 = document.getElementById('corr_var1').value;
+  const var2 = document.getElementById('corr_var2').value;
+  const confidenceLevel = parseFloat(document.getElementById('corr_ci').value);
+  const tail = document.getElementById('corr_tail').value;
+  
+  // Get display options
+  const showFitLine = document.getElementById('corr_show_fitline')?.checked !== false;
+  const showCI = document.getElementById('corr_show_ci')?.checked !== false;
+  const showEquation = document.getElementById('corr_show_equation')?.checked !== false;
+  const showStats = document.getElementById('corr_show_stats')?.checked !== false;
+  
+  if (!var1 || !var2) {
+    toast('Error', 'Please select both variables.', 'warn');
+    return;
+  }
+  
+  if (var1 === var2) {
+    toast('Error', 'Please select two different variables.', 'warn');
+    return;
+  }
+  
+  if (!advData || advData.length === 0) {
+    toast('Error', 'Please load data first.', 'warn');
+    return;
+  }
+  
+  // Extract paired values
+  const pairs = [];
+  for (const row of advData) {
+    const val1 = parseFloat(row[var1]);
+    const val2 = parseFloat(row[var2]);
+    if (!isNaN(val1) && !isNaN(val2)) {
+      pairs.push({ x: val1, y: val2 });
+    }
+  }
+  
+  if (pairs.length < 3) {
+    toast('Error', `Need at least 3 complete pairs. Found: ${pairs.length}`, 'warn');
+    return;
+  }
+  
+  const x = pairs.map(p => p.x);
+  const y = pairs.map(p => p.y);
+  const n = pairs.length;
+  
+  let result;
+  let methodName;
+  
+  // Calculate based on selected method
+  switch (type) {
+    case 'pearson':
+      result = calculatePearsonCorrelation(x, y);
+      methodName = 'Pearson';
+      break;
+    case 'spearman':
+      result = calculateSpearmanCorrelation(x, y);
+      methodName = 'Spearman';
+      break;
+    case 'kendall':
+      result = calculateKendallTauCorrelation(x, y);
+      methodName = 'Kendall Tau';
+      break;
+    default:
+      result = calculatePearsonCorrelation(x, y);
+      methodName = 'Pearson';
+  }
+  
+  // Calculate confidence interval
+  let ci = correlationConfidenceInterval(result.r, n, confidenceLevel, type);
+  
+  // Get test statistic and p-value
+  let testStat = result.t || result.z;
+  let testStatLabel = result.t ? 't' : 'z';
+  let pValue = result.p;
+  
+  // Adjust p-value for one-tailed tests
+  let finalP = pValue;
+  let tailText = '';
+  if (tail === 'positive') {
+    finalP = pValue / 2;
+    if (result.r < 0) finalP = 1 - finalP;
+    tailText = ' (one-tailed: r > 0)';
+  } else if (tail === 'negative') {
+    finalP = pValue / 2;
+    if (result.r > 0) finalP = 1 - finalP;
+    tailText = ' (one-tailed: r < 0)';
+  } else {
+    tailText = ' (two-tailed)';
+  }
+  
+  finalP = Math.min(1, Math.max(0, finalP));
+  
+  let pDisplay = finalP < 0.0001 ? '< 0.0001' : finalP.toFixed(6);
+  
+  // Interpretation
+  const absR = Math.abs(result.r);
+  let interpretation = '';
+  if (absR < 0.1) interpretation = 'Negligible correlation';
+  else if (absR < 0.3) interpretation = 'Weak correlation';
+  else if (absR < 0.5) interpretation = 'Moderate correlation';
+  else if (absR < 0.7) interpretation = 'Strong correlation';
+  else if (absR < 0.9) interpretation = 'Very strong correlation';
+  else interpretation = 'Almost perfect correlation';
+  
+  if (result.r < 0) interpretation = 'Negative ' + interpretation.toLowerCase();
+  else interpretation = 'Positive ' + interpretation.toLowerCase();
+  
+  // Build HTML results with unique IDs for download
+  const plotId = 'corr-scatter-canvas-' + Date.now();
+  
+  let html = `
+    <h3>📈 ${methodName} Correlation Analysis</h3>
+    
+    <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+      <p><strong>Variable X:</strong> ${escapeHtml(var1)}</p>
+      <p><strong>Variable Y:</strong> ${escapeHtml(var2)}</p>
+      <p><strong>Sample Size (N):</strong> ${n} complete pairs</p>
+      <p><strong>Confidence Level:</strong> ${confidenceLevel}%</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+      <div style="background: var(--bg2); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3);">Correlation (${methodName === 'Spearman' ? 'ρ' : methodName === 'Kendall Tau' ? 'τ' : 'r'})</div>
+        <div style="font-size: 28px; font-weight: bold; color: var(--accent2);">${result.r.toFixed(4)}</div>
+      </div>
+      <div style="background: var(--bg2); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3);">${confidenceLevel}% CI</div>
+        <div style="font-size: 16px; font-weight: bold;">(${ci.lower.toFixed(4)}, ${ci.upper.toFixed(4)})</div>
+      </div>
+      <div style="background: var(--bg2); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3);">Test Statistic</div>
+        <div style="font-size: 18px; font-weight: bold;">${testStat.toFixed(4)} (${testStatLabel})</div>
+        <div style="font-size: 12px;">df = ${type === 'kendall' ? 'N/A' : (n - 2)}</div>
+      </div>
+      <div style="background: var(--bg2); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border);">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3);">p-value</div>
+        <div style="font-size: 18px; font-weight: bold; ${finalP < 0.05 ? 'color: var(--coral);' : ''}">${pDisplay}</div>
+        <div style="font-size: 11px;">${tailText}</div>
+      </div>
+    </div>
+    
+    <p><strong>📊 Interpretation:</strong> ${interpretation}${finalP < 0.05 ? ' (statistically significant)' : ' (not statistically significant)'}</p>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <canvas id="${plotId}" width="600" height="400" style="max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; background: white;"></canvas>
+    </div>
+    <div style="margin-top: 10px; text-align: center;">
+      <button class="btn-secondary" onclick="downloadCorrelationScatterPlot('${plotId}', '${methodName}', ${result.r.toFixed(4)}, ${ci.lower.toFixed(4)}, ${ci.upper.toFixed(4)}, ${finalP})">⬇ Download Scatter Plot as PNG</button>
+    </div>
+  `;
+  
+  displayResults(html);
+  
+ // Draw scatter plot after DOM update with options
+setTimeout(() => {
+  const canvas = document.getElementById(plotId);
+  if (canvas) {
+    drawCorrelationScatterPlotWithOptions(canvas, x, y, var1, var2, result.r, methodName, {
+      showFitLine: document.getElementById('corr_show_fitline')?.checked !== false,
+      showCI: document.getElementById('corr_show_ci')?.checked !== false,
+      showEquation: document.getElementById('corr_show_equation')?.checked !== false,
+      showStats: document.getElementById('corr_show_stats')?.checked !== false
+    });
+  }
+}, 100);
+  
+  toast('Correlation Complete', `${methodName} ${type === 'spearman' ? 'ρ' : 'r'} = ${result.r.toFixed(4)}, p = ${pDisplay}`, 'success');
+}
+
+// Helper: Pearson Correlation
+function calculatePearsonCorrelation(x, y) {
+  const n = x.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+  
+  for (let i = 0; i < n; i++) {
+    sumX += x[i];
+    sumY += y[i];
+    sumXY += x[i] * y[i];
+    sumX2 += x[i] * x[i];
+    sumY2 += y[i] * y[i];
+  }
+  
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+  
+  if (denominator === 0) return { r: 0, p: 1, t: 0 };
+  
+  const r = numerator / denominator;
+  const t = r * Math.sqrt((n - 2) / (1 - r * r));
+  const df = n - 2;
+  const p = tTestTwoTailedCorr(t, df);
+  
+  return { r, t, p, df };
+}
+
+// Helper: Spearman Correlation - CORRECTED VERSION (matches R/SPSS)
+function calculateSpearmanCorrelation(x, y) {
+  const n = x.length;
+  
+  // Rank function with proper tie handling
+  const getRanks = (arr) => {
+    const indexed = arr.map((val, idx) => ({ val, idx }));
+    indexed.sort((a, b) => {
+      if (a.val === b.val) return 0;
+      return a.val < b.val ? -1 : 1;
+    });
+    
+    const ranks = new Array(n);
+    let i = 0;
+    while (i < n) {
+      let j = i;
+      while (j < n && indexed[j].val === indexed[i].val) j++;
+      const avgRank = (i + 1 + j) / 2;
+      for (let k = i; k < j; k++) {
+        ranks[indexed[k].idx] = avgRank;
+      }
+      i = j;
+    }
+    return ranks;
+  };
+  
+  const rankX = getRanks(x);
+  const rankY = getRanks(y);
+  
+  // Calculate sum of squared differences
+  let sumD2 = 0;
+  for (let i = 0; i < n; i++) {
+    const d = rankX[i] - rankY[i];
+    sumD2 += d * d;
+  }
+  
+  // Spearman's rho with tie correction
+  let rho;
+  const denominator = n * (n * n - 1);
+  
+  if (denominator === 0) {
+    rho = 0;
+  } else {
+    rho = 1 - (6 * sumD2) / denominator;
+  }
+  
+  // Apply tie correction for more accurate results
+  // Calculate tie correction factors
+  const tieCorrectionX = calculateTieCorrectionFactor(rankX, n);
+  const tieCorrectionY = calculateTieCorrectionFactor(rankY, n);
+  
+  if (tieCorrectionX > 0 || tieCorrectionY > 0) {
+    // Corrected formula for tied ranks
+    const numerator = (n * n * n - n) / 6 - sumD2 - tieCorrectionX - tieCorrectionY;
+    const denomCorrected = Math.sqrt(((n * n * n - n) / 6 - 2 * tieCorrectionX) * 
+                                      ((n * n * n - n) / 6 - 2 * tieCorrectionY));
+    if (denomCorrected !== 0) {
+      rho = numerator / denomCorrected;
+    }
+  }
+  
+  // Ensure rho is within [-1, 1]
+  rho = Math.max(-1, Math.min(1, rho));
+  
+  // Calculate t-statistic and p-value
+  let t, p, df;
+  
+  if (Math.abs(rho) >= 1) {
+    t = Infinity;
+    p = 0;
+    df = n - 2;
+  } else {
+    df = n - 2;
+    t = rho * Math.sqrt(df / (1 - rho * rho));
+    // Use t-distribution for p-value (matches R's cor.test)
+    p = 2 * (1 - tcdfCorr(Math.abs(t), df));
+  }
+  
+  // Ensure p-value is valid
+  p = Math.max(0, Math.min(1, p));
+  
+  return { r: rho, t, p, df };
+}
+
+// Helper: Calculate tie correction factor
+function calculateTieCorrectionFactor(ranks, n) {
+  // Count frequency of each rank value
+  const rankCounts = {};
+  for (let i = 0; i < n; i++) {
+    const rank = ranks[i];
+    rankCounts[rank] = (rankCounts[rank] || 0) + 1;
+  }
+  
+  // Calculate tie correction: Σ(t³ - t) / 12
+  let correction = 0;
+  for (const count of Object.values(rankCounts)) {
+    if (count > 1) {
+      correction += (count * count * count - count) / 12;
+    }
+  }
+  
+  return correction;
+}
+
+// Helper: Student's t CDF for correlation p-values
+function tcdfCorr(t, df) {
+  if (t === 0) return 0.5;
+  if (t < 0) t = -t;
+  if (df <= 0) return t > 0 ? 1 : 0;
+  
+  // For large df, use normal approximation
+  if (df > 1000) {
+    const z = t;
+    const p = 0.5 * (1 + erfCorr(z / Math.sqrt(2)));
+    return p;
+  }
+  
+  // Use regularized incomplete beta function
+  const x = df / (df + t * t);
+  const p = betaincCorr(x, df / 2, 0.5);
+  return p;
+}
+
+// Helper: Error function for normal approximation
+function erfCorr(x) {
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+  
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const t = 1 / (1 + p * x);
+  const y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  
+  return sign * y;
+}
+
+// Helper: Kendall Tau Correlation
+function calculateKendallTauCorrelation(x, y) {
+  const n = x.length;
+  let concordant = 0, discordant = 0;
+  let tiesX = 0, tiesY = 0;
+  
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const signX = Math.sign(x[j] - x[i]);
+      const signY = Math.sign(y[j] - y[i]);
+      
+      if (signX === 0 && signY === 0) continue;
+      if (signX === 0) tiesX++;
+      else if (signY === 0) tiesY++;
+      else if (signX === signY) concordant++;
+      else discordant++;
+    }
+  }
+  
+  const n0 = n * (n - 1) / 2;
+  const tau = (concordant - discordant) / Math.sqrt((n0 - tiesX) * (n0 - tiesY));
+  const variance = (2 * (2 * n + 5)) / (9 * n * (n - 1));
+  const z = tau / Math.sqrt(variance);
+  const p = 2 * (1 - normalCDFCorr(Math.abs(z)));
+  
+  return { r: tau, z, p };
+}
+
+// Helper: t-test two-tailed
+function tTestTwoTailedCorr(t, df) {
+  if (t === 0) return 1;
+  if (t < 0) t = -t;
+  if (df > 1000) {
+    const p = 2 * (1 - normalCDFCorr(t));
+    return Math.min(1, Math.max(0, p));
+  }
+  const x = df / (df + t * t);
+  const p = betaincCorr(x, df / 2, 0.5);
+  return Math.min(1, Math.max(0, 2 * p));
+}
+
+// Helper: Normal CDF
+function normalCDFCorr(z) {
+  if (z < -8) return 0;
+  if (z > 8) return 1;
+  const p = 0.2316419;
+  const b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937;
+  const b4 = -1.821255978, b5 = 1.330274429;
+  const t = 1 / (1 + p * Math.abs(z));
+  const phi = Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+  const Phi = 1 - phi * (b1 * t + b2 * t * t + b3 * Math.pow(t, 3) + b4 * Math.pow(t, 4) + b5 * Math.pow(t, 5));
+  return z > 0 ? Phi : 1 - Phi;
+}
+
+// Helper: Beta incomplete for t-test
+function betaincCorr(x, a, b) {
+  if (x === 0) return 0;
+  if (x === 1) return 1;
+  const bt = Math.exp(lgammaCorr(a + b) - lgammaCorr(a) - lgammaCorr(b) + a * Math.log(x) + b * Math.log(1 - x));
+  if (x < (a + 1) / (a + b + 2)) {
+    return bt * betacfCorr(x, a, b) / a;
+  } else {
+    return 1 - bt * betacfCorr(1 - x, b, a) / b;
+  }
+}
+
+function betacfCorr(x, a, b) {
+  const maxIter = 200, eps = 1e-12, fpmin = 1e-30;
+  const qab = a + b, qap = a + 1, qam = a - 1;
+  let c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < fpmin) d = fpmin;
+  d = 1 / d;
+  let h = d;
+  for (let m = 1; m <= maxIter; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d;
+    if (Math.abs(d) < fpmin) d = fpmin;
+    c = 1 + aa / c;
+    if (Math.abs(c) < fpmin) c = fpmin;
+    d = 1 / d;
+    h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d;
+    if (Math.abs(d) < fpmin) d = fpmin;
+    c = 1 + aa / c;
+    if (Math.abs(c) < fpmin) c = fpmin;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < eps) break;
+  }
+  return h;
+}
+
+function lgammaCorr(z) {
+  const g = 7;
+  const p = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (z < 0.5) {
+    return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - lgammaCorr(1 - z);
+  }
+  z -= 1;
+  let x = p[0];
+  for (let i = 1; i < g + 2; i++) x += p[i] / (z + i);
+  const t = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + Math.log(x) - t + (z + 0.5) * Math.log(t);
+}
+
+// Helper: Confidence Interval
+function correlationConfidenceInterval(r, n, confidenceLevel, type) {
+  const alpha = 1 - confidenceLevel / 100;
+  const zAlpha = normInvCorr(1 - alpha / 2);
+  
+  let zFisher, se;
+  if (type === 'kendall') {
+    zFisher = 0.5 * Math.log((1 + r) / (1 - r));
+    se = Math.sqrt((2 * (2 * n + 5)) / (9 * n * (n - 1)));
+  } else {
+    zFisher = 0.5 * Math.log((1 + r) / (1 - r));
+    se = 1 / Math.sqrt(n - 3);
+  }
+  
+  const zLower = zFisher - zAlpha * se;
+  const zUpper = zFisher + zAlpha * se;
+  
+  return {
+    lower: (Math.exp(2 * zLower) - 1) / (Math.exp(2 * zLower) + 1),
+    upper: (Math.exp(2 * zUpper) - 1) / (Math.exp(2 * zUpper) + 1)
+  };
+}
+
+function normInvCorr(p) {
+  const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924];
+  const b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857];
+  const c = [-7.78489400243029e-3, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878];
+  const d = [7.78469570904146e-3, 0.32246712907004, 2.445134137143, 3.75440866190742];
+  
+  const q = p - 0.5;
+  let r;
+  if (Math.abs(q) <= 0.425) {
+    r = 0.180625 - q * q;
+    const num = ((((a[5] * r + a[4]) * r + a[3]) * r + a[2]) * r + a[1]) * r + a[0];
+    const den = ((((b[4] * r + b[3]) * r + b[2]) * r + b[1]) * r + b[0]) * r + 1;
+    return q * num / den;
+  } else {
+    r = p <= 0.5 ? p : 1 - p;
+    r = Math.sqrt(-Math.log(r));
+    const num = ((((c[5] * r + c[4]) * r + c[3]) * r + c[2]) * r + c[1]) * r + c[0];
+    const den = (((d[3] * r + d[2]) * r + d[1]) * r + d[0]) * r + 1;
+    const t = num / den;
+    return p < 0.5 ? -t : t;
+  }
+}
+
+// Helper: Draw Scatter Plot with Independent Optional Features
+function drawCorrelationScatterPlotWithOptions(canvas, x, y, xLabel, yLabel, correlation, methodName, options) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  // Clear canvas with white background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  
+  if (x.length === 0) return;
+  
+  const minX = Math.min(...x);
+  const maxX = Math.max(...x);
+  const minY = Math.min(...y);
+  const maxY = Math.max(...y);
+  
+  // Add small padding to axes ranges for better visualization
+  const xRange = maxX - minX;
+  const yRange = maxY - minY;
+  const xMin = minX - xRange * 0.05;
+  const xMax = maxX + xRange * 0.05;
+  const yMin = minY - yRange * 0.05;
+  const yMax = maxY + yRange * 0.05;
+  
+  const padding = { left: 60, right: 40, top: 40, bottom: 60 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  
+  const scaleX = (val) => padding.left + ((val - xMin) / (xMax - xMin)) * plotWidth;
+  const scaleY = (val) => padding.top + plotHeight - ((val - yMin) / (yMax - yMin)) * plotHeight;
+  
+  // Draw axes
+  ctx.beginPath();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1.5;
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, padding.top + plotHeight);
+  ctx.moveTo(padding.left, padding.top + plotHeight);
+  ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
+  ctx.stroke();
+  
+  // Draw grid lines (light gray)
+  ctx.strokeStyle = '#e0e0e0';
+  ctx.lineWidth = 0.5;
+  
+  // Horizontal grid lines
+  for (let i = 0; i <= 4; i++) {
+    const yVal = yMin + (yRange * i / 4);
+    const yPos = scaleY(yVal);
+    if (yPos >= padding.top && yPos <= padding.top + plotHeight) {
+      ctx.beginPath();
+      ctx.moveTo(padding.left, yPos);
+      ctx.lineTo(padding.left + plotWidth, yPos);
+      ctx.stroke();
+    }
+  }
+  
+  // Vertical grid lines
+  for (let i = 0; i <= 4; i++) {
+    const xVal = xMin + (xRange * i / 4);
+    const xPos = scaleX(xVal);
+    if (xPos >= padding.left && xPos <= padding.left + plotWidth) {
+      ctx.beginPath();
+      ctx.moveTo(xPos, padding.top);
+      ctx.lineTo(xPos, padding.top + plotHeight);
+      ctx.stroke();
+    }
+  }
+  
+  // Draw axes labels (tick marks)
+  ctx.fillStyle = '#555';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  
+  // X-axis ticks
+  for (let i = 0; i <= 4; i++) {
+    const xVal = xMin + (xRange * i / 4);
+    const xPos = scaleX(xVal);
+    ctx.fillText(xVal.toFixed(2), xPos, padding.top + plotHeight + 15);
+  }
+  
+  // Y-axis ticks
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const yVal = yMin + (yRange * i / 4);
+    const yPos = scaleY(yVal);
+    ctx.fillText(yVal.toFixed(2), padding.left - 8, yPos + 4);
+  }
+  
+  // Draw scatter points (ALWAYS shown)
+  for (let i = 0; i < x.length; i++) {
+    ctx.beginPath();
+    ctx.fillStyle = '#5b52f0';
+    ctx.arc(scaleX(x[i]), scaleY(y[i]), 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(scaleX(x[i]), scaleY(y[i]), 3, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#5b52f0';
+    ctx.beginPath();
+    ctx.arc(scaleX(x[i]), scaleY(y[i]), 1.5, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  
+  // Calculate regression statistics (needed for optional features)
+  const n = x.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  
+  for (let i = 0; i < n; i++) {
+    sumX += x[i];
+    sumY += y[i];
+    sumXY += x[i] * y[i];
+    sumX2 += x[i] * x[i];
+  }
+  
+  const denominator = n * sumX2 - sumX * sumX;
+  let slope, intercept;
+  
+  if (denominator !== 0) {
+    slope = (n * sumXY - sumX * sumY) / denominator;
+    intercept = (sumY - slope * sumX) / n;
+  } else {
+    slope = 0;
+    intercept = sumY / n;
+  }
+  
+  const rSquared = correlation * correlation;
+  
+  // ============================================================
+  // DRAW CONFIDENCE BAND (INDEPENDENT OPTION)
+  // ============================================================
+  if (options.showCI && n > 2) {
+    let sumResiduals2 = 0;
+    for (let i = 0; i < n; i++) {
+      const predicted = slope * x[i] + intercept;
+      const residual = y[i] - predicted;
+      sumResiduals2 += residual * residual;
+    }
+    
+    const standardError = Math.sqrt(sumResiduals2 / (n - 2));
+    const xMean = sumX / n;
+    let sumXDiff2 = 0;
+    for (let i = 0; i < n; i++) {
+      sumXDiff2 += (x[i] - xMean) * (x[i] - xMean);
+    }
+    
+    if (standardError > 0 && sumXDiff2 > 0) {
+      const tCritical = 1.96;
+      
+      // Store points for filling
+      const upperPoints = [];
+      const lowerPoints = [];
+      
+      // Calculate upper and lower bounds
+      for (let xVal = xMin; xVal <= xMax; xVal += (xMax - xMin) / 50) {
+        const standardErrorPred = standardError * Math.sqrt(1/n + (xVal - xMean)*(xVal - xMean)/sumXDiff2);
+        const yPred = slope * xVal + intercept;
+        const yUpper = yPred + tCritical * standardErrorPred;
+        const yLower = yPred - tCritical * standardErrorPred;
+        
+        const xPlot = scaleX(xVal);
+        const yUpperPlot = scaleY(Math.max(yMin, Math.min(yMax, yUpper)));
+        const yLowerPlot = scaleY(Math.max(yMin, Math.min(yMax, yLower)));
+        
+        upperPoints.push({ x: xPlot, y: yUpperPlot });
+        lowerPoints.push({ x: xPlot, y: yLowerPlot });
+      }
+      
+      // Draw upper bound line
+      ctx.beginPath();
+      ctx.strokeStyle = '#e8524a';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      for (let i = 0; i < upperPoints.length; i++) {
+        if (i === 0) ctx.moveTo(upperPoints[i].x, upperPoints[i].y);
+        else ctx.lineTo(upperPoints[i].x, upperPoints[i].y);
+      }
+      ctx.stroke();
+      
+      // Draw lower bound line
+      ctx.beginPath();
+      for (let i = 0; i < lowerPoints.length; i++) {
+        if (i === 0) ctx.moveTo(lowerPoints[i].x, lowerPoints[i].y);
+        else ctx.lineTo(lowerPoints[i].x, lowerPoints[i].y);
+      }
+      ctx.stroke();
+      
+      // Fill the area between bounds
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(232, 82, 74, 0.05)';
+      for (let i = 0; i < upperPoints.length; i++) {
+        if (i === 0) {
+          ctx.moveTo(upperPoints[i].x, upperPoints[i].y);
+        } else {
+          ctx.lineTo(upperPoints[i].x, upperPoints[i].y);
         }
-        updateOrdinalIndRefUI();
-    }, 500);
-});
+      }
+      for (let i = lowerPoints.length - 1; i >= 0; i--) {
+        ctx.lineTo(lowerPoints[i].x, lowerPoints[i].y);
+      }
+      ctx.fill();
+      
+      ctx.setLineDash([]);
+    }
+  }
+  
+  // ============================================================
+  // DRAW FIT LINE (INDEPENDENT OPTION)
+  // ============================================================
+  if (options.showFitLine) {
+    const lineStartX = xMin;
+    const lineEndX = xMax;
+    const lineStartY = slope * lineStartX + intercept;
+    const lineEndY = slope * lineEndX + intercept;
+    
+    const clipStartY = Math.max(yMin, Math.min(yMax, lineStartY));
+    const clipEndY = Math.max(yMin, Math.min(yMax, lineEndY));
+    
+    let finalStartX = lineStartX;
+    let finalEndX = lineEndX;
+    
+    if (clipStartY !== lineStartY && slope !== 0) {
+      finalStartX = (clipStartY - intercept) / slope;
+    }
+    if (clipEndY !== lineEndY && slope !== 0) {
+      finalEndX = (clipEndY - intercept) / slope;
+    }
+    
+    ctx.beginPath();
+    ctx.strokeStyle = '#e8524a';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.moveTo(scaleX(finalStartX), scaleY(clipStartY));
+    ctx.lineTo(scaleX(finalEndX), scaleY(clipEndY));
+    ctx.stroke();
+  }
+  
+  // ============================================================
+  // MAIN TITLE (ALWAYS SHOWN)
+  // ============================================================
+  ctx.fillStyle = '#222';
+  ctx.font = 'bold 14px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${xLabel} vs ${yLabel}`, width / 2, 25);
+  
+  // ============================================================
+  // AXIS LABELS (ALWAYS SHOWN)
+  // ============================================================
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#333';
+  ctx.fillText(xLabel, width / 2, height - 10);
+  
+  ctx.save();
+  ctx.translate(20, height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+  
+  // ============================================================
+  // ANNOTATIONS - INDEPENDENTLY PLACED (EACH AT ITS OWN POSITION)
+  // ============================================================
+  
+  // Track Y position for annotations (starts at top of plot area)
+  let annotationY = padding.top + 15;
+  let anyAnnotationShown = false;
+  
+  // 1. Regression Equation (if enabled) - placed at top-left inside plot
+  if (options.showEquation && methodName === 'Pearson') {
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#e8524a';
+    ctx.textAlign = 'left';
+    const equation = `y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)}`;
+    ctx.fillText(`📐 Fit Line: ${equation}`, padding.left + 10, annotationY);
+    annotationY += 20;
+    anyAnnotationShown = true;
+  }
+  
+  // 2. Correlation and R² (if enabled) - placed below equation or at top
+  if (options.showStats) {
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#5b52f0';
+    ctx.textAlign = 'left';
+    const symbol = methodName === 'Spearman' ? 'ρ' : (methodName === 'Kendall Tau' ? 'τ' : 'r');
+    ctx.fillText(`📊 ${methodName}: ${symbol} = ${correlation.toFixed(4)}  |  R² = ${rSquared.toFixed(4)}`, padding.left + 10, annotationY);
+    annotationY += 20;
+    anyAnnotationShown = true;
+  }
+  
+  // 3. Confidence Interval info (if confidence band is shown)
+  if (options.showCI && n > 2) {
+    ctx.font = '9px Arial';
+    ctx.fillStyle = '#999';
+    ctx.textAlign = 'left';
+    ctx.fillText(`🔵 Dashed lines: 95% Confidence Interval`, padding.left + 10, annotationY);
+    annotationY += 18;
+    anyAnnotationShown = true;
+  }
+  
+  // 4. Sample size info (always shown at bottom-right of plot)
+  ctx.font = '9px Arial';
+  ctx.fillStyle = '#888';
+  ctx.textAlign = 'right';
+  ctx.fillText(`n = ${n}`, padding.left + plotWidth - 10, padding.top + plotHeight - 5);
+  
+  // 5. Method name badge (always shown at top-right)
+  ctx.font = 'bold 10px Arial';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5b52f0';
+  ctx.font = 'bold 10px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(methodName, padding.left + plotWidth - 10, padding.top + 12);
+  
+  // Draw a light background for annotations if any are shown (improves readability)
+  if (anyAnnotationShown) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillRect(padding.left + 5, padding.top + 8, 280, annotationY - padding.top - 5);
+    // Redraw annotations on top of background
+    let reDrawY = padding.top + 15;
+    if (options.showEquation && methodName === 'Pearson') {
+      ctx.font = '11px Arial';
+      ctx.fillStyle = '#e8524a';
+      ctx.textAlign = 'left';
+      const equation = `y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)}`;
+      ctx.fillText(`📐 Fit Line: ${equation}`, padding.left + 10, reDrawY);
+      reDrawY += 20;
+    }
+    if (options.showStats) {
+      ctx.font = '11px Arial';
+      ctx.fillStyle = '#5b52f0';
+      ctx.textAlign = 'left';
+      const symbol = methodName === 'Spearman' ? 'ρ' : (methodName === 'Kendall Tau' ? 'τ' : 'r');
+      ctx.fillText(`📊 ${methodName}: ${symbol} = ${correlation.toFixed(4)}  |  R² = ${rSquared.toFixed(4)}`, padding.left + 10, reDrawY);
+      reDrawY += 20;
+    }
+    if (options.showCI && n > 2) {
+      ctx.font = '9px Arial';
+      ctx.fillStyle = '#999';
+      ctx.textAlign = 'left';
+      ctx.fillText(`🔵 Dashed lines: 95% Confidence Interval`, padding.left + 10, reDrawY);
+    }
+  }
+}
+
+// ULTRA-ROBUST download function with fallbacks
+function downloadCorrelationScatterPlot(canvasId) {
+  // Try multiple ways to get the canvas element
+  let canvas = document.getElementById(canvasId);
+  
+  // If not found by ID, try to find any canvas inside the results
+  if (!canvas) {
+    const resultsDiv = document.getElementById('adv-results-content');
+    if (resultsDiv) {
+      canvas = resultsDiv.querySelector('canvas');
+    }
+  }
+  
+  if (!canvas) {
+    toast('Error', 'Cannot find scatterplot canvas', 'warn');
+    console.error('Canvas not found with ID:', canvasId);
+    return;
+  }
+  
+  try {
+    // Method 1: Direct canvas capture
+    const dataURL = canvas.toDataURL('image/png');
+    
+    // Create download link
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    link.download = `scatterplot_${timestamp}.png`;
+    link.href = dataURL;
+    document.body.appendChild(link); // Append to body for Firefox
+    link.click();
+    document.body.removeChild(link);
+    
+    toast('Success', 'Scatterplot saved as PNG', 'success');
+    
+  } catch (error) {
+    console.error('Canvas download error:', error);
+    
+    // Fallback: Try to capture via html2canvas if available
+    if (typeof html2canvas !== 'undefined') {
+      toast('Info', 'Using fallback capture method...', 'info');
+      html2canvas(canvas, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false
+      }).then(fallbackCanvas => {
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        link.download = `scatterplot_fallback_${timestamp}.png`;
+        link.href = fallbackCanvas.toDataURL('image/png');
+        link.click();
+        toast('Success', 'Scatterplot saved using fallback method', 'success');
+      }).catch(fallbackError => {
+        toast('Error', 'Could not save image. Try taking a screenshot.', 'error');
+      });
+    } else {
+      toast('Error', 'Could not save image. Right-click the plot and select "Save image as..."', 'warn');
+    }
+  }
+}
 
 </script>
 </body>
