@@ -10301,98 +10301,417 @@ function runChiSquare() {
 // ═══════════════════════════════════════════════════════════════
 // FISHER'S EXACT TEST
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// FISHER'S EXACT TEST - ENHANCED WITH FULL CROSSTAB & EFFECT SIZES
+// ═══════════════════════════════════════════════════════════════
 function runFisherExact() {
   const rowVar = document.getElementById('adv_fish_row').value;
   const colVar = document.getElementById('adv_fish_col').value;
 
-  const rowLevels = [...new Set(advData.map(r => r[rowVar]))].filter(v => v !== '').sort();
-  const colLevels = [...new Set(advData.map(r => r[colVar]))].filter(v => v !== '').sort();
-
-  if (rowLevels.length !== 2 || colLevels.length !== 2) {
-    showToast('Warning', "Fisher's exact test requires a 2×2 table", 'warn');
+  if (!rowVar || !colVar) {
+    toast('Error', 'Please select both row and column variables', 'warn');
+    return;
   }
 
-  let a = 0, b = 0, c = 0, d = 0;
-  advData.forEach(row => {
-    const rv = row[rowVar], cv = row[colVar];
-    if (rv === rowLevels[0] && cv === colLevels[0]) a++;
-    else if (rv === rowLevels[0] && cv === colLevels[1]) b++;
-    else if (rv === rowLevels[1] && cv === colLevels[0]) c++;
-    else if (rv === rowLevels[1] && cv === colLevels[1]) d++;
-  });
+  // Get unique levels, excluding empty strings
+  const rowLevels = [...new Set(advData.map(r => r[rowVar]))].filter(v => v !== '' && v !== undefined && v !== null);
+  const colLevels = [...new Set(advData.map(r => r[colVar]))].filter(v => v !== '' && v !== undefined && v !== null);
+  
+  if (rowLevels.length !== 2 || colLevels.length !== 2) {
+    toast('Warning', "Fisher's exact test is most appropriate for 2×2 tables.", 'info');
+  }
 
-  const n = a + b + c + d;
-  if (n === 0) { showToast('Error', 'No valid data', 'warn'); return; }
+  const R = rowLevels.length;
+  const C = colLevels.length;
+  
+  // Build observed frequency table
+  const obs = Array.from({length: R}, () => Array(C).fill(0));
+  let total = 0;
+  
+  for (const row of advData) {
+    const rv = row[rowVar];
+    const cv = row[colVar];
+    const ri = rowLevels.indexOf(rv);
+    const ci = colLevels.indexOf(cv);
+    if (ri !== -1 && ci !== -1) {
+      obs[ri][ci]++;
+      total++;
+    }
+  }
 
-  // Exact two-tailed p-value using hypergeometric distribution
+  if (total === 0) {
+    toast('Error', 'No valid data for analysis', 'warn');
+    return;
+  }
+
+  // Calculate row and column totals
+  const rowTotals = obs.map(row => row.reduce((a, b) => a + b, 0));
+  const colTotals = Array(C).fill(0);
+  for (let j = 0; j < C; j++) {
+    for (let i = 0; i < R; i++) {
+      colTotals[j] += obs[i][j];
+    }
+  }
+
+  // Extract 2x2 table values for Fisher's test
+  const a = obs[0][0], b = obs[0][1], c = obs[1][0], d = obs[1][1];
+  
+  // Fisher's Exact Test p-value (two-tailed)
   const pExact = fisherTwoTailed(a, b, c, d);
 
+  // ==============================================================
+  // CHI-SQUARE STATISTICS (for effect sizes)
+  // ==============================================================
+  
+  // Calculate expected frequencies
+  const exp = obs.map((row, i) => row.map((_, j) => (rowTotals[i] * colTotals[j]) / total));
+  
+  // Pearson chi-square
+  let chi2 = 0;
+  for (let i = 0; i < R; i++) {
+    for (let j = 0; j < C; j++) {
+      if (exp[i][j] > 0) {
+        chi2 += Math.pow(obs[i][j] - exp[i][j], 2) / exp[i][j];
+      }
+    }
+  }
+  
+  const df = (R - 1) * (C - 1);
+  const pChiSquare = chipvalue(chi2, df);
+  
+  // Effect sizes
+  const phi = Math.sqrt(chi2 / total);
+  const cramersV = Math.sqrt(chi2 / (total * Math.min(R - 1, C - 1)));
+  const contCoeff = Math.sqrt(chi2 / (chi2 + total));
+  
+  // ==============================================================
+  // ODDS RATIO AND CONFIDENCE INTERVAL
+  // ==============================================================
+  
   const OR = (b === 0 || c === 0) ? Infinity : (a * d) / (b * c);
-  let ciLower = NaN, ciUpper = NaN;
-  if (isFinite(OR) && OR > 0) {
+  let orLower = NaN, orUpper = NaN;
+  if (isFinite(OR) && OR > 0 && a > 0 && b > 0 && c > 0 && d > 0) {
     const logOR = Math.log(OR);
     const se = Math.sqrt(1/a + 1/b + 1/c + 1/d);
-    ciLower = Math.exp(logOR - 1.96 * se);
-    ciUpper = Math.exp(logOR + 1.96 * se);
+    orLower = Math.exp(logOR - 1.96 * se);
+    orUpper = Math.exp(logOR + 1.96 * se);
+  }
+  
+  // ==============================================================
+  // RELATIVE RISK AND CONFIDENCE INTERVAL
+  // ==============================================================
+  
+  // Risk in exposed group (row 0, col 0)
+  const riskExposed = (a + b) > 0 ? a / (a + b) : NaN;
+  // Risk in unexposed group (row 1, col 0)
+  const riskUnexposed = (c + d) > 0 ? c / (c + d) : NaN;
+  // Relative Risk
+  const RR = (riskExposed / riskUnexposed);
+  
+  // Standard error for log(RR)
+  let rrLower = NaN, rrUpper = NaN;
+  if (a > 0 && b > 0 && c > 0 && d > 0 && isFinite(RR) && RR > 0) {
+    const logRR = Math.log(RR);
+    const seLogRR = Math.sqrt((1/a) - (1/(a+b)) + (1/c) - (1/(c+d)));
+    rrLower = Math.exp(logRR - 1.96 * seLogRR);
+    rrUpper = Math.exp(logRR + 1.96 * seLogRR);
+  }
+  
+  // ==============================================================
+  // BUILD ENHANCED CROSSTAB TABLE
+  // ==============================================================
+  
+  let html = `<h3>📊 Fisher's Exact Test</h3>
+  
+  <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+    <p><strong>Row Variable:</strong> ${escapeHtml(rowVar)}</p>
+    <p><strong>Column Variable:</strong> ${escapeHtml(colVar)}</p>
+    <p><strong>Total Sample Size (N):</strong> ${total}</p>
+    ${R === 2 && C === 2 ? '<p><strong>Test Type:</strong> 2×2 Contingency Table</p>' : ''}
+  </div>
+  
+  <p><strong>Crosstabulation</strong></p>
+  <div style="overflow-x: auto;">
+    <table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid var(--border);">
+      <thead>
+        <tr style="background: var(--bg3);">
+          <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">&nbsp;</th>
+          ${colLevels.map(c => `<th colspan="3" style="border: 1px solid var(--border); padding: 8px; text-align: center;">${escapeHtml(c)}</th>`).join('')}
+          <th rowspan="2" style="border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle;">Total</th>
+        </tr>
+        <tr style="background: var(--bg3);">
+          ${colLevels.map(() => `
+            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Count</th>
+            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Row %</th>
+            <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Col %</th>
+          `).join('')}
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (let i = 0; i < R; i++) {
+    html += `<tr style="border: 1px solid var(--border);">
+      <td style="border: 1px solid var(--border); padding: 8px; font-weight: bold; background: var(--bg3); text-align: left;">${escapeHtml(rowLevels[i])}</td>`;
+    
+    for (let j = 0; j < C; j++) {
+      const count = obs[i][j];
+      const rowPct = rowTotals[i] > 0 ? (count / rowTotals[i] * 100) : 0;
+      const colPct = colTotals[j] > 0 ? (count / colTotals[j] * 100) : 0;
+      
+      html += `
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${count}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${rowPct.toFixed(1)}%</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${colPct.toFixed(1)}%</span></td>`;
+    }
+    
+    html += `<td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold; background: var(--bg3);">${rowTotals[i]}<br><span style="font-size: 10px;">(${(rowTotals[i]/total*100).toFixed(1)}%)</span></span></td>
+    </tr>`;
   }
 
-  const rr = b > 0 ? (a / (a + b)) / (c / (c + d)) : NaN;
-  const phi = Math.sqrt((a*d - b*c) ** 2 * n / ((a+b)*(c+d)*(a+c)*(b+d)));
-
-  let html = `<h3>Fisher's Exact Test</h3>
-  <p><strong>Crosstabulation</strong></p>
-  <table class="desc-table">
-    <tr><th></th><th>${escapeHtml(colLevels[0])}</th><th>${escapeHtml(colLevels[1])}</th><th>Total</th></tr>
-    <tr><th>${escapeHtml(rowLevels[0])}</th><td>${a}</td><td>${b}</td><td>${a+b}</td></tr>
-    <tr><th>${escapeHtml(rowLevels[1])}</th><td>${c}</td><td>${d}</td><td>${c+d}</td></tr>
-    <tr><th>Total</th><td>${a+c}</td><td>${b+d}</td><td>${n}</td></tr>
-  </table>
-  <p><strong>Exact Test Results</strong></p>
-  <table class="desc-table">
-    <tr><th>Test</th><th>Exact Sig. (2-sided)</th></tr>
-    <tr><td style="text-align: center;">Fisher's Exact Test</span></td>
-      <td style="text-align: center;">${pExact.toFixed(6)}${pExact < 0.05 ? ' *' : ''}</span></td>
-    </tr>
-  </table>
-  <p><em>* p &lt; 0.05 indicates statistical significance</em></p>
+  // Add column totals row
+  html += `<tr style="background: var(--bg3); border: 1px solid var(--border);">
+    <td style="border: 1px solid var(--border); padding: 8px; font-weight: bold; text-align: left;">Total</span></td>`;
   
-  <p><strong>Risk Estimates</strong></p>
-  <table class="desc-table">
-    <tr><th>Measure</th><th>Value</th><th>95% CI Lower</th><th>95% CI Upper</th></tr>
-    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(rowLevels[0])} vs ${escapeHtml(rowLevels[1])})</span></td>
-      <td style="text-align: center;">${isFinite(OR) ? OR.toFixed(4) : 'Undefined'}</span></td>
-      <td style="text-align: center;">${isNaN(ciLower) ? '—' : ciLower.toFixed(4)}</span></td>
-      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : ciUpper.toFixed(4)}</span></td>
-    </tr>
-    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(rowLevels[1])} vs ${escapeHtml(rowLevels[0])})</span></td>
-      <td style="text-align: center;">${isFinite(OR) && OR !== 0 ? (1/OR).toFixed(4) : (OR === 0 ? 'Infinity' : 'Undefined')}</span></td>
-      <td style="text-align: center;">${isNaN(ciLower) ? '—' : (1/ciUpper).toFixed(4)}</span></td>
-      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : (1/ciLower).toFixed(4)}</span></td>
-    </tr>
-    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(colLevels[0])} vs ${escapeHtml(colLevels[1])})</span></td>
-      <td style="text-align: center;">${isFinite(OR) ? OR.toFixed(4) : 'Undefined'}</span></td>
-      <td style="text-align: center;">${isNaN(ciLower) ? '—' : ciLower.toFixed(4)}</span></td>
-      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : ciUpper.toFixed(4)}</span></td>
-    </tr>
-    <tr><td style="text-align: left;">Odds Ratio (${escapeHtml(colLevels[1])} vs ${escapeHtml(colLevels[0])})</span></td>
-      <td style="text-align: center;">${isFinite(OR) && OR !== 0 ? (1/OR).toFixed(4) : (OR === 0 ? 'Infinity' : 'Undefined')}</span></td>
-      <td style="text-align: center;">${isNaN(ciLower) ? '—' : (1/ciUpper).toFixed(4)}</span></td>
-      <td style="text-align: center;">${isNaN(ciUpper) ? '—' : (1/ciLower).toFixed(4)}</span></td>
-    </tr>
-    <tr><td style="text-align: left;">Relative Risk</span></td>
-      <td style="text-align: center;">${!isNaN(rr) ? rr.toFixed(4) : 'Undefined'}</span></td>
-      <td style="text-align: center;">—</span></td>
-      <td style="text-align: center;">—</span></td>
-    </tr>
-    <tr><td style="text-align: left;">Phi Coefficient</span></td>
-      <td style="text-align: center;">${phi.toFixed(4)}</span></td>
-      <td style="text-align: center;">—</span></td>
-      <td style="text-align: center;">—</span></td>
-    </tr>
+  for (let j = 0; j < C; j++) {
+    const colTotal = colTotals[j];
+    const colPctOfTotal = (colTotal / total * 100);
+    html += `
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${colTotal}</span></td>
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">-</span></td>
+      <td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${colPctOfTotal.toFixed(1)}%</span></td>`;
+  }
+  
+  html += `<td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${total}<br><span style="font-size: 10px;">(100%)</span></span></td>
+  </tr>
+  </tbody>
   </table>
-  <p class="step-val">${pExact < 0.05 ? '✓ Significant association detected (p < 0.05)' : '✗ No significant association detected (p ≥ 0.05)'}</p>`;
+  </div>
+  
+  <p style="font-size: 12px; color: var(--text3); margin-top: 10px;">
+    <strong>Note:</strong> Row % = percentage within row category | Col % = percentage within column category
+  </p>`;
 
+  // ==============================================================
+  // FISHER'S EXACT TEST RESULTS
+  // ==============================================================
+  
+  html += `<p><strong>Fisher's Exact Test</strong></p>
+  <table style="border-collapse: collapse; width: auto; min-width: 300px; margin: 10px 0; border: 1px solid var(--border);">
+    <thead>
+      <tr style="background: var(--bg3);">
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Test</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">p-value (2-sided)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px;">Fisher's Exact Test</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: ${pExact < 0.05 ? 'bold' : 'normal'};">${pExact.toFixed(6)}${pExact < 0.05 ? ' *' : ''}</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p><em>* p &lt; 0.05 indicates statistical significance</em></p>`;
+
+  // ==============================================================
+  // CHI-SQUARE TESTS
+  // ==============================================================
+  
+  html += `<p><strong>Chi-Square Tests</strong></p>
+  <table style="border-collapse: collapse; width: auto; min-width: 400px; margin: 10px 0; border: 1px solid var(--border);">
+    <thead>
+      <tr style="background: var(--bg3);">
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Test</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Value</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Asymptotic Sig.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px;">Pearson Chi-Square</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${chi2.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${df}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pChiSquare.toFixed(6)}</span></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  // ==============================================================
+  // SYMMETRIC MEASURES (Effect Sizes)
+  // ==============================================================
+  
+  html += `<p><strong>Symmetric Measures</strong></p>
+  <table style="border-collapse: collapse; width: auto; min-width: 400px; margin: 10px 0; border: 1px solid var(--border);">
+    <thead>
+      <tr style="background: var(--bg3);">
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Measure</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Value</th>
+        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Interpretation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px;">Phi Coefficient (φ)</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${phi.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px;">${phi < 0.1 ? 'Negligible' : phi < 0.3 ? 'Weak' : phi < 0.5 ? 'Moderate' : 'Strong'} association</span></td>
+      </tr>
+      <tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px;">Cramer's V</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${cramersV.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px;">${cramersV < 0.1 ? 'Negligible' : cramersV < 0.3 ? 'Weak' : cramersV < 0.5 ? 'Moderate' : 'Strong'} association</span></td>
+      </tr>
+      <tr style="border: 1px solid var(--border);">
+        <td style="border: 1px solid var(--border); padding: 8px;">Contingency Coefficient</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${contCoeff.toFixed(4)}</span></td>
+        <td style="border: 1px solid var(--border); padding: 8px;">—</span></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  // ==============================================================
+  // RISK ESTIMATES (for 2×2 tables only) - WITH CI FOR BOTH
+  // ==============================================================
+  
+  if (R === 2 && C === 2) {
+    // Calculate significance indicators
+    const orSig = (!isNaN(orLower) && !isNaN(orUpper) && (orLower > 1 || orUpper < 1));
+    const rrSig = (!isNaN(rrLower) && !isNaN(rrUpper) && (rrLower > 1 || rrUpper < 1));
+    
+    html += `<p><strong>Risk Estimates (2×2 Table)</strong></p>
+    <div style="background: var(--bg3); padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
+      <strong>📖 Interpretation Guide:</strong><br>
+      • <strong>Odds Ratio &gt; 1:</strong> ${escapeHtml(rowLevels[0])} has higher odds of ${escapeHtml(colLevels[0])}<br>
+      • <strong>Odds Ratio &lt; 1:</strong> ${escapeHtml(rowLevels[0])} has lower odds of ${escapeHtml(colLevels[0])}<br>
+      • <strong>Relative Risk &gt; 1:</strong> Risk factor (increased risk)<br>
+      • <strong>Relative Risk &lt; 1:</strong> Protective factor (decreased risk)<br>
+      • <strong>95% CI excluding 1.0:</strong> Statistically significant at α = 0.05
+    </div>
+    
+    <div style="overflow-x: auto;">
+      <table style="border-collapse: collapse; width: 100%; font-size: 12px; border: 1px solid var(--border);">
+        <thead>
+          <tr style="background: var(--bg3);">
+            <th style="border: 1px solid var(--border); padding: 10px; text-align: left; width: 28%;">Comparison</th>
+            <th style="border: 1px solid var(--border); padding: 10px; text-align: center; width: 12%;">Value</th>
+            <th style="border: 1px solid var(--border); padding: 10px; text-align: center; width: 12%;">95% CI Lower</th>
+            <th style="border: 1px solid var(--border); padding: 10px; text-align: center; width: 12%;">95% CI Upper</th>
+            <th style="border: 1px solid var(--border); padding: 10px; text-align: left; width: 36%;">Interpretation</th>
+          </tr>
+        </thead>
+        <tbody>`;
+    
+    // Odds Ratio 1: Group1 vs Group2 for Outcome1
+    html += `<tr style="border: 1px solid var(--border);">
+      <td style="border: 1px solid var(--border); padding: 10px;">
+        <strong>Odds Ratio</strong><br>
+        <span style="font-size: 10px; color: var(--text3);">${escapeHtml(rowLevels[0])} vs ${escapeHtml(rowLevels[1])}<br>for "${escapeHtml(colLevels[0])}"</span>
+      </td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center; font-weight: 600;">${isFinite(OR) ? OR.toFixed(4) : '∞'}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${isNaN(orLower) ? '—' : orLower.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${isNaN(orUpper) ? '—' : orUpper.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px;">${getSimpleOddsInterpretation(OR, escapeHtml(rowLevels[0]), escapeHtml(rowLevels[1]), escapeHtml(colLevels[0]))}${orSig ? ' ✓' : ''}</span></td>
+    </tr>`;
+    
+    // Odds Ratio 2: Group2 vs Group1 for Outcome2 (reciprocal)
+    const OR2 = isFinite(OR) && OR !== 0 ? 1/OR : (OR === 0 ? Infinity : NaN);
+    const or2Lower = isNaN(orLower) ? NaN : 1/orUpper;
+    const or2Upper = isNaN(orUpper) ? NaN : 1/orLower;
+    const or2Sig = (!isNaN(or2Lower) && !isNaN(or2Upper) && (or2Lower > 1 || or2Upper < 1));
+    
+    html += `<tr style="border: 1px solid var(--border);">
+      <td style="border: 1px solid var(--border); padding: 10px;">
+        <strong>Odds Ratio</strong><br>
+        <span style="font-size: 10px; color: var(--text3);">${escapeHtml(rowLevels[1])} vs ${escapeHtml(rowLevels[0])}<br>for "${escapeHtml(colLevels[1])}"</span>
+      </td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center; font-weight: 600;">${isFinite(OR2) ? OR2.toFixed(4) : (OR === 0 ? '∞' : '—')}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${isNaN(or2Lower) ? '—' : or2Lower.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${isNaN(or2Upper) ? '—' : or2Upper.toFixed(4)}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px;">${getSimpleOddsInterpretation(OR2, escapeHtml(rowLevels[1]), escapeHtml(rowLevels[0]), escapeHtml(colLevels[1]))}${or2Sig ? ' ✓' : ''}</span></td>
+    </tr>`;
+    
+    // Relative Risk with Confidence Interval
+    const rrDisplay = !isNaN(RR) ? RR.toFixed(4) : '—';
+    const rrLowerDisplay = !isNaN(rrLower) ? rrLower.toFixed(4) : '—';
+    const rrUpperDisplay = !isNaN(rrUpper) ? rrUpper.toFixed(4) : '—';
+    
+    let rrInterpretation = '';
+    if (!isNaN(RR)) {
+      if (RR > 1) {
+        rrInterpretation = `${escapeHtml(rowLevels[0])} has ${RR.toFixed(2)}× higher risk of "${escapeHtml(colLevels[0])}" than ${escapeHtml(rowLevels[1])}`;
+      } else if (RR < 1) {
+        rrInterpretation = `${escapeHtml(rowLevels[0])} has ${(1/RR).toFixed(2)}× lower risk of "${escapeHtml(colLevels[0])}" than ${escapeHtml(rowLevels[1])}`;
+      } else {
+        rrInterpretation = `No difference in risk between ${escapeHtml(rowLevels[0])} and ${escapeHtml(rowLevels[1])}`;
+      }
+    } else {
+      rrInterpretation = 'Cannot calculate (division by zero)';
+    }
+    
+    html += `<tr style="border: 1px solid var(--border);">
+      <td style="border: 1px solid var(--border); padding: 10px;">
+        <strong>Relative Risk</strong><br>
+        <span style="font-size: 10px; color: var(--text3);">${escapeHtml(rowLevels[0])} vs ${escapeHtml(rowLevels[1])}<br>for "${escapeHtml(colLevels[0])}"</span>
+      </td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center; font-weight: 600;">${rrDisplay}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${rrLowerDisplay}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${rrUpperDisplay}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px;">${rrInterpretation}${rrSig ? ' ✓' : ''}</span></td>
+    </tr>`;
+    
+    // Additional: Risk Difference with CI
+    const riskDiff = riskExposed - riskUnexposed;
+    let rdLower = NaN, rdUpper = NaN;
+    if (a > 0 && b > 0 && c > 0 && d > 0) {
+      const seRD = Math.sqrt((riskExposed * (1 - riskExposed) / (a + b)) + (riskUnexposed * (1 - riskUnexposed) / (c + d)));
+      rdLower = riskDiff - 1.96 * seRD;
+      rdUpper = riskDiff + 1.96 * seRD;
+    }
+    
+    const rdSig = (!isNaN(rdLower) && !isNaN(rdUpper) && (rdLower > 0 || rdUpper < 0));
+    
+    html += `<tr style="border: 1px solid var(--border); background: var(--bg3);">
+      <td style="border: 1px solid var(--border); padding: 10px;">
+        <strong>Risk Difference</strong><br>
+        <span style="font-size: 10px; color: var(--text3);">${escapeHtml(rowLevels[0])} vs ${escapeHtml(rowLevels[1])}</span>
+      </td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center; font-weight: 600;">${!isNaN(riskDiff) ? riskDiff.toFixed(4) : '—'}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${!isNaN(rdLower) ? rdLower.toFixed(4) : '—'}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px; text-align: center;">${!isNaN(rdUpper) ? rdUpper.toFixed(4) : '—'}</span></td>
+      <td style="border: 1px solid var(--border); padding: 10px;">${!isNaN(riskDiff) ? (riskDiff > 0 ? `Absolute risk increase of ${(riskDiff * 100).toFixed(1)}%` : riskDiff < 0 ? `Absolute risk reduction of ${(-riskDiff * 100).toFixed(1)}%` : 'No absolute risk difference') : 'Cannot calculate'}${rdSig ? ' ✓' : ''}</span></td>
+    </tr>`;
+    
+    html += `</tbody>
+    </table>
+    </div>
+    
+    <div style="background: var(--teal-dim); padding: 8px 12px; border-radius: 6px; margin-top: 10px; font-size: 11px;">
+      <strong>💡 Summary:</strong><br>
+      • <strong>Risk in ${escapeHtml(rowLevels[0])}:</strong> ${!isNaN(riskExposed) ? (riskExposed * 100).toFixed(1) : 'N/A'}%<br>
+      • <strong>Risk in ${escapeHtml(rowLevels[1])}:</strong> ${!isNaN(riskUnexposed) ? (riskUnexposed * 100).toFixed(1) : 'N/A'}%<br>
+      • <strong>Absolute Risk Difference:</strong> ${!isNaN(riskDiff) ? (riskDiff * 100).toFixed(1) : 'N/A'} percentage points
+    </div>`;
+  }
+
+  html += `<p class="step-val">${pExact < 0.05 ? '✓ Significant association detected (p < 0.05)' : '✗ No significant association detected (p ≥ 0.05)'}</p>`;
+  
   displayResults(html);
+}
+
+// Simple helper function for odds ratio interpretation
+function getSimpleOddsInterpretation(OR, group1, group2, outcome) {
+  if (!isFinite(OR)) return 'Cannot calculate';
+  if (Math.abs(OR - 1) < 0.05) return `No difference between ${group1} and ${group2}`;
+  
+  if (OR > 1) {
+    if (OR < 1.5) return `${group1} has slightly higher odds (${OR.toFixed(2)}×)`;
+    if (OR < 3) return `${group1} has moderately higher odds (${OR.toFixed(2)}×)`;
+    return `${group1} has much higher odds (${OR.toFixed(2)}×)`;
+  } else {
+    const reduction = ((1 - OR) * 100).toFixed(1);
+    if (OR > 0.67) return `${group1} has slightly lower odds (${reduction}% reduction)`;
+    if (OR > 0.33) return `${group1} has moderately lower odds (${reduction}% reduction)`;
+    return `${group1} has much lower odds (${reduction}% reduction)`;
+  }
 }
 
 function fisherTwoTailed(a, b, c, d) {
