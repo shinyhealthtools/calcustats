@@ -11886,7 +11886,7 @@ function isCategoricalPoisson(varName) {
     if (!allNumeric) return true;
     
     const uniqueValues = [...new Set(values)];
-    return uniqueValues.length <= 10;
+    return uniqueValues.length <= 2;
 }
 
 // Get unique values for a variable
