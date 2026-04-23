@@ -16151,20 +16151,23 @@ function runMultinomialReg() {
         <tr><th style="border: 1px solid var(--border); padding: 8px;">Nagelkerke R²</th><td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${Nagelkerke.toFixed(4)}</td></tr>
     </table>`;
     
-    // Parameter estimates for each outcome category
-    for (let j = 0; j < nRef; j++) {
-        html += `<h4 style="margin-top: 25px;">Outcome: ${escapeHtml(nonRefLevels[j])} (vs. ${escapeHtml(refCat)})</h4>
+        // Parameter estimates for each outcome category
+        for (let j = 0; j < nRef; j++) {
+            html += `<h4 style="margin-top: 25px;">Outcome: ${escapeHtml(nonRefLevels[j])} (vs. ${escapeHtml(refCat)})</h4>
         
         <div style="overflow-x: auto;">
             <table class="desc-table" style="border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px;">
                 <thead>
                     <tr style="background: var(--bg3);">
                         <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Term</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate (B)</th>
                         <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std Error</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">ChiSquare</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Prob>ChiSq</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Wald χ²</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">df</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
                         <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Odds Ratio</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
+                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -16175,6 +16178,10 @@ function runMultinomialReg() {
             const se = result.se[j * nParams + i];
             const wald = (beta / Math.max(se, 1e-10)) ** 2;
             const oddsRatio = Math.exp(beta);
+            
+            // Calculate 95% Confidence Interval for Odds Ratio
+            const ciLower = Math.exp(beta - 1.96 * se);
+            const ciUpper = Math.exp(beta + 1.96 * se);
             
             // CORRECTED: Use the proper p-value calculation function
             const pVal = calculatePValue(wald, 1);
@@ -16194,8 +16201,11 @@ function runMultinomialReg() {
                 <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${isNaN(beta) ? '0.0000' : beta.toFixed(4)}</td>
                 <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${isNaN(se) ? '0.0000' : se.toFixed(4)}</td>
                 <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${isNaN(wald) ? '0.00' : wald.toFixed(2)}</td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pDisplay}</td>
-                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${oddsRatio.toFixed(3)}</td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">1</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pDisplay}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center; font-weight: bold;">${oddsRatio.toFixed(3)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciLower.toFixed(3)}</span></td>
+                <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${ciUpper.toFixed(3)}</span></td>
             </tr>`;
         }
         
