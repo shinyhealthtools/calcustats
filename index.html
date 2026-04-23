@@ -10566,8 +10566,7 @@ function buildYForRegression(dependentVar) {
     }).filter(v => v !== null);
 }
 
-// Calculate complete pairwise comparisons for categorical variables
-function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical) {
+function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical, df_residual) {
     const results = {};
     
     for (const enc of varEncodings) {
@@ -10621,7 +10620,8 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
                     const ciUpper = diff + tCritical * seDiff;
                     
                     const tStat = diff / seDiff;
-                    const pValue = getTpValue(tStat, 0);
+                    // FIX: Pass the actual residual degrees of freedom, not 0!
+                    const pValue = getTpValue(tStat, df_residual);
                     
                     comparisons.push({
                         level1: level1,
@@ -10630,7 +10630,8 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
                         ciLower: ciLower,
                         ciUpper: ciUpper,
                         se: seDiff,
-                        tStat: tStat
+                        tStat: tStat,
+                        pValue: pValue
                     });
                 }
             }
@@ -10643,7 +10644,6 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
     
     return results;
 }
-
 // Accurate t-critical value from table with interpolation
 function getCriticalT(df, alpha = 0.05) {
     const tTable = [
@@ -11061,9 +11061,6 @@ const p_b = t_b.map(t => {
         }
         const DW = dwNum / Math.max(1e-15, dwDen);
         
-        // Calculate complete pairwise comparisons for categorical variables
-        const pairwiseComparisons = calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritical);
-        
         // Build HTML output - FIXED TABLE FORMATTING
         let html = `<h3>📈 Linear Regression Results</h3>
         
@@ -11177,47 +11174,6 @@ const p_b = t_b.map(t => {
             </tbody>
         </table>
         <p><em>Significance codes: *** p &lt; 0.001, ** p &lt; 0.01, * p &lt; 0.05</em></p>`;
-        
-        // Add complete pairwise comparisons for categorical variables
-        for (const [varName, comparisons] of Object.entries(pairwiseComparisons)) {
-            html += `<p><strong>Pairwise Comparisons for ${escapeHtml(varName)}</strong></p>
-            <p><em>95% Confidence Interval (Wald)</em></p>
-            <table class="desc-table" style="border-collapse: collapse; width: 100%;">
-                <thead>
-                    <tr style="background: var(--bg3);">
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level1</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Level2</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Estimate (B)</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Std. Error</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">t</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">Sig.</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Lower</th>
-                        <th style="border: 1px solid var(--border); padding: 8px; text-align: center;">95% CI Upper</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            
-            for (const comp of comparisons) {
-                const pValue = getTpValue(comp.tStat, df_res);
-                const stars = pValue < 0.001 ? '***' : pValue < 0.01 ? '**' : pValue < 0.05 ? '*' : '';
-                
-                html += `
-                    <tr>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(String(comp.level1))}</strong></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: left;"><strong>${escapeHtml(String(comp.level2))}</strong></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.estimate.toFixed(4)}</span></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.se.toFixed(4)}</span></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.tStat.toFixed(4)}</span></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${pValue.toFixed(6)} ${stars}</span></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.ciLower.toFixed(4)}</span></td>
-                        <td style="border: 1px solid var(--border); padding: 8px; text-align: center;">${comp.ciUpper.toFixed(4)}</span></td>
-                    </tr>`;
-            }
-            
-            html += `
-                </tbody>
-            </table>`;
-        }
         
         html += `
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-top: 15px;">
