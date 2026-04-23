@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <title>CalcuStats | Sample Size & Statistical Analysis Platform</title>
+<title>CalcuStats - Free Sample Size Calculator & Statistical Analysis Software</title>
     
     <!-- SEO Meta Tags -->
     <meta name="title" content="CalcuStats ">
@@ -55,8 +55,6 @@
 <meta name="google-site-verification" content="kJB32ReGicGUyIhghuPcYT3SjyxekwpWrDlm9t7NasA" />
 <meta name="google-site-verification" content="wziTcVA66OowBWGGGHsar8ky99roP427M_3ZTu8x1sI" />
 
-    
-    
     <!-- JSON-LD Schema Markup -->
     <script type="application/ld+json">
     {
@@ -233,7 +231,6 @@ body.dark::before {
   object-fit: cover;
   display: block;
 }
-
 
 /* ── HEADER ───────────────────────────────────────────────────── */
 .header {
@@ -611,7 +608,7 @@ main { max-width:1320px; margin:0 auto; padding:0 32px 60px; position:relative; 
   transform: translateY(-2px);
 }
 
-/* ENTIRE CARD HIGHLIGHT - NOT JUST TEXT */
+/* ENTIRE CARD HIGHLIGHT */
 .desc-var-card.selected {
   background: var(--accent-glow) !important;
   border: 2px solid var(--accent) !important;
@@ -768,7 +765,7 @@ body.dark .desc-var-card.selected .desc-var-name {
 .del-stratum:hover { background:var(--coral-dim); border-color:rgba(232,82,74,.3); color:var(--coral); }
 .del-stratum:disabled { opacity:.3; cursor:not-allowed; }
 
-/* ── FLOWCHART INLINE BUTTON (removed from input panel; now rendered in results by JS) ── */
+/* ── FLOWCHART INLINE BUTTON ── */
 .fc-inline-btn-wrap {
   display:none; margin-top:12px;
 }
@@ -1031,7 +1028,7 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
 .fc-modal-header h3 span { font-size:20px; }
 .fc-header-btns { display:flex; align-items:center; gap:8px; }
 
-/* ── CHANGE 2: Fix fullscreen button visibility ── */
+/* ── Fix fullscreen button visibility ── */
 .fc-fullscreen-btn {
   width:36px; height:36px;
   background:var(--bg4);
@@ -1167,7 +1164,7 @@ body.dark .export-btn.fc:hover { background:#f5a623; color:#0a0a0f; border-color
   transform: translateX(4px);
 }
 
-/* Optional: Add a subtle green border on hover */
+/* Add a subtle green border on hover */
 .calc-card.c-green:hover {
   border-color: rgba(40, 165, 94, 0.3);
 }
@@ -1713,8 +1710,6 @@ body.dark .result-metric-value.highlight {
   .stratum-row { grid-template-columns:1fr auto; }
   .stratum-row input:first-child { display:none; }
 }
-
-
 
 /* ── DESCRIPTIVES SPECIFIC STYLES ──────────────────────────────── */
 .desc-var-card {
@@ -2335,7 +2330,7 @@ body.dark .separator {
 <div class="calc-card c-adv" onclick="goTo('advstats')">
   <div class="card-icon">⚙</div>
   <h3>Advanced Inferential Tests</h3>
-  <p>t-tests, ANOVA, regression, chi-square, Kruskal-Wallis, Mann-Whitney, and others — full inferential statistics with estimates and p-values.</p>
+  <p>t-tests (one-sample, two sample, paired), ANOVA (One-Way, Two-way,ANCOVA, MANOVA), regression (linear, logistic, poisson), chi-square/fisher's exact, Kruskal-Wallis, Mann-Whitney, and others — with estimates, CIs, p-values, and effect size.</p>
   <div class="card-link">Run Tests →</div>
 </div>
 </div>
@@ -2344,7 +2339,7 @@ body.dark .separator {
     <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">Strata Support (Unlimited)</div></div>
     <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Ads / Tracking</div></div>
     <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Free Forever</div></div>
-    <div class="stat-item"><div class="stat-num">17</div><div class="stat-label">Inferential Tests</div></div>
+    <div class="stat-item"><div class="stat-num">19</div><div class="stat-label">Inferential Tests</div></div>
 </div>
 </div>
 
@@ -2403,14 +2398,14 @@ body.dark .separator {
         
         <div class="field-row">
           <div class="field">
-            <label>📊 Show Response Rate Column</label>
+            <label>Show Response Rate Column</label>
             <select id="show-response-rate" onchange="renderAdvancedStrata()">
               <option value="true">Yes - Show Returned & Response Rate</option>
               <option value="false">No</option>
             </select>
           </div>
           <div class="field">
-            <label>📈 Show Population Proportion</label>
+            <label>Show Population Proportion</label>
             <select id="show-proportion" onchange="renderAdvancedStrata()">
               <option value="true">Yes - Show % of Total</option>
               <option value="false">No</option>
@@ -2646,18 +2641,18 @@ body.dark .separator {
         </a>
       </p>
       <p class="bug-report">
-        <span class="bug-icon">🐛</span>
+        <span class="bug-icon"></span>
         Found a bug or need help? 
         <a href="mailto:mudassiribrahim30@gmail.com?subject=CalcuStats%20Bug%20Report&body=Please%20describe%20the%20issue%3A%0A%0A1.%20What%20were%20you%20doing%3F%0A2.%20What%20happened%3F%0A3.%20What%20did%20you%20expect%20to%20happen%3F%0A%0AThank%20you!" class="bug-link">
-          Report a Bug 📧
+          Report a Bug 
         </a>
         <span class="separator">|</span>
         <a href="https://github.com/shinyhealthtools/calcustats/issues" target="_blank" class="github-issue-link">
-          GitHub Issues 🐙
+          GitHub Issues 
         </a>
       </p>
       <p class="last-updated">
-        <span class="update-icon">🔄</span>
+        <span class="update-icon"></span>
         Last Updated: <span id="last-updated-date">April 23, 2026</span>
       </p>
       <p class="copyright">
@@ -2670,7 +2665,7 @@ body.dark .separator {
         <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
         </svg>
-        <span>Source Code</span>
+        <span>GitHub Code</span>
       </a>
       <a href="https://linkedin.com/in/mudasir-mohammed-ibrahim-16b5141b0" target="_blank" rel="noopener noreferrer" class="linkedin-btn">
         <svg height="20" width="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -2819,13 +2814,12 @@ body.dark .separator {
 (function() {
   const copyrightSpan = document.getElementById('copyright-full');
   if (copyrightSpan) {
-    copyrightSpan.textContent = `© ${new Date().getFullYear()} CalcuStats · Created by Mudasir Mohammed Ibrahim`;
+    copyrightSpan.textContent = `© ${new Date().getFullYear()} CalcuStats · Site built by Mudasir Mohammed Ibrahim`;
   }
   
-  // Set last updated date (you can manually set this or calculate from git)
+  // Set last updated date (Can manually set this or calculate from git)
   const lastUpdatedSpan = document.getElementById('last-updated-date');
   if (lastUpdatedSpan) {
-    // You can either hardcode the date or use a dynamic approach
     // For dynamic: fetch from somewhere or calculate from localStorage
     const lastUpdated = localStorage.getItem('calcustats_last_updated');
     if (lastUpdated) {
@@ -3058,7 +3052,7 @@ body.dark .separator {
     <div class="panel">
       <div class="panel-title" id="adv-selected-test-title">⚙️ Test Configuration</div>
       <div id="adv-test-config-content">
-        <!-- Dynamic inputs will appear here based on selected test -->
+        <!-- Dynamic inputs appear based on selected test -->
         <p style="color:var(--text3); text-align:center; padding:20px;">Select a test from the categories above to configure and run.</p>
       </div>
       <div class="btn-row" style="margin-top:20px;">
@@ -3115,7 +3109,7 @@ let currentSelectedAdvTest = null;
 function selectAdvTest(testId) {
   currentSelectedAdvTest = testId;
   
-  // Update UI: remove selected class from all test options
+  // Remove selected class from all test options
   document.querySelectorAll('.test-option').forEach(opt => opt.classList.remove('selected'));
   // Add selected class to clicked option
   const clickedOpt = document.querySelector(`.test-option[data-test="${testId}"]`);
@@ -3499,7 +3493,6 @@ function runSelectedAdvTest() {
   }
 }
 
-
 // Make sure category cards don't interfere with test selection
 window.selectAdvTest = selectAdvTest;
 window.runSelectedAdvTest = runSelectedAdvTest;
@@ -3791,8 +3784,7 @@ window.runSelectedAdvTest = runSelectedAdvTest;
           <div id="fc-svg-container"></div>
         </div>
       </div>
-
-    </div><!-- end fc-body -->
+    </div>
   </div>
 </div>
 <!-- ══ END FLOWCHART MODAL ════════════════════════════════════════ -->
@@ -5756,7 +5748,7 @@ function escapeHtml(str) {
   });
 }
 
-// Accurate quantile calculation matching SAS/R (Type 6 method)
+// Accurate quantile calculation 
 function calculateQuantile(sorted, p, n) {
   const index = p * (n + 1);
   const lower = Math.floor(index);
@@ -5770,14 +5762,14 @@ function calculateQuantile(sorted, p, n) {
   return sorted[lower - 1] * (1 - weight) + sorted[upper - 1] * weight;
 }
 
-// SAS-matching confidence interval for mean
+// Confidence interval for mean
 function getSASConfidenceInterval(mean, sd, n, alpha = 0.05) {
   if (n <= 1) return { lower: null, upper: null };
   
   const df = n - 1;
   const standardError = sd / Math.sqrt(n);
   
-  // Get exact t-value matching SAS (using inverse CDF)
+  // Get exact t-value (using inverse CDF)
   const tValue = getTValueSAS(df, 1 - alpha/2);
   const marginOfError = tValue * standardError;
   
@@ -5789,25 +5781,23 @@ function getSASConfidenceInterval(mean, sd, n, alpha = 0.05) {
   };
 }
 
-// SAS-matching t-value using precise approximation
+// T-value using precise approximation
 function getTValueSAS(df, p) {
   // For large df, use normal approximation
   if (df > 1000) {
     return getZScore(p);
   }
   
-  // Use the same algorithm SAS uses (based on AS 241 algorithm)
-  // This provides matching results to SAS PROC MEANS
+  // Use AS 241 algorithm
   return inverseTCDF(p, df);
 }
 
-// Inverse t CDF - matches SAS output
+// Inverse t CDF 
 function inverseTCDF(p, df) {
   if (p <= 0) return -Infinity;
   if (p >= 1) return Infinity;
   
   // For one-tailed probability p, two-tailed uses 1 - alpha/2
-  // Using algorithm similar to SAS's TINV function
   
   if (df > 1000) {
     return getZScore(p);
@@ -5843,7 +5833,7 @@ function calculateNumericStats(values) {
   const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
   const sd = Math.sqrt(variance);
   
-  // SAS-matching 95% Confidence Interval for the Mean
+  // 95% Confidence Interval for the Mean
   const ci = getSASConfidenceInterval(mean, sd, n, 0.05);
   
   const min = sorted[0];
@@ -5862,7 +5852,7 @@ function calculateNumericStats(values) {
     percentileValues[p] = calculateQuantile(sorted, p / 100, n);
   });
   
-  // SAS-matching skewness and kurtosis
+  // Skewness and kurtosis
   const m2 = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / n;
   const m3 = values.reduce((sum, v) => sum + Math.pow(v - mean, 3), 0) / n;
   const m4 = values.reduce((sum, v) => sum + Math.pow(v - mean, 4), 0) / n;
@@ -5899,14 +5889,14 @@ function calculateNumericStats(values) {
   };
 }
 
-// Calculate confidence interval for a proportion (Wilson score interval - matches SAS)
+// Calculate confidence interval for a proportion (Wilson score interval)
 function calculateProportionCI(count, total, confidenceLevel = 0.95) {
   if (total === 0) return { lower: null, upper: null, proportion: 0 };
   
   const p = count / total;
   const z = getZScore(1 - (1 - confidenceLevel) / 2);
   
-  // Wilson score interval (SAS default for binomial proportions)
+  // Wilson score interval 
   const denominator = 1 + (z * z) / total;
   const center = p + (z * z) / (2 * total);
   const halfWidth = z * Math.sqrt((p * (1 - p) + (z * z) / (4 * total)) / total);
@@ -5922,7 +5912,7 @@ function calculateProportionCI(count, total, confidenceLevel = 0.95) {
 }
 
 function getZScore(p) {
-  // Inverse CDF for standard normal (AS 241 algorithm - matches SAS)
+  // Inverse CDF for standard normal (AS 241 algorithm)
   const a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
   const a4 = 138.357751867269, a5 = -30.6647980661472, a6 = 2.50662827745924;
   const b1 = -54.4760987982241, b2 = 161.585836858041, b3 = -155.698979859887;
@@ -7067,8 +7057,7 @@ function toast(title, message, type = 'info') {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CORRECTED STATISTICAL DISTRIBUTION FUNCTIONS
-// All p-values match R/validated references to ≥4 decimal places
+// STATISTICAL DISTRIBUTION FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
 // --- Regularized Incomplete Beta Function (core for t and F CDFs) ---
@@ -7263,7 +7252,7 @@ function covariance(a, b) {
 function correlation(a, b) { return covariance(a, b) / (sd(a) * sd(b)); }
 
 function leveneTest(g1, g2, useMedian = false) {
-  // useMedian = false (default) = Levene's test (uses MEAN) - matches SPSS
+  // useMedian = false (default) = Levene's test (uses MEAN) 
   // useMedian = true = Brown-Forsythe test (uses MEDIAN) - more robust for non-normal data
   
   const center1 = useMedian ? median(g1) : mean(g1);
@@ -7453,9 +7442,6 @@ function cohensD(g1, g2) {
 // ═══════════════════════════════════════════════════════════════
 // INDEPENDENT SAMPLES t-TEST 
 // ═══════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════
-// CORRECTED t-TEST - NO BOLD CI VALUES
-// ═══════════════════════════════════════════════════════════════
 function runIndTTest() {
   const dep = document.getElementById('adv_dep').value;
   const group = document.getElementById('adv_group').value;
@@ -7488,7 +7474,7 @@ const lev = leveneTest(g1, g2, false);
   const alpha = 1 - ci;
 
   // ============================================================
-  // CORRECTED P-VALUE FUNCTIONS
+  // P-VALUE FUNCTIONS
   // ============================================================
   
   function tcdf_corrected(t, df) {
@@ -8265,7 +8251,7 @@ const cohensD = meanDiff / s;
 // ═══════════════════════════════════════════════════════════════
 // ONE-WAY ANOVA
 // ═══════════════════════════════════════════════════════════════
-// Reliable F-distribution p-value calculation (matches SPSS/R/SAS/Stata)
+// Reliable F-distribution p-value calculation 
 function fdistPvalue(F, df1, df2) {
   if (F <= 0) return 1.0;
   if (isNaN(F) || !isFinite(F)) return 1.0;
@@ -8361,14 +8347,11 @@ function loggamma(z) {
 }
 
 // ============================================================
-// VALIDATED F-DISTRIBUTION P-VALUE CALCULATION
-// Matches R's pf() function, SPSS, SAS, and JMP
+// F-DISTRIBUTION P-VALUE CALCULATION
 // ============================================================
 
 function pf_accurate(F, df1, df2) {
     // Returns the upper tail p-value: P(F > observed)
-    // This matches R's pf(F, df1, df2, lower.tail = FALSE)
-    
     if (F <= 0) return 1.0;
     if (isNaN(F) || !isFinite(F)) return 1.0;
     if (df1 <= 0 || df2 <= 0) return 1.0;
@@ -8484,7 +8467,6 @@ function lgamma_fn(z) {
 
 function incbeta_accurate(x, a, b) {
     // Regularized incomplete beta function
-    // Matches R's pbeta() function
     if (x <= 0) return 0;
     if (x >= 1) return 1;
     if (a <= 0 || b <= 0) return NaN;
@@ -8556,7 +8538,7 @@ function incbeta_cf(x, a, b) {
 }
 
 // ============================================================
-// CORRECTED ONE-WAY ANOVA WITH VALIDATED P-VALUES
+// ONE-WAY ANOVA 
 // ============================================================
 
 function runOneWayANOVA() {
@@ -8706,7 +8688,7 @@ function runOneWayANOVA() {
     const Fvalue = MSbetween / MSwithin;
     
     // ============================================================
-    // VALIDATED P-VALUE USING ACCURATE F-DISTRIBUTION
+    // P-VALUE USING ACCURATE F-DISTRIBUTION
     // ============================================================
     const pValue = pf_accurate(Fvalue, dfBetween, dfWithin);
     
@@ -8873,7 +8855,7 @@ function runOneWayANOVA() {
     toast("ANOVA Complete", `F(${dfBetween}, ${dfWithin}) = ${Fvalue.toFixed(4)}, p = ${pDisplay}`, "success");
 }
 
-// Helper: Levene's Test (keep your existing implementation)
+// Helper: Levene's Test 
 function calculateLeveneStatistic(groups, groupStats) {
     const groupNames = Object.keys(groups);
     let allDeviations = [];
@@ -8971,8 +8953,6 @@ function calculateMedian(arr) {
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 0 ? (sorted[mid-1] + sorted[mid]) / 2 : sorted[mid];
 }
-
-// ADD THESE 3 NEW FUNCTIONS
 
 function calculateTukeyHSDCorrected(groupStats, MSwithin, dfWithin) {
     const results = [];
@@ -9335,8 +9315,7 @@ function logGamma(z) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TWO-WAY ANOVA — COMPLETE WITH CORRECT PARAMETER ESTIMATES
-// Using proper t-distribution for p-values and confidence intervals
+// TWO-WAY ANOVA 
 // ═══════════════════════════════════════════════════════════════
 
 // Global store for Two-Way ANOVA reference levels
@@ -9448,7 +9427,7 @@ function setTwowayAnovaRef(varName, refValue) {
 }
 
 // ==============================================================
-// CORRECT T-DISTRIBUTION FUNCTIONS
+// T-DISTRIBUTION FUNCTIONS
 // ==============================================================
 
 // Student's t-distribution CDF (cumulative distribution function)
@@ -10137,7 +10116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ═══════════════════════════════════════════════════════════════
-// MATRIX HELPERS  (add these once globally if not already present)
+// MATRIX HELPERS  
 // ═══════════════════════════════════════════════════════════════
 
 function transpose(M) {
@@ -10180,7 +10159,7 @@ function matInv(M) {
 
 
 // ═══════════════════════════════════════════════════════════════
-// CHI-SQUARE TEST OF INDEPENDENCE - WITH ENHANCED CROSSTAB
+// CHI-SQUARE TEST OF INDEPENDENCE 
 // ═══════════════════════════════════════════════════════════════
 function runChiSquare() {
   const rowVar = document.getElementById('adv_chi_row').value;
@@ -10262,7 +10241,7 @@ function runChiSquare() {
   }
 
   // ==============================================================
-  // LINEAR-BY-LINEAR ASSOCIATION (Mantel-Haenszel) - ADDED
+  // LINEAR-BY-LINEAR ASSOCIATION (Mantel-Haenszel) 
   // ==============================================================
   let linearByLinearChi2 = null;
   let linearByLinearP = null;
@@ -10484,7 +10463,7 @@ function runChiSquare() {
     </tr>`;
   }
   
-  // Linear-by-Linear Association - ADDED ROW
+  // Linear-by-Linear Association 
   if (linearByLinearChi2 !== null) {
     html += `<tr>
       <td style="border: 1px solid var(--border);">Linear-by-Linear Association</span></td>
@@ -10541,9 +10520,6 @@ function runChiSquare() {
 
 // ═══════════════════════════════════════════════════════════════
 // FISHER'S EXACT TEST
-// ═══════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════
-// FISHER'S EXACT TEST - ENHANCED WITH FULL CROSSTAB & EFFECT SIZES
 // ═══════════════════════════════════════════════════════════════
 function runFisherExact() {
   const rowVar = document.getElementById('adv_fish_row').value;
@@ -10659,7 +10635,7 @@ function runFisherExact() {
   }
   
   // ==============================================================
-  // BUILD ENHANCED CROSSTAB TABLE
+  // BUILD CROSSTAB TABLE
   // ==============================================================
   
   let html = `<h3>📊 Fisher's Exact Test</h3>
@@ -11083,14 +11059,14 @@ function buildDesignMatrixForRegressionWithRef(independentVars) {
     const colNames = ['(Intercept)'];
     const varEncodings = [];
     
-    // CRITICAL FIX: Store reference levels for each categorical variable
+    // Store reference levels for each categorical variable
     const varRefLevels = {};
     
     // First pass: determine encoding for each variable and STORE reference levels
     independentVars.forEach(varName => {
         if (isCategoricalLinear(varName)) {
             const levels = getUniqueValuesLinear(varName);
-            // FIX: Explicitly set and store reference level (first level alphabetically or user-selected)
+            // Explicitly set and store reference level (first level alphabetically or user-selected)
             const referenceLevel = categoricalReferenceLevels[varName] || levels[0];
             varRefLevels[varName] = referenceLevel;
             const otherLevels = levels.filter(v => v !== referenceLevel);
@@ -11131,13 +11107,12 @@ function buildDesignMatrixForRegressionWithRef(independentVars) {
             }
             
             if (isCategoricalLinear(varName)) {
-                // FIX: Use the pre-stored reference level for this variable
+                // Use the pre-stored reference level for this variable
                 const referenceLevel = varRefLevels[varName];
                 const levels = getUniqueValuesLinear(varName);
                 const otherLevels = levels.filter(v => v !== referenceLevel);
                 
-                // FIX: Create dummy variables (0/1) for non-reference levels only
-                // This prevents the dummy variable trap (perfect multicollinearity)
+                // Create dummy variables (0/1) for non-reference levels only
                 for (const level of otherLevels) {
                     // Convert both to strings for reliable comparison
                     const valStr = String(value);
@@ -11160,7 +11135,7 @@ function buildDesignMatrixForRegressionWithRef(independentVars) {
         }
     }
     
-    // FIX: Return the properly constructed design matrix
+    // Return the properly constructed design matrix
     return { X, colNames, n: X.length, varEncodings, varRefLevels };
 }
 
@@ -11227,7 +11202,7 @@ function calculateCompletePairwiseComparisons(betas, se_b, varEncodings, tCritic
                     const ciUpper = diff + tCritical * seDiff;
                     
                     const tStat = diff / seDiff;
-                    // FIX: Pass the actual residual degrees of freedom, not 0!
+                    // Pass the actual residual degrees of freedom, not 0!
                     const pValue = getTpValue(tStat, df_residual);
                     
                     comparisons.push({
@@ -11668,7 +11643,7 @@ const p_b = t_b.map(t => {
         }
         const DW = dwNum / Math.max(1e-15, dwDen);
         
-        // Build HTML output - FIXED TABLE FORMATTING
+        // Build HTML output 
         let html = `<h3>📈 Linear Regression Results</h3>
         
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
@@ -12430,7 +12405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// POISSON REGRESSION - WITH CONFIDENCE INTERVALS FOR B COEFFICIENTS
+// POISSON REGRESSION 
 // ═══════════════════════════════════════════════════════════════
 
 // Store reference levels for independent variables
@@ -12706,7 +12681,7 @@ function poissonLogL_Enhanced(X, Y, betas) {
 }
 
 // ============================================================
-// MAIN POISSON REGRESSION FUNCTION - WITH CI FOR B COEFFICIENTS
+// MAIN POISSON REGRESSION FUNCTION 
 // ============================================================
 function runPoissonReg() {
     console.log("=== Poisson Regression Started ===");
@@ -12798,7 +12773,7 @@ function runPoissonReg() {
         const IRR = betas.map(b => Math.exp(b));
         
         // ============================================================
-        // BUILD HTML OUTPUT WITH CI FOR B COEFFICIENTS
+        // BUILD HTML OUTPUT 
         // ============================================================
         let html = `<h3>📊 Poisson Regression Results</h3>
         
@@ -12976,7 +12951,6 @@ function olsSolve(X, Y) {
   console.log("OLS: Design matrix dimensions", n, "x", p);
   
   // Method 1: Use Moore-Penrose pseudo-inverse for numerical stability
-  // This handles near-singular matrices that cause p=1.0000
   
   // Build XtX and XtY
   const Xt = transposeMatrix(X);
@@ -12984,7 +12958,6 @@ function olsSolve(X, Y) {
   const XtY = multiplyMatrices(Xt, Y.map(v => [v]));
   
   // Add small ridge parameter to diagonal for numerical stability
-  // This prevents singular matrix issues while preserving interpretation
   const lambda = 1e-10;
   const XtX_reg = XtX.map((row, i) => 
     row.map((val, j) => i === j ? val + lambda : val)
@@ -13172,7 +13145,7 @@ function multinomialIRLS(X, Yenc, J, refIdx) {
 function ordinalIRLS(X, Yenc, J, maxIter = 200, tol = 1e-8) {
   const n = X.length, p = X[0].length;
   // Parameters: J-1 thresholds + p-1 coefficients (no intercept column in X_pred)
-  const Xp = X.map(row => row.slice(1)); // remove intercept column
+  const Xp = X.map(row => row.slice(1)); 
   const q  = Xp[0].length;
 
   // Initialize thresholds by empirical quantiles
@@ -13269,12 +13242,12 @@ function ordinalIRLS(X, Yenc, J, maxIter = 200, tol = 1e-8) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DESIGN MATRIX BUILDER (handles categorical → dummy encoding)
+// DESIGN MATRIX BUILDER 
 // ═══════════════════════════════════════════════════════════════
 function buildDesignMatrix(inds) {
   // Determine which columns are categorical
-  const dummyMap = {}; // col -> [dummyColName, ...]
-  const colBlocks = []; // [{name, type, levels?}]
+  const dummyMap = {}; 
+  const colBlocks = []; 
   for (const col of inds) {
     const vals = advData.map(r => r[col]).filter(v => v !== '');
     const isNum = vals.every(v => !isNaN(parseFloat(v)));
@@ -13441,7 +13414,7 @@ function escapeHtml(str) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ADVANCED STATISTICAL TESTS - DATA LOADING & UTILITIES
+// ADVANCED STATISTICAL TESTS 
 // ═══════════════════════════════════════════════════════════════
 
 let advData = [];
@@ -13501,7 +13474,7 @@ function clearAdvData() {
   toast('Cleared', 'All data cleared.', 'info');
 }
 
-// ========== FIXED DISPLAY FUNCTIONS ==========
+// ========== DISPLAY FUNCTIONS ==========
 function displayResults(html) {
   console.log('displayResults called, HTML length:', html.length);
   
@@ -13589,7 +13562,7 @@ function showToast(msg, title, type) {
 })();
 
 // ═══════════════════════════════════════════════════════════════
-// MANN-WHITNEY U TEST - PROPER HTML TABLE FORMATTING
+// MANN-WHITNEY U TEST 
 // ═══════════════════════════════════════════════════════════════
 
 function runMannWhitney() {
@@ -13711,7 +13684,7 @@ function runMannWhitney() {
     else pDisplay = pValue.toFixed(4);
     
     // ============================================================
-    // BUILD HTML USING PROPER TABLE TAGS (NOT PLAIN TEXT)
+    // BUILD HTML 
     // ============================================================
     
     let html = `<h3>📊 Mann-Whitney U Test (Wilcoxon Rank-Sum Test)</h3>
@@ -13754,7 +13727,7 @@ function runMannWhitney() {
         </table>
     </div>`;
     
-    // TABLE 2: Rank Information (FIXED - PROPER HTML TABLE)
+    // TABLE 2: Rank Information 
     html += `<p><strong>📊 Rank Information</strong></p>
     <div style="overflow-x: auto; margin-bottom: 20px;">
         <table style="border-collapse: collapse; width: 100%; font-size: 13px; border: 1px solid #ccc;">
@@ -13851,7 +13824,7 @@ function calculateIQRFast(values) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WILCOXON SIGNED-RANK TEST - CLEAR INTERPRETATION
+// WILCOXON SIGNED-RANK TEST 
 // ═══════════════════════════════════════════════════════════════
 
 function runWilcoxon() {
@@ -14077,7 +14050,7 @@ function runWilcoxon() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// KRUSKAL-WALLIS H TEST with Dunn's Test
+// KRUSKAL-WALLIS H TEST 
 // ═══════════════════════════════════════════════════════════════
 
 function runKruskalWallis() {
@@ -14287,7 +14260,7 @@ function runKruskalWallis() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ANCOVA - Analysis of Covariance (CalcuStats unique output)
+// ANCOVA - Analysis of Covariance 
 // ═══════════════════════════════════════════════════════════════
 
 // Global store for ANCOVA reference levels
@@ -14542,7 +14515,7 @@ function runANCOVA() {
     const refDisplay = referenceLevel ? ` (vs ${referenceLevel})` : '';
     for (let j = 1; j < k; j++) paramNames.push(`${factor}: ${factorLevels[j]}${refDisplay}`);
     
-    // Build HTML output - UNIQUE CalcuStats format
+    // Build HTML output 
     let html = `<h3>📊 Covariance Analysis (ANCOVA)</h3>
     
     <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
@@ -14744,8 +14717,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// MANOVA - Multivariate Analysis of Variance (Complete)
-// Includes Multivariate Tests + Tests of Between-Subjects Effects
+// MANOVA - Multivariate Analysis of Variance 
 // ═══════════════════════════════════════════════════════════════
 
 function runMANOVA() {
@@ -15416,7 +15388,7 @@ function pfvalue(F, df1, df2) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MULTINOMIAL LOGISTIC REGRESSION - Using Softmax with BFGS Optimization
+// MULTINOMIAL LOGISTIC REGRESSION 
 // ═══════════════════════════════════════════════════════════════
 
 let multinomialIndRefLevels = {};
@@ -15532,7 +15504,7 @@ function createDesignMatrix(independentVars, data) {
     // Build design matrix with consistent numeric representation
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
-        const designRow = [1]; // Intercept
+        const designRow = [1]; 
         let valid = true;
         
         for (const varName of independentVars) {
@@ -15581,7 +15553,7 @@ function softmaxPredictions(X, betas, nCategories, nParams) {
     
     for (let i = 0; i < n; i++) {
         const x = X[i];
-        const scores = [0]; // Reference category score = 0
+        const scores = [0]; 
         
         for (let j = 0; j < nRef; j++) {
             let score = 0;
@@ -15614,7 +15586,7 @@ function negativeLogLikelihood(betas, X, y, nCategories, nParams) {
         const trueCat = y[i];
         
         // Compute linear predictors
-        const scores = [0]; // Reference category
+        const scores = [0]; 
         
         for (let j = 0; j < nRef; j++) {
             let score = 0;
@@ -15720,7 +15692,7 @@ function computeHessian(betas, X, y, nCategories, nParams) {
     return hessian;
 }
 
-// CORRECTED: Calculate p-value from Chi-square statistic (1 degree of freedom)
+// Calculate p-value from Chi-square statistic (1 degree of freedom)
 function calculatePValue(chiSquare, df) {
     if (chiSquare <= 0) return 1.0;
     if (df === 1) {
@@ -16008,7 +15980,7 @@ function bfgsOptimize(X, y, nCategories, nParams, maxIter = 500, tol = 1e-6) {
     return { betas, se, loss: prevLoss, hessian };
 }
 
-// MAIN FUNCTION with corrected p-value calculation
+// MAIN FUNCTION 
 function runMultinomialReg() {
     const dep = document.getElementById('adv_multi_dep').value;
     const indsSelect = document.getElementById('adv_multi_inds');
@@ -16183,7 +16155,7 @@ function runMultinomialReg() {
             const ciLower = Math.exp(beta - 1.96 * se);
             const ciUpper = Math.exp(beta + 1.96 * se);
             
-            // CORRECTED: Use the proper p-value calculation function
+            // Use the proper p-value calculation function
             const pVal = calculatePValue(wald, 1);
             
             let stars = '';
@@ -16237,11 +16209,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ============================================================
 // ADVANCED PROPORTIONAL ALLOCATION WITH SUB-NODES
-// SUB-NODES DO NOT AFFECT FLOWCHART - ONLY FOR REPORTING
 // ============================================================
 
 // Global storage for advanced strata data (sub-nodes under major strata)
-let advancedSubNodes = {}; // Format: { stratumId: [{ id, name, pop, returned }] }
+let advancedSubNodes = {}; 
 let subNodeIdCounter = 0;
 
 // Toggle advanced features panel
@@ -16604,7 +16575,7 @@ function calculateAdvancedProportionalWithSubNodes() {
     const subNodes = groupedSubNodes[major.name] || [];
     
     if (subNodes.length === 0) {
-      continue; // No sub-nodes to report
+      continue; 
     }
     
     // Calculate total sub-node population under this major stratum
@@ -16846,7 +16817,7 @@ window.resetProportional = function() {
 };
 
 // ============================================================
-// CORRELATION ANALYSIS (Integrated into Inferential Tests)
+// CORRELATION ANALYSIS 
 // ============================================================
 
 function runCorrelationAnalysisInferential(type) {
@@ -16957,7 +16928,7 @@ function runCorrelationAnalysisInferential(type) {
   if (result.r < 0) interpretation = 'Negative ' + interpretation.toLowerCase();
   else interpretation = 'Positive ' + interpretation.toLowerCase();
   
-  // Build HTML results with unique IDs for download
+  // Build HTML results 
   const plotId = 'corr-scatter-canvas-' + Date.now();
   
   let html = `
@@ -17045,7 +17016,7 @@ function calculatePearsonCorrelation(x, y) {
   return { r, t, p, df };
 }
 
-// Helper: Spearman Correlation - CORRECTED VERSION (matches R/SPSS)
+// Helper: Spearman Correlation 
 function calculateSpearmanCorrelation(x, y) {
   const n = x.length;
   
@@ -17715,7 +17686,7 @@ function downloadCorrelationScatterPlot(canvasId) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     link.download = `scatterplot_${timestamp}.png`;
     link.href = dataURL;
-    document.body.appendChild(link); // Append to body for Firefox
+    document.body.appendChild(link); 
     link.click();
     document.body.removeChild(link);
     
