@@ -776,6 +776,110 @@ body.dark .desc-var-card.selected .desc-var-name {
   margin-top: 4px !important;
 }
 
+/* ── HEADER LAYOUT FIXES ────────────────────────────────────── */
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 66px;
+  gap: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 8px;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Right controls container */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.theme-btn {
+  width: 38px;
+  height: 38px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.theme-btn:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.hamburger {
+  display: none;
+  width: 38px;
+  height: 38px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 19px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.hamburger:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 0 16px;
+  }
+  
+  .nav {
+    display: none;
+  }
+  
+  .hamburger {
+    display: flex;
+  }
+  
+  .theme-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
 /* ============================================================
    DATA PREVIEW - AGGRESSIVE FIXES
    ============================================================ */
@@ -2635,26 +2739,30 @@ body.dark .separator {
 
 <header class="header">
   <div class="header-inner">
-<a class="logo" href="#" onclick="goTo('home'); return false;" style="cursor:pointer; text-decoration:none;">
-  <div class="logo-mark">
-    <img src="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/CalcuStatslogo.png" alt="CalcuStats Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 11px; image-rendering: crisp-edges;">
-  </div>
-  <div style="display: flex; flex-direction: column; line-height: 1.2;">
-    <span class="logo-text" style="font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">CalcuStats</span>
-<span style="display: inline-block; margin-top: 3px; background: var(--accent-glow); color: var(--accent2); font-size: 12px; font-weight: 600; padding: 2px 14px; border-radius: 12px; letter-spacing: 0.06em; border: 1px solid rgba(91,82,240,0.2);">version 2.0</span>  
-</div>
-</a>
-<nav class="nav">
-  <button class="nav-btn active" data-page="home"><span class="nav-icon">◈</span> Home</button>
-  <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional Allocation</button>
-  <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
-  <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran</button>
-  <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
-  <button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
-  <button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Inferential Statistics</button>
-</nav>
-    <button class="theme-btn" id="themeBtn" title="Toggle theme">☾</button>
-    <button class="hamburger" id="hamburger">≡</button>
+    <a class="logo" href="#" onclick="goTo('home'); return false;" style="cursor:pointer; text-decoration:none; flex-shrink:0;">
+      <div class="logo-mark">
+        <img src="https://raw.githubusercontent.com/mudassiribrahim12/Stats/main/CalcuStatslogo.png" alt="CalcuStats Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 11px; image-rendering: crisp-edges;">
+      </div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2;">
+        <span class="logo-text" style="font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">CalcuStats</span>
+        <span style="display: inline-block; margin-top: 3px; background: var(--accent-glow); color: var(--accent2); font-size: 12px; font-weight: 600; padding: 2px 14px; border-radius: 12px; letter-spacing: 0.06em; border: 1px solid rgba(91,82,240,0.2);">version 2.0</span>
+      </div>
+    </a>
+    
+    <nav class="nav">
+      <button class="nav-btn active" data-page="home"><span class="nav-icon">◈</span> Home</button>
+      <button class="nav-btn" data-page="proportional"><span class="nav-icon">◉</span> Proportional Allocation</button>
+      <button class="nav-btn" data-page="yamane"><span class="nav-icon">◐</span> Taro Yamane</button>
+      <button class="nav-btn" data-page="cochran"><span class="nav-icon">◑</span> Cochran</button>
+      <button class="nav-btn" data-page="other"><span class="nav-icon">◇</span> Other Formulas</button>
+      <button class="nav-btn" data-page="descriptives"><span class="nav-icon">▣</span> Descriptive Statistics</button>
+      <button class="nav-btn" data-page="advstats"><span class="nav-icon">⚙</span> Inferential Statistics</button>
+    </nav>
+    
+    <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0;">
+      <button class="theme-btn" id="themeBtn" title="Toggle theme">☾</button>
+      <button class="hamburger" id="hamburger">≡</button>
+    </div>
   </div>
 </header>
 
